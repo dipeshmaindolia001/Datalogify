@@ -1,273 +1,443 @@
 ---
 title: "Power Query — Automate Data Cleaning & Transformation"
-description: "Import, clean, reshape, and merge data automatically with Power Query — the modern analyst's secret weapon."
+description: "Learn how to build automated ETL pipelines in Excel using Power Query to clean, merge, unpivot, and load messy data without manual formulas."
 category: "excel"
 order: 202
 phase: 3
 tags: ["excel", "power-query", "etl", "data-transformation"]
-publishedDate: 2025-03-27
+publishedDate: 2026-07-08
 prevSlug: "advanced-formulas"
 nextSlug: "power-pivot-dax"
-seoTitle: "Excel Power Query Tutorial | Datalogify"
-seoDescription: "Master Power Query — import, clean, merge, unpivot, and automate data transformation in Excel."
+seoTitle: "Excel Power Query Tutorial: Automate ETL & Clean Data | Datalogify"
+seoDescription: "Step-by-step classroom tutorial on Power Query in Excel. Learn how to import, clean, merge, append, unpivot data, and write basic M code."
 ---
 
-## Why This Matters
+## Why This Matters: The Death of Manual Labor
 
-Power Query is what real analysts use instead of manually cleaning data with formulas. You define your cleaning steps once, and Power Query replays them automatically every time the data refreshes. It's the difference between spending 2 hours cleaning a monthly report vs clicking one button.
+Imagine you are a data analyst at a fast-growing retail business. Every Monday morning at 9:00 AM, the sales database exports a raw, messy CSV file. It has extra spaces in customer names, blank rows, prices formatted as text, dates in mixed regional formats, and products spread across several columns instead of being neatly arranged in rows. 
 
-## What Is Power Query?
+Historically, you would open this spreadsheet and perform a weekly ritual:
+1. Manually delete columns A, D, and G.
+2. Insert helper columns and write `=TRIM(PROPER(B2))` to clean up names.
+3. Write complex nested `=IFERROR(VALUE(E2), 0)` formulas to fix numerical formatting.
+4. Filter out blank rows and copy-paste missing region codes.
+5. Create a VLOOKUP chain to fetch product prices from a separate reference sheet.
 
-Power Query is a **data transformation engine** built into Excel (Data → Get & Transform). Think of it as an ETL (Extract, Transform, Load) tool inside your spreadsheet.
+By 11:30 AM, your fingers are sore, and your coffee is cold. The worst part? If a new batch of sales comes in at 2:00 PM, you have to do the **exact same thing all over again**.
 
-**How it works:**
-1. **Connect** to data (CSV, Excel files, databases, web pages, APIs)
-2. **Transform** — clean, reshape, merge, filter (recorded as steps)
-3. **Load** — output clean data to a worksheet or Data Model
-4. **Refresh** — click "Refresh" and all steps replay on new data
+Power Query changes this forever. It is not just a tool; it is a **system of record** for your data cleaning logic. You define the steps once, and Excel records them as a reproducible recipe. The next time you get a messy file, you drop it into a folder and click **Refresh All**. Excel replays your steps in milliseconds, producing a pristine, analysis-ready table. This is the difference between working hard and working smart.
 
-## Opening Power Query
+---
 
-**Path:** Data tab → Get Data (or Get & Transform section)
+## The Metaphor: The Automated Car Wash
 
-Common sources:
-- **From File** → CSV, Excel workbook, Text, JSON
-- **From Database** → SQL Server, MySQL, PostgreSQL
-- **From Web** → scrape HTML tables from websites
-- **From Table/Range** → transform data already in your workbook
+To understand Power Query, think of it as an **Automated Car Wash**.
 
-## The Power Query Editor Interface
-
-When you load data into Power Query, the Editor opens:
-
-| Panel | What It Does |
-|---|---|
-| **Query Settings** (right) | Shows query name and Applied Steps |
-| **Preview** (center) | Shows your data with transformations applied |
-| **Formula Bar** (top) | Shows the M code for the current step |
-| **Ribbon** (top) | Transform, Add Column, View, Home tabs |
-
-**Applied Steps** = your recorded transformation recipe. Each step you do (remove column, change type, filter rows) gets added to this list. You can:
-- Click any step to see the data at that point
-- Delete a step to undo it
-- Reorder steps by dragging
-- Edit a step's settings
-
-## Core Transformations
-
-### Remove Columns
-
-Right-click column header → Remove (or select multiple → Remove Columns button).
-
-**Better approach:** Right-click → "Remove Other Columns" — keeps only the columns you selected. This is safer because if new columns appear in the source data, they're automatically excluded.
-
-### Change Data Types
-
-Power Query auto-detects types, but often gets them wrong. Fix them:
-
-Click the icon next to the column header (ABC = text, 123 = number, 📅 = date):
-- Whole Number
-- Decimal Number
-- Text
-- Date
-- Date/Time
-- True/False
-
-Or: Transform → Data Type dropdown
-
-### Filter Rows
-
-Click the dropdown arrow on any column header:
-- Uncheck values to exclude them
-- Text Filters → Contains, Starts With, Does Not Contain
-- Number Filters → Greater Than, Between
-- Date Filters → After, Before, Between, Last N Days
-
-### Remove Duplicates
-
-Right-click column → Remove Duplicates
-
-Or select multiple columns → Home → Remove Rows → Remove Duplicates
-
-### Split Columns
-
-Transform → Split Column → By Delimiter (comma, space, dash, custom)
-
-**Example:** "John Smith" → "John" | "Smith"
-
-### Replace Values
-
-Right-click column → Replace Values
-- Replace "N/A" with null
-- Replace "Y" with "Yes"
-- Replace errors with null
-
-### Add Custom Columns
-
-Add Column → Custom Column:
-
-```
-= [Revenue] - [Cost]
+```text
+       [ Messy Raw Data ]  (Muddy Cars)
+               │
+               ▼
+┌──────────────────────────────┐
+│  STAGE 1: EXTRACT (Import)   │  <-- Car enters the conveyor belt
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│  STAGE 2: TRANSFORM (Clean)  │
+│  - Remove mud (Delete rows)  │  <-- Applied Steps (scrub, soap, rinse, dry)
+│  - Straighten mirrors        │
+│  - Apply wax (Format types)  │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│    STAGE 3: LOAD (Output)    │  <-- Clean, shiny car drives onto the road
+└──────────────────────────────┘
 ```
 
+*   **The Muddy Car:** This is your raw, dirty input data (e.g., CSV, SQL database, web page).
+*   **The Conveyor Belt:** Once the car enters the wash, it moves along a fixed path. In Power Query, this is the **ETL Pipeline (Extract, Transform, Load)**.
+*   **The Scrubbers, Soap, and Dryer:** Each physical mechanism represents an **Applied Step** in your query (e.g., Change Type, Split Column, Remove Duplicates).
+*   **The Shiny Car:** The final output loaded back into Excel as a clean, formatted table.
+
+The beauty of the automated car wash is that once the plumbing and conveyor tracks are built, it doesn't matter how muddy the next car is—you don't pick up a sponge. You just push a button and let the machinery do the work.
+
+---
+
+## Core Concepts & Terminology
+
+Before clicking buttons, let's master the vocabulary of data engineering inside Excel.
+
+### 1. What is ETL?
+*   **Extract:** Connecting to a data source (wherever it lives) and pulling the raw data in without altering the original file. Power Query is **read-only** to the source.
+*   **Transform:** Manipulating the data (filtering, joining, grouping, changing types) to get it into the desired shape.
+*   **Load:** Sending the polished data back to Excel (either directly to a worksheet table or to the Power Pivot Data Model).
+
+### 2. The Power Query Engine and the M Language
+Under the hood of Power Query is a highly optimized functional formula language called **M** (stands for "Data Mashup"). 
+*   Every button you click in the Power Query user interface automatically generates M code in the background.
+*   You don't need to be a developer to use Power Query, but understanding basic M syntax allows you to build custom calculations and bypass UI limitations.
+*   *Fun Fact:* M is case-sensitive! Writing `if` is not the same as `IF`.
+
+### 3. Applied Steps
+Found in the **Query Settings** panel on the right side of the screen, the **Applied Steps** list is your chronological history of edits.
+*   Each step acts like a version control checkpoint.
+*   You can click on step 3 to see what the data looked like at that moment, even if you are currently on step 10.
+*   You can delete intermediate steps (with caution!), rename steps to document your workflow, or insert new steps in the middle of the chain.
+
+---
+
+## Step-by-Step Concept Breakdown
+
+### Importing Data from Diverse Sources
+To open the Power Query Editor, go to the **Data** tab in Excel. You will see the **Get & Transform Data** group:
+
+```text
+Data -> Get Data -> [Select Source]
 ```
-= if [Revenue] > 50000 then "High" else "Standard"
+
+*   **From File:** Import from `.xlsx`, `.csv`, `.txt`, `.xml`, `.json`, or an entire **Folder** (which merges all files in that directory).
+*   **From Database:** Connect directly to relational engines like **SQL Server**, **MySQL**, **PostgreSQL**, or **Access**. This is crucial because it pulls data live, avoiding intermediary manual CSV exports.
+*   **From Web:** Scrape tables directly from an HTML page. You paste a URL, and Power Query scans the page for structured table elements.
+*   **From Table/Range:** Turn an existing standard Excel Table on your worksheet into a Power Query source.
+
+---
+
+## Code & Practical Walkthroughs
+
+Let's work through three detailed, real-world data analytics scenarios.
+
+### Walkthrough 1: Basic Cleaning, Custom Columns, and Applied Steps
+
+Suppose we have the following dirty raw transaction log from an e-commerce platform. Notice the spaces in names, text mixed with numbers, missing values, and weird casing.
+
+#### Raw Input Data (Source Table)
+
+| ID | Cust_Name | Date_Logged | Raw_Revenue | Region_Code |
+|---|---|---|---|---|
+| 1001 |  john smith  | 2026/01/15 | $120.50 USD | US-East |
+| 1002 | Jane Doe | 2026-01-16 | 450.00 | us-west |
+| 1003 | mark Johnson | 17-Jan-26 | $85.00 |   |
+| 1004 | sarah lee | 2026/01/18 | N/A | US-East |
+
+We need to:
+1. Clean customer names (trim spaces and capitalize first letters).
+2. Clean and convert `Date_Logged` into a standard Date format.
+3. Extract the numeric value from `Raw_Revenue` and convert it to a decimal number.
+4. Replace blank `Region_Code` values with "Unknown".
+5. Add a custom column calculating a 10% tax.
+6. Remove the raw revenue column to save space.
+
+Let's write out the steps and the corresponding M formulas generated.
+
+#### Step-by-Step Execution:
+1. Select the raw data table → Go to **Data** → **From Sheet** (or **From Table/Range**).
+2. Select the `Cust_Name` column → Right-click → **Transform** → **Trim** (removes leading/trailing spaces). Then, right-click → **Transform** → **Capitalize Each Word**.
+3. Select `Date_Logged` → Click the type icon in the header → Change to **Date**. Power Query parses standard date variations.
+4. Select `Raw_Revenue` → Go to **Transform** → **Extract** → **Text Between Delimiters** (or use **Replace Values** to remove `$`, `USD`, and spaces). Let's use **Replace Values**:
+   - Replace `$` with nothing.
+   - Replace ` USD` with nothing.
+   - Replace `N/A` with `0`.
+   - Convert data type to **Currency (Decimal Number)**.
+5. Select `Region_Code` → Right-click → **Replace Values** → Find: `""` (leave empty or match blank) → Replace With: `"Unknown"`. Let's also capitalize it: Transform → **Uppercase**.
+6. Create a Custom Column for Tax:
+   - Go to **Add Column** → **Custom Column**.
+   - Name: `Tax_Amount`
+   - Formula:
+   
+```excel
+= [Raw_Revenue] * 0.10
 ```
 
+7. Select `Raw_Revenue` → Right-click → **Remove**. (This records `Table.RemoveColumns`).
+
+Let's look at the generated M Code in the **Advanced Editor** representing this transformation pipeline:
+
+```excel
+let
+    Source = Excel.CurrentWorkbook(){[Name="Raw_Sales"]}[Content],
+    // Change initial types to make handling easier
+    #"Changed Type" = Table.TransformColumnTypes(Source,{{"ID", Int64.Type}, {"Cust_Name", type text}, {"Date_Logged", type text}, {"Raw_Revenue", type text}, {"Region_Code", type text}}),
+    
+    // Clean names
+    #"Trimmed Name" = Table.TransformColumns(#"Changed Type",{{"Cust_Name", Text.Trim, type text}}),
+    #"Capitalized Name" = Table.TransformColumns(#"Trimmed Name",{{"Cust_Name", Text.Proper, type text}}),
+    
+    // Convert Dates
+    #"Parsed Date" = Table.TransformColumns(#"Capitalized Name",{{"Date_Logged", each Date.From(DateTime.FromText(_)), type date}}),
+    
+    // Clean and convert revenue
+    #"Cleaned Revenue Text" = Table.ReplaceValue(#"Parsed Date","N/A","0",Replacer.ReplaceText,{"Raw_Revenue"}),
+    #"Removed Dollar Sign" = Table.ReplaceValue(#"Cleaned Revenue Text","$","",Replacer.ReplaceText,{"Raw_Revenue"}),
+    #"Removed USD" = Table.ReplaceValue(#"Removed Dollar Sign"," USD","",Replacer.ReplaceText,{"Raw_Revenue"}),
+    #"Converted Revenue" = Table.TransformColumnTypes(#"Removed USD",{{"Raw_Revenue", type number}}),
+    
+    // Clean Region Code
+    #"Replaced Blanks" = Table.ReplaceValue(#"Converted Revenue","","Unknown",Replacer.ReplaceValue,{"Region_Code"}),
+    #"Uppercase Region" = Table.TransformColumns(#"Replaced Blanks",{{"Region_Code", Text.Upper, type text}}),
+    
+    // Add custom calculation column
+    #"Added Tax Column" = Table.AddColumn(#"Uppercase Region", "Tax_Amount", each [Raw_Revenue] * 0.1, type number),
+    
+    // Drop raw column to retain only the clean data
+    #"Removed Raw Columns" = Table.RemoveColumns(#"Added Tax Column",{"Raw_Revenue"})
+in
+    #"Removed Raw Columns"
 ```
-= Text.Upper([Region])
+
+#### Output (Pristine Table Loaded to Worksheet)
+
+```text
+# Output:
+| ID   | Cust_Name    | Date_Logged | Region_Code | Tax_Amount |
+|------|--------------|-------------|-------------|------------|
+| 1001 | John Smith   | 2026-01-15  | US-EAST     | 12.05      |
+| 1002 | Jane Doe     | 2026-01-16  | US-WEST     | 45.00      |
+| 1003 | Mark Johnson | 2026-01-17  | UNKNOWN     | 8.50       |
+| 1004 | Sarah Lee    | 2026-01-18  | US-EAST     | 0.00       |
 ```
 
-### Trim & Clean Text
+---
 
-Transform → Format → Trim (removes leading/trailing spaces), Clean (removes non-printable characters), UPPER/LOWER/Capitalize.
+### Walkthrough 2: Unpivoting Columns (Wide-to-Long Transformation)
 
-## Merge Queries (= SQL JOIN)
+A database-compliant table layout must have one row per observation. However, humans prefer reading "wide" reports where months or quarters are listed as columns. This is called a cross-tab report. 
 
-This is Power Query's killer feature. It lets you JOIN tables without VLOOKUP.
+If you try to build a Pivot Table or connect to a BI engine using wide data, you will hit a wall because you cannot group or slice by a single "Date" or "Month" field. Power Query's **Unpivot** utility makes transforming wide reports to normalized tables effortless.
 
-**Steps:**
-1. Home → Merge Queries
-2. Select the primary table
-3. Select the matching column (click it in both tables)
-4. Select the lookup table
-5. Choose join type:
+#### Raw Wide Data (Regional Budget Spreadsheet)
 
-| Join Kind | SQL Equivalent | What It Returns |
-|---|---|---|
-| Left Outer | LEFT JOIN | All rows from left + matches from right |
-| Right Outer | RIGHT JOIN | All rows from right + matches from left |
-| Full Outer | FULL JOIN | All rows from both |
-| Inner | INNER JOIN | Only matching rows |
-| Left Anti | NOT IN / LEFT JOIN WHERE IS NULL | Rows in left with NO match in right |
-| Right Anti | NOT IN reversed | Rows in right with NO match in left |
+| Product_Line | Region | Jan_Budget | Feb_Budget | Mar_Budget |
+|---|---|---|---|---|
+| Electronics | North | 50000 | 52000 | 55000 |
+| Electronics | South | 40000 | 41000 | 42000 |
+| Home & Kitchen | North | 20000 | 22000 | 25000 |
 
-6. Click OK → A new column appears containing a Table
-7. Click the expand icon → select which columns to bring in
-8. Uncheck "Use original column name as prefix" for cleaner names
+We need to unpivot this so that the months become rows in a single column named `Month`, and the budget figures sit in a column named `Budget`.
 
-## Append Queries (= SQL UNION)
+#### Step-by-Step Execution:
+1. Select the Table → Data → **From Table/Range**.
+2. Select the columns that you **do not** want to change: hold `Ctrl` and select `Product_Line` and `Region`.
+3. Right-click either of the selected headers → Choose **Unpivot Other Columns**.
+4. Power Query transforms the columns into two fields: `Attribute` and `Value`.
+5. Double-click the header `Attribute` and rename it to `Month`.
+6. Double-click the header `Value` and rename it to `Budget`.
+7. Change the data type of `Month` to text (or extract month names) and `Budget` to decimal number.
 
-Combine rows from multiple tables with the same structure.
+Here is the resulting M code:
 
-Home → Append Queries → Select tables to stack on top of each other.
+```excel
+let
+    Source = Excel.CurrentWorkbook(){[Name="Wide_Budget"]}[Content],
+    #"Changed Type" = Table.TransformColumnTypes(Source,{{"Product_Line", type text}, {"Region", type text}, {"Jan_Budget", Int64.Type}, {"Feb_Budget", Int64.Type}, {"Mar_Budget", Int64.Type}}),
+    
+    // The core transformation step
+    #"Unpivoted Other Columns" = Table.UnpivotOtherColumns(#"Changed Type", {"Product_Line", "Region"}, "Attribute", "Value"),
+    
+    // Rename output fields
+    #"Renamed Columns" = Table.RenameColumns(#"Unpivoted Other Columns",{{"Attribute", "Month"}, {"Value", "Budget"}}),
+    
+    // Clean up Month names (remove '_Budget' text if needed)
+    #"Cleaned Month Text" = Table.ReplaceValue(#"Renamed Columns","_Budget","",Replacer.ReplaceText,{"Month"})
+in
+    #"Cleaned Month Text"
+```
 
-**Use case:** You get monthly data in separate files (Jan.xlsx, Feb.xlsx, Mar.xlsx). Append them all into one consolidated table.
+#### Output (Long Data Structure)
 
-### Append from Folder (Power Move)
+```text
+# Output:
+| Product_Line   | Region | Month | Budget |
+|----------------|--------|-------|--------|
+| Electronics    | North  | Jan   | 50000  |
+| Electronics    | North  | Feb   | 52000  |
+| Electronics    | North  | Mar   | 55000  |
+| Electronics    | South  | Jan   | 40000  |
+| Electronics    | South  | Feb   | 41000  |
+| Electronics    | South  | Mar   | 42000  |
+| Home & Kitchen | North  | Jan   | 20000  |
+| Home & Kitchen | North  | Feb   | 22000  |
+| Home & Kitchen | North  | Mar   | 25000  |
+```
 
-Data → Get Data → From File → From Folder → Select the folder
+---
 
-Power Query automatically imports ALL files in that folder and appends them. When you add a new file next month, just click Refresh.
+### Walkthrough 3: Merging Queries (Joins) and Appending Queries (Unions)
 
-## Group By (= SQL GROUP BY)
+Now, let's explore advanced data assembly. 
+*   **Merge Queries** acts like an SQL Join or VLOOKUP. It combines columns from two tables based on a shared key.
+*   **Append Queries** acts like an SQL Union or copy-pasting tables on top of each other. It stacks rows from multiple tables.
 
-Transform → Group By:
+Let's look at a scenario with two regional sales tables (which we need to stack) and a product catalog (which we need to merge to fetch prices).
 
-| Column | Operation | New Column Name |
-|---|---|---|
-| Region | Sum | Total Revenue |
-| Region | Count | Transaction Count |
-| Region | Average | Avg Revenue |
+#### Raw Table A (East_Sales)
 
-Advanced: Group by multiple columns (Region + Product), add multiple aggregations.
-
-## Unpivot Columns (Wide → Long Format)
-
-**Before (wide):**
-
-| Product | Jan | Feb | Mar |
+| Order_ID | Date | Product_ID | Units |
 |---|---|---|---|
-| Widget A | 50000 | 45000 | 55000 |
-| Widget B | 35000 | 38000 | 40000 |
+| E-101 | 2026-02-01 | PROD-01 | 5 |
+| E-102 | 2026-02-02 | PROD-02 | 10 |
 
-**After unpivot:**
+#### Raw Table B (West_Sales)
 
-| Product | Month | Revenue |
+| Order_ID | Date | Product_ID | Units |
+|---|---|---|---|
+| W-201 | 2026-02-01 | PROD-01 | 8 |
+| W-202 | 2026-02-03 | PROD-03 | 2 |
+
+#### Raw Table C (Product_Catalog)
+
+| Product_ID | Product_Name | Unit_Price |
 |---|---|---|
-| Widget A | Jan | 50000 |
-| Widget A | Feb | 45000 |
-| Widget A | Mar | 55000 |
-| Widget B | Jan | 35000 |
-| Widget B | Feb | 38000 |
-| Widget B | Mar | 40000 |
+| PROD-01 | Laptop | 1200 |
+| PROD-02 | Mouse | 25 |
+| PROD-03 | Monitor | 300 |
 
-**Steps:**
-1. Select the columns you DON'T want to unpivot (Product)
-2. Transform → Unpivot Other Columns
+We need to:
+1. Append `East_Sales` and `West_Sales` together into a master transaction table.
+2. Merge this master transaction table with `Product_Catalog` using `Product_ID` as the key.
+3. Expand `Product_Name` and `Unit_Price` columns.
+4. Add a custom column to calculate total revenue (`Units` * `Unit_Price`).
 
-This is incredibly useful. Many real-world reports come in wide format but analysis needs long format.
+#### Step 1: Append Queries
+Load both `East_Sales` and `West_Sales` queries into Power Query (Connection Only).
+Go to **Home** → **Append Queries as New**.
+Select the two tables and stack them. Let's name the resulting query `All_Transactions`.
 
-## Pivot Columns (Long → Wide)
+#### Step 2: Merge Queries
+Select the newly created `All_Transactions` query.
+Go to **Home** → **Merge Queries**.
+Select `Product_ID` in the top preview and select `Product_Catalog` in the bottom drop-down, clicking the matching `Product_ID` column there.
+Choose **Left Outer Join** (all rows from the sales table, matches from the catalog). Click OK.
 
-The reverse of Unpivot. Transform → Pivot Column → select the values column and aggregation.
+A new column containing nested tables appears: `Product_Catalog`.
+Click the **Expand** button (two arrows pointing outward) in the header of the nested column.
+Uncheck `Product_ID` (we already have it). Check `Product_Name` and `Unit_Price`. Uncheck "Use original column name as prefix". Click OK.
 
-## Loading Options
+#### Step 3: Calculation
+Go to **Add Column** → **Custom Column**.
+Name: `Total_Revenue`
+Formula:
 
-When you're done transforming, Close & Load:
+```excel
+= [Units] * [Unit_Price]
+```
 
-| Option | Best For |
-|---|---|
-| Close & Load (Table) | You want the clean data on a worksheet |
-| Close & Load To → Connection Only | You're feeding a pivot table or Power Pivot (no worksheet needed) |
-| Close & Load To → Data Model | You're building a multi-table model |
+Let's review the final consolidated M Code:
 
-## Refresh Workflow
+```excel
+let
+    // Step 1: Union (Append) East and West Sales
+    Source = Table.Combine({East_Sales, West_Sales}),
+    
+    // Step 2: Join (Merge) with the Product Catalog Table
+    #"Merged Catalog" = Table.NestedJoin(Source, {"Product_ID"}, Product_Catalog, {"Product_ID"}, "CatalogTable", JoinKind.LeftOuter),
+    
+    // Step 3: Expand the joined table columns
+    #"Expanded Catalog" = Table.ExpandTableColumn(#"Merged Catalog", "CatalogTable", {"Product_Name", "Unit_Price"}, {"Product_Name", "Unit_Price"}),
+    
+    // Step 4: Perform arithmetic on the fields
+    #"Added Revenue" = Table.AddColumn(#"Expanded Catalog", "Total_Revenue", each [Units] * [Unit_Price], type number)
+in
+    #"Added Revenue"
+```
 
-1. Source data changes (new CSV, updated database)
-2. Click **Refresh All** (Data tab) or right-click query → Refresh
-3. All transformation steps replay automatically
-4. Clean data appears in your worksheet
-5. Pivot tables/charts linked to this data also refresh
+#### Output (Consolidated Sales Table)
 
-**Schedule refresh:** If connected to SharePoint/OneDrive, you can set up automatic daily/hourly refresh.
+```text
+# Output:
+| Order_ID | Date       | Product_ID | Units | Product_Name | Unit_Price | Total_Revenue |
+|----------|------------|------------|-------|--------------|------------|---------------|
+| E-101    | 2026-02-01 | PROD-01    | 5     | Laptop       | 1200       | 6000          |
+| E-102    | 2026-02-02 | PROD-02    | 10    | Mouse        | 25         | 250           |
+| W-201    | 2026-02-01 | PROD-01    | 8     | Laptop       | 1200       | 9600          |
+| W-202    | 2026-02-03 | PROD-03    | 2     | Monitor      | 300        | 600           |
+```
 
-<div class="interview-tip">
+---
 
-**Where This Shows Up in Real Jobs:**
-- "We get a messy CSV export from the CRM every Monday. Can you automate the cleaning?" → Power Query
-- Combining monthly sales files from 12 Excel workbooks → Append from Folder
-- Replacing VLOOKUP chains with Merge Queries (faster, cleaner, auto-refreshing)
-- Building ETL pipelines that non-technical colleagues can refresh with one click
-- Converting cross-tab reports (wide format) to database-friendly long format
+## Edge Cases & Common Mistakes
 
-</div>
+Data engineering in Excel requires strict planning to ensure updates do not break your pipelines. Keep an eye out for these common issues:
 
-<div class="challenge">
+### 1. The "Hardcoded Columns" Gotcha
+*   **The Problem:** If you record step changes by selecting columns A, B, and C, and manually choose "Remove Columns", Power Query records the names of the columns to delete: `Table.RemoveColumns(Source, {"ColumnToDelete1", "ColumnToDelete2"})`. If the source system later stops exporting `ColumnToDelete1`, the query will fail with a "Column not found" error during refresh.
+*   **The Solution:** Use **Remove Other Columns**. Select only the columns you *want* to keep, right-click, and choose **Remove Other Columns**. If the source later exports new, unexpected columns, they will be discarded automatically without throwing errors.
 
-**Mini-Challenge:** You receive monthly sales reports as separate CSVs with messy data:
+### 2. Case-Sensitivity & Text Cleanliness
+*   **The Problem:** In Excel formulas, `vlookup` is not case-sensitive. However, Power Query is built on M, which is case-sensitive. If you merge on a column containing `PROD-01` and another containing `prod-01`, they will not match, leaving blank results.
+*   **The Solution:** Before performing merges, joins, or filtering, apply a text cleanup step (e.g., **Capitalize Each Word**, **Uppercase**, or **Lowercase**) to the key columns in both tables.
 
-1. Import one CSV into Power Query
-2. Remove unnecessary columns (keep only: Date, Region, Product, Revenue)
-3. Change data types (Date to date, Revenue to decimal)
-4. Replace blank regions with "Unknown"
-5. Trim whitespace from the Product column
-6. Remove rows where Revenue ≤ 0
-7. Add a custom column: Month-Year = `Text.From(Date.Month([Date])) & "-" & Text.From(Date.Year([Date]))`
-8. Group by Region to get Total Revenue per region
-9. Load to a worksheet
-10. Then set up Append from Folder so future monthly files load automatically
+### 3. Data Type Conversions Resulting in `[Error]`
+*   **The Problem:** If you convert a column to a Whole Number, but one row contains a text string (like "N/A" or "TBD"), the cell will fail and show a red error bar.
+*   **The Solution:** Use the **Replace Errors** feature to replace errors with `null` or `0`, or structure the M code using `try ... otherwise` logic:
 
-</div>
+```excel
+= try Number.From([Value]) otherwise 0
+```
+
+### 4. Privacy Levels & Formula.Firewall Errors
+*   **The Problem:** Excel will block queries when you attempt to combine a local workbook source with an external database source (e.g., SQL server). This is a security feature to prevent local data from being sent to external endpoints.
+*   **The Solution:** In Power Query, go to **File** → **Options and Settings** → **Query Options** → **Privacy** → Set to **Ignore the Privacy Levels and potentially improve performance**. Only use this settings bypass if you trust both sources.
+
+---
+
+## Practice Exercises & Mini-Projects
+
+### Exercise 1: Clean and Merge Customer Logs
+*   **Goal:** Build a clean customer table from a messy text log.
+*   **Input Data:** Copy the following markdown table into an Excel sheet. Name the range `RawCustomers`.
+
+| ID | Name | Phone_Raw | Joined_Date |
+|---|---|---|---|
+| C-1 |  Alice Green | (555) 123-4567 | 2026/01/01 |
+| C-2 | Bob Miller | 555-987-6543 | 02-Jan-26 |
+| C-3 | CHARLIE BROWN | 555.222.1111 | 2026.01.03 |
+
+*   **Task:** Import to Power Query. Trim names and ensure uppercase names become Capitalized (e.g. `Charlie Brown`). Remove non-numeric characters from `Phone_Raw` so only numbers remain. Convert the date column. Load as Connection Only.
+
+---
+
+### Exercise 2: Unpivot and Scale a Global Budget
+*   **Goal:** Take a multi-year quarterly budget and shape it for data visualization.
+*   **Input Data:** Create a sheet with this table:
+
+| Department | Y2025_Q1 | Y2025_Q2 | Y2026_Q1 | Y2026_Q2 |
+|---|---|---|---|---|
+| Sales | 10000 | 12000 | 15000 | 17000 |
+| Marketing | 8000 | 9000 | 9500 | 11000 |
+
+*   **Task:** Unpivot the table so that Department, Quarter, and Amount are the only three columns. Add a column called `Tax_Reserved` calculating 5% of the Amount.
+
+---
+
+## Section Recaps
+
+*   **ETL Pipeline:** Power Query represents the Extract, Transform, Load paradigm. It is a read-only connector that acts like a recipe recording transformation steps.
+*   **Applied Steps:** Found in Query Settings. They allow step-by-step history tracking, reordering, and editing of transformation steps.
+*   **Unpivoting:** Converts wide datasets into long datasets, which is crucial for database compliance and building clean pivot tables.
+*   **Merge vs. Append:** Merging adds columns based on a matching key (JOIN). Appending stacks rows on top of each other (UNION).
+*   **M Language:** The underlying functional programming language of Power Query. It is case-sensitive and processes data operations efficiently.
+
+---
 
 ## Common Interview Questions
 
-### Q1: What is Power Query and how is it different from formulas?
+### Q1: What is Power Query, and how does it differ from traditional Excel formulas?
+**Answer:** Power Query is a data transformation and mashup engine that implements the ETL (Extract, Transform, Load) workflow within Excel. Unlike formulas, which execute cell-by-cell on a live worksheet and recalculate frequently, Power Query runs outside the main worksheet interface, is read-only to source data, handles millions of rows, and records transformation steps in M code. When the source data updates, clicking "Refresh" replays all steps automatically.
 
-**Answer:** Power Query is a data transformation engine in Excel that imports, cleans, and reshapes data through a series of recorded steps. Unlike formulas (which operate cell-by-cell on worksheet data), Power Query works on the data source before it reaches the worksheet, handles millions of rows, and replays all transformations automatically on refresh. It's Excel's ETL tool.
+### Q2: Why is "Remove Other Columns" preferred over "Remove Columns" in a production pipeline?
+**Answer:** "Remove Columns" hardcodes the exact names of the columns to delete. If the source database later stops exporting one of those deleted columns, the query will fail with a "Column not found" error. "Remove Other Columns" hardcodes only the names of the columns you wish to *keep*. If the source data drops a column you didn't need anyway, or adds new metadata fields, the query will continue running without errors.
 
-### Q2: How do you combine data from multiple Excel files?
+### Q3: What is the difference between Merge Queries and Append Queries?
+**Answer:** 
+*   **Merge Queries** acts like a SQL Join or VLOOKUP. It combines columns from two tables by matching values in key columns. It expands the dataset horizontally.
+*   **Append Queries** acts like a SQL Union. It combines rows from multiple tables that share the same schema, stacking them vertically on top of each other.
 
-**Answer:** Use Power Query's "Get Data → From File → From Folder." Select the folder containing all files, Power Query imports and appends them automatically. Alternatively, use "Append Queries" to stack individual tables. This replaces manually copying and pasting from multiple workbooks.
+### Q4: Explain the difference between Wide and Long data formats. Why does Power Query have an Unpivot feature?
+**Answer:** Wide data features variables or time periods spread across column headers (e.g., having separate columns for Jan, Feb, and Mar). While easy for human consumption, wide tables are difficult to model. Long data structures stack all values into a single column, using an attribute column to label the category (e.g., having a single "Month" column and a single "Sales" column). Power Query's Unpivot feature allows analysts to easily normalize wide reports into long tables, which are required for building clean Pivot Tables and charts.
 
-### Q3: What's the difference between Merge and Append in Power Query?
-
-**Answer:** Merge = SQL JOIN. Combines columns from two tables based on a matching key (like VLOOKUP but better). Append = SQL UNION. Stacks rows from multiple tables on top of each other (same columns, more rows). Merge adds width; Append adds height.
-
-### Q4: What is Unpivot and when would you use it?
-
-**Answer:** Unpivot converts wide-format data (months as columns: Jan, Feb, Mar) into long-format data (one Month column, one Value column). Long format is needed for pivot tables, charts, database imports, and most analysis tools. It's the opposite of a Pivot Table — it normalizes cross-tab reports into a clean structure.
-
-### Q5: How do you handle errors in Power Query?
-
-**Answer:** Right-click a column → Replace Errors (replace with null or a default value). Or use Transform → Replace Errors. For row-level filtering: Home → Remove Rows → Remove Errors. In custom columns, use `try [Column] otherwise null` syntax in M code to handle errors gracefully.
+### Q5: How does Power Query handle data errors (e.g., text values in a numeric column), and how can you resolve them?
+**Answer:** When Power Query encounters a conversion issue, it labels the cell with an `[Error]` and highlights the row. You can manage this by:
+1. Selecting the column, right-clicking, and choosing **Replace Errors** (to substitute a fallback value like `0` or `null`).
+2. Choosing **Remove Errors** to filter out the problematic rows entirely.
+3. Writing a custom M formula containing a `try ... otherwise` block to handle exceptions gracefully at execution time.
