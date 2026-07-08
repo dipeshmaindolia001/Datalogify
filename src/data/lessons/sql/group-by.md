@@ -1,474 +1,385 @@
 ---
-title: "GROUP BY & Aggregations — Summarize Your Data"
-description: "Learn to aggregate data with GROUP BY, COUNT, SUM, AVG, MIN, MAX — essential for every analytics report."
+title: "GROUP BY & Aggregations — Summarizing Data"
+description: "Master GROUP BY, HAVING, and SQL aggregate functions (SUM, AVG, COUNT, MAX, MIN) to build reports and summarize datasets."
 category: "sql"
 order: 3
 phase: 2
-tags: ["sql", "group-by", "aggregation", "having"]
+tags: ["sql", "group-by", "aggregations", "having", "analytics"]
 publishedDate: 2025-02-03
 prevSlug: "joins"
-nextSlug: "subqueries"
-seoTitle: "SQL GROUP BY & Aggregations for Data Analytics | Datalogify"
-seoDescription: "Master GROUP BY, HAVING, COUNT, SUM, AVG with real analytics report examples."
+nextSlug: "and-or-not"
+seoTitle: "SQL GROUP BY & Aggregations Tutorial for Data Analytics | Datalogify"
+seoDescription: "Learn how to use SQL GROUP BY, HAVING, and aggregates. Understand the difference between WHERE and HAVING with query execution order."
 ---
 
 ## Why This Matters
 
-"How much revenue did each region generate last quarter?" "Which product has the highest return rate?" "How many customers signed up each month?" — every single one of these questions requires GROUP BY and aggregation. This is what transforms raw rows into actual insights.
+Raw database tables are like logs of individual events: a user clicked a button, a customer bought a subscription, an employee completed a shift. If you try to read all these millions of rows individually, you will see nothing but noise.
 
-## The Tables We're Working With
+Analytics is the art of compression. To find insights, you must collapse thousands of raw records into a single summary table:
+*   Instead of looking at 10,000 sales transactions, you want to see **total revenue by region**.
+*   Instead of reviewing every support ticket, you want to see the **average resolution time by representative**.
+*   Instead of listing every signup, you want to calculate the **monthly growth rate of new users**.
 
-```sql
--- sales table
--- | sale_id | rep_id | product       | amount  | sale_date  | region | status   |
--- |---------|--------|---------------|---------|------------|--------|----------|
--- | 1       | 101    | CRM Pro       | 15000   | 2024-01-15 | West   | closed   |
--- | 2       | 102    | CRM Pro       | 12500   | 2024-01-22 | East   | closed   |
--- | 3       | 101    | Analytics Hub | 28000   | 2024-02-03 | West   | closed   |
--- | 4       | 102    | CRM Pro       | 15000   | 2024-02-18 | East   | closed   |
--- | 5       | 101    | Data Vault    | 8500    | 2024-03-07 | South  | closed   |
--- | 6       | 103    | Analytics Hub | 28000   | 2024-03-12 | West   | closed   |
--- | 7       | 103    | CRM Pro       | 12500   | 2024-04-01 | North  | closed   |
--- | 8       | 101    | CRM Pro       | 15000   | 2024-04-15 | West   | pending  |
--- | 9       | 102    | Data Vault    | 8500    | 2024-05-02 | East   | refunded |
--- | 10      | 103    | Analytics Hub | 28000   | 2024-05-20 | North  | closed   |
--- | 11      | 101    | CRM Pro       | 15000   | 2024-06-01 | South  | closed   |
--- | 12      | 102    | Analytics Hub | 28000   | 2024-06-15 | East   | closed   |
+The `GROUP BY` clause, paired with SQL aggregate functions, is how you transform a mountain of transactional rows into structured summary reports.
 
--- reps table
--- | rep_id | name           | team     | hire_date  |
--- |--------|----------------|----------|------------|
--- | 101    | Sarah Chen     | Alpha    | 2022-01-15 |
--- | 102    | James Wilson   | Beta     | 2022-06-01 |
--- | 103    | Priya Patel    | Alpha    | 2023-03-10 |
+---
+
+## Conceptual Analogy: The Fruit Basket Sorting
+
+Imagine you are handed a massive wicker basket containing a jumble of mixed fruit: Red Apples, Green Apples, Navel Oranges, and Bananas.
+
+```text
+       [ Wicker Basket of Fruit ]
+ (Apple, Orange, Banana, Apple, Banana, Orange)
 ```
 
-## Aggregate Functions — The Basics
+If you are asked to summarize this basket, you cannot just look at the pile and guess. You must follow a process:
 
-### COUNT — How Many Rows?
+1. **Sort into Piles (GROUP BY)**: You place all the Apples in one pile on the left, all the Oranges in a pile in the middle, and all the Bananas in a pile on the right. 
+
+```text
+   [Apples Pile]       [Oranges Pile]       [Bananas Pile]
+  (Apple, Apple)      (Orange, Orange)     (Banana, Banana)
+```
+
+2. **Measure the Piles (Aggregation)**: Now that the fruits are separated, you can apply measurements to each pile:
+    *   **COUNT**: How many pieces of fruit are in this pile?
+    *   **SUM**: What is the total weight of this pile?
+    *   **AVG**: What is the average weight of a single fruit in this pile?
+    *   **MAX/MIN**: What is the heaviest and lightest fruit in this pile?
+
+### The Cardinal Rule of Grouping
+Once you have sorted your fruit into piles, you can only ask questions about the **entire pile** or the **grouping attribute**.
+
+If someone points to the Apple pile and asks: *"What is the specific color of the apples?"* you cannot give a single answer because the pile contains both Red and Green apples. If you tried, you would break the rule.
+
+In SQL, this is why: **Every column you select must either be the column you grouped by (the fruit type), or wrapped in an aggregate function (e.g. SUM, COUNT).**
+
+---
+
+## The Table We're Working With
+
+We will query a `sales` table containing transaction details for sales representatives across different territories:
+
+| sale_id | rep_id | product | amount | sale_date | region | status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | 101 | CRM Pro | 15000.00 | 2024-01-15 | West | completed |
+| 2 | 102 | CRM Pro | 12000.00 | 2024-01-22 | East | completed |
+| 3 | 101 | Analytics Hub | 28000.00 | 2024-02-03 | West | completed |
+| 4 | 103 | CRM Pro | 15000.00 | 2024-02-18 | East | pending |
+| 5 | 101 | Data Vault | 8500.00 | 2024-03-07 | South | completed |
+| 6 | 102 | Analytics Hub | *NULL* | 2024-03-12 | East | cancelled |
+| 7 | 103 | Dashboard Kit | 5000.00 | 2024-03-25 | East | completed |
+
+---
+
+## Aggregate Functions in Detail
+
+Aggregate functions perform a calculation on a set of values and return a single value. 
+
+### 1. COUNT(*) vs. COUNT(column) vs. COUNT(DISTINCT column)
+How SQL counts rows is one of the most common sources of calculation bugs:
+
+*   **`COUNT(*)`**: Counts every single row in the group, including rows that contain `NULL` values. Think of it as counting physical envelopes regardless of what is inside.
+*   **`COUNT(column)`**: Counts only rows where the specified column is **not NULL**. If a column contains a NULL, it is ignored in the count.
+*   **`COUNT(DISTINCT column)`**: Counts only unique, non-NULL values within that column.
+
+Let's look at how these behave on our `sales` table:
 
 ```sql
--- Total number of sales
-SELECT COUNT(*) AS total_sales
+SELECT 
+    COUNT(*) AS total_rows,
+    COUNT(amount) AS non_null_amounts,
+    COUNT(DISTINCT product) AS unique_products
 FROM sales;
 ```
 
 ```text
 # Output:
-total_sales
------------
-12
-(1 row)
+total_rows | non_null_amounts | unique_products
+-----------|------------------|----------------
+7          | 6                | 4
 ```
+*Why the values differ*: 
+*   `total_rows` is 7 because there are 7 records.
+*   `non_null_amounts` is 6 because transaction 6 has a `NULL` amount.
+*   `unique_products` is 4 because there are only 4 distinct products sold (CRM Pro, Analytics Hub, Data Vault, Dashboard Kit).
+
+---
+
+### 2. SUM() and AVG() NULL Handling
+Like `COUNT(column)`, both `SUM()` and `AVG()` ignore NULL values during calculation.
+
+> [!WARNING]
+> **The Average Denominator Trap**: Because `AVG(column)` ignores NULL values, it does not include them in the denominator. This can skew calculations if you want NULLs treated as zero.
+
+For example, let's look at average sales in the East region (transactions 2, 4, 6, and 7):
+*   Amounts: 12000, 15000, NULL, 5000.
+*   `SUM(amount)` = 32,000.
+*   `AVG(amount)` = 32,000 / 3 = **10,666.67** (ignores transaction 6 entirely).
+
+If transaction 6 was a cancelled sale that you wanted to count as $0, a simple `AVG(amount)` will give you an inflated number. To treat NULLs as zero, you must use a function like `COALESCE` to replace NULL with 0 before aggregating:
 
 ```sql
--- COUNT(*) vs COUNT(column) — a critical difference
-SELECT
-    COUNT(*)          AS total_rows,
-    COUNT(status)     AS non_null_status,
-    COUNT(DISTINCT status) AS unique_statuses
-FROM sales;
+SELECT 
+    AVG(amount) AS average_excluding_nulls,
+    AVG(COALESCE(amount, 0)) AS average_including_nulls_as_zero
+FROM sales
+WHERE region = 'East';
 ```
 
 ```text
 # Output:
-total_rows | non_null_status | unique_statuses
------------|-----------------|----------------
-12         | 12              | 3
-(1 row)
+average_excluding_nulls | average_including_nulls_as_zero
+------------------------|---------------------------------
+10666.67                | 8000.00
+```
+*Calculation details*: `8000.00` is derived from `(12000 + 15000 + 0 + 5000) / 4`.
+
+---
+
+### 3. MIN() and MAX()
+`MIN()` and `MAX()` return the smallest and largest values in a group. They can be applied to numbers, strings (alphabetical sorting), and dates (earliest and latest). They also ignore NULL values.
+
+---
+
+## WHERE vs. HAVING
+
+The difference between `WHERE` and `HAVING` is the most frequently tested concept in SQL interviews.
+
+*   **`WHERE`** filters individual rows **before** any grouping or aggregation takes place.
+*   **`HAVING`** filters the aggregated groups **after** the `GROUP BY` step has executed.
+
+### Logical Query Processing Order with GROUP BY & HAVING
+
+```mermaid
+graph TD
+    A[1. FROM] -->|Load Raw Table| B[2. WHERE]
+    B -->|Filter Raw Rows| C[3. GROUP BY]
+    C -->|Group Rows into Piles| D[4. HAVING]
+    D -->|Filter Groups/Aggregates| E[5. SELECT]
+    E -->|Select & Run Aggregates| F[6. ORDER BY]
+    F -->|Sort Output| G[7. LIMIT]
 ```
 
-**Key rule:** `COUNT(*)` counts all rows including NULLs. `COUNT(column)` counts only non-NULL values. `COUNT(DISTINCT column)` counts unique non-NULL values.
+Because of this order:
+*   You **cannot** put aggregate functions in a `WHERE` clause (e.g. `WHERE SUM(amount) > 1000` is invalid because aggregates have not been calculated yet).
+*   You **can** filter on both raw columns and aggregates in `HAVING`, though standard practice is to place raw column filters in `WHERE` to minimize the number of rows the database must sort.
 
-### SUM — Total Value
+---
+
+## Code Walkthroughs
+
+### Example 1: Basic Grouping and Multi-Metric Reporting
+**Business Scenario**: The Executive Leadership Team wants a regional sales report. For each sales region, they need to know:
+1.  Total revenue generated (completed and pending transactions)
+2.  Total number of deals closed
+3.  The value of the largest deal closed
 
 ```sql
-SELECT SUM(amount) AS total_revenue
-FROM sales
-WHERE status = 'closed';
-```
-
-```text
-# Output:
-total_revenue
--------------
-177500
-(1 row)
-```
-
-### AVG — Average Value
-
-```sql
-SELECT
-    AVG(amount)       AS avg_deal_size,
-    ROUND(AVG(amount), 2) AS avg_rounded
-FROM sales
-WHERE status = 'closed';
-```
-
-```text
-# Output:
-avg_deal_size     | avg_rounded
-------------------|------------
-17750.000000      | 17750.00
-(1 row)
-```
-
-### MIN and MAX
-
-```sql
-SELECT
-    MIN(amount) AS smallest_deal,
-    MAX(amount) AS largest_deal,
-    MIN(sale_date) AS first_sale,
-    MAX(sale_date) AS last_sale
-FROM sales;
-```
-
-```text
-# Output:
-smallest_deal | largest_deal | first_sale | last_sale
---------------|--------------|------------|----------
-8500          | 28000        | 2024-01-15 | 2024-06-15
-(1 row)
-```
-
-<div class="interview-tip">
-
-**Where this is used in real jobs:** Every dashboard KPI — total revenue, average order value, customer count, first/last purchase date — is an aggregate function. You'll write these dozens of times per week. Know them cold.
-
-</div>
-
-## GROUP BY — Aggregate Per Category
-
-GROUP BY splits your data into groups, then applies aggregate functions to each group separately.
-
-### Single Column GROUP BY
-
-```sql
--- Revenue by region
-SELECT
-    region,
-    COUNT(*)      AS num_deals,
-    SUM(amount)   AS total_revenue,
-    AVG(amount)   AS avg_deal_size
-FROM sales
-WHERE status = 'closed'
-GROUP BY region
-ORDER BY total_revenue DESC;
-```
-
-```text
-# Output:
-region | num_deals | total_revenue | avg_deal_size
--------|-----------|---------------|-------------
-West   | 3         | 71000         | 23666.67
-East   | 3         | 55500         | 18500.00
-North  | 2         | 40500         | 20250.00
-South  | 2         | 23500         | 11750.00
-(4 rows)
-```
-
-### Multiple Column GROUP BY
-
-```sql
--- Revenue by region AND product
-SELECT
-    region,
-    product,
-    COUNT(*)    AS deals,
-    SUM(amount) AS revenue
-FROM sales
-WHERE status = 'closed'
-GROUP BY region, product
-ORDER BY region, revenue DESC;
-```
-
-```text
-# Output:
-region | product       | deals | revenue
--------|---------------|-------|--------
-East   | Analytics Hub | 1     | 28000
-East   | CRM Pro       | 2     | 27500
-North  | Analytics Hub | 1     | 28000
-North  | CRM Pro       | 1     | 12500
-South  | CRM Pro       | 1     | 15000
-South  | Data Vault    | 1     | 8500
-West   | Analytics Hub | 2     | 56000
-West   | CRM Pro       | 1     | 15000
-(8 rows)
-```
-
-### The Golden Rule of GROUP BY
-
-**Every column in your SELECT must either be in the GROUP BY clause or inside an aggregate function.** Break this rule and you'll get an error.
-
-```sql
--- WRONG — rep_id is not in GROUP BY and not aggregated
-SELECT region, rep_id, SUM(amount)
-FROM sales
-GROUP BY region;
--- ERROR: column "sales.rep_id" must appear in GROUP BY clause
-
--- CORRECT — add rep_id to GROUP BY
-SELECT region, rep_id, SUM(amount) AS revenue
-FROM sales
-GROUP BY region, rep_id;
-
--- ALSO CORRECT — aggregate rep_id
-SELECT region, COUNT(DISTINCT rep_id) AS num_reps, SUM(amount) AS revenue
-FROM sales
-GROUP BY region;
-```
-
-## HAVING — Filter After Grouping
-
-WHERE filters individual rows *before* grouping. HAVING filters groups *after* aggregation.
-
-```sql
--- Only regions with revenue over 30K
-SELECT
+SELECT 
     region,
     SUM(amount) AS total_revenue,
-    COUNT(*)    AS num_deals
+    COUNT(sale_id) AS total_deals,
+    MAX(amount) AS largest_deal
 FROM sales
-WHERE status = 'closed'
-GROUP BY region
-HAVING SUM(amount) > 30000
-ORDER BY total_revenue DESC;
+WHERE amount IS NOT NULL                    -- Discard rows with missing values
+GROUP BY region;                            -- Sort sales into territorial piles
 ```
 
 ```text
 # Output:
-region | total_revenue | num_deals
--------|---------------|----------
-West   | 71000         | 3
-East   | 55500         | 3
-North  | 40500         | 2
+region | total_revenue | total_deals | largest_deal
+-------|---------------|-------------|-------------
+West   | 43000.00      | 2           | 28000.00
+East   | 32000.00      | 3           | 15000.00
+South  | 8500.00       | 1           | 8500.00
 (3 rows)
 ```
 
-### WHERE vs HAVING — Side by Side
+---
+
+### Example 2: Grouping by Multiple Columns
+**Business Scenario**: The Sales Operations Director wants to inspect rep productivity by region. They want to check how much revenue each sales representative generated in each specific region.
 
 ```sql
--- WHERE filters ROWS before grouping
--- HAVING filters GROUPS after aggregation
-
--- "Show regions where closed deals over 10K average more than 20K"
-SELECT
+SELECT 
+    rep_id,
     region,
-    AVG(amount) AS avg_deal
+    SUM(amount) AS revenue_generated,
+    COUNT(*) AS transactions_count
 FROM sales
-WHERE status = 'closed'       -- Step 1: Filter to closed deals only
-  AND amount > 10000          -- Step 1: Filter to deals over 10K only
-GROUP BY region               -- Step 2: Group the filtered rows
-HAVING AVG(amount) > 20000    -- Step 3: Keep groups where average > 20K
-ORDER BY avg_deal DESC;
+WHERE amount IS NOT NULL
+GROUP BY rep_id, region                      -- Create unique rep-region combinations
+ORDER BY revenue_generated DESC;
 ```
 
 ```text
 # Output:
-region | avg_deal
--------|--------
-West   | 23666.67
-North  | 20250.00
-(2 rows)
+rep_id | region | revenue_generated | transactions_count
+-------|--------|-------------------|-------------------
+101    | West   | 43000.00          | 2
+103    | East   | 20000.00          | 2
+102    | East   | 12000.00          | 1
+101    | South  | 8500.00           | 1
+(4 rows)
 ```
+*Note*: Rep 101 appears twice because they generated sales in both the West and South regions. The database creates a separate group for each unique combination of `rep_id` and `region`.
 
-<div class="interview-tip">
+---
 
-**Interview question:** "What's the difference between WHERE and HAVING?" Expected answer: WHERE filters rows before GROUP BY runs. HAVING filters groups after aggregation. You can't use aggregate functions in WHERE — that's what HAVING is for. Execution order: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY.
-
-</div>
-
-## Aggregation with JOINs
-
-This is where it gets real. Combine GROUP BY with JOINs to answer business questions across multiple tables.
+### Example 3: Filtering Groups with HAVING
+**Business Scenario**: The VP of Sales wants to reward high-performing sales representatives. They need a list of sales representatives who have generated **more than $20,000 in total completed sales**.
 
 ```sql
--- Total revenue by sales rep (joining reps table for names)
-SELECT
-    r.name          AS sales_rep,
-    r.team,
-    COUNT(*)        AS total_deals,
-    SUM(s.amount)   AS total_revenue,
-    AVG(s.amount)   AS avg_deal_size,
-    MIN(s.sale_date) AS first_sale,
-    MAX(s.sale_date) AS last_sale
-FROM sales s
-INNER JOIN reps r ON s.rep_id = r.rep_id
-WHERE s.status = 'closed'
-GROUP BY r.name, r.team
-ORDER BY total_revenue DESC;
+SELECT 
+    rep_id,
+    SUM(amount) AS completed_revenue
+FROM sales
+WHERE status = 'completed'                   -- Filter raw rows BEFORE grouping
+GROUP BY rep_id
+HAVING SUM(amount) > 20000;                  -- Filter groups AFTER aggregation
 ```
 
 ```text
 # Output:
-sales_rep    | team  | total_deals | total_revenue | avg_deal_size | first_sale | last_sale
--------------|-------|-------------|---------------|---------------|------------|----------
-Sarah Chen   | Alpha | 4           | 66500         | 16625.00      | 2024-01-15 | 2024-06-01
-James Wilson | Beta  | 3           | 55500         | 18500.00      | 2024-01-22 | 2024-06-15
-Priya Patel  | Alpha | 3           | 68500         | 22833.33      | 2024-03-12 | 2024-05-20
-(3 rows)
+rep_id | completed_revenue
+-------|------------------
+101    | 51500.00
+(1 row)
 ```
 
-### Revenue by Product with Deal Count
+*Detailed Step-by-Step Execution*:
+1.  **`FROM sales`**: Loads all 7 sales records.
+2.  **`WHERE status = 'completed'`**: Filters out transaction 4 (pending) and transaction 6 (cancelled). 5 rows remain.
+3.  **`GROUP BY rep_id`**: Groups the remaining transactions:
+    *   Rep 101: deals 1 ($15,000), 3 ($28,000), 5 ($8,500). Total = $51,500.
+    *   Rep 102: deal 2 ($12,000). Total = $12,000.
+    *   Rep 103: deal 7 ($5,000). Total = $5,000.
+4.  **`HAVING SUM(amount) > 20000`**: Discards Rep 102 ($12,000) and Rep 103 ($5,000). Only Rep 101 remains.
+5.  **`SELECT`**: Renders Rep 101 and their completed revenue of $51,500.
+
+---
+
+## Edge Cases & Common Mistakes
+
+### 1. The SELECT-GROUP BY Non-Match Error
+This is the most common SQL error for beginners.
 
 ```sql
-SELECT
+-- ❌ THIS WILL FAIL in standard SQL:
+SELECT rep_id, product, SUM(amount)
+FROM sales
+GROUP BY rep_id;
+```
+*Why it fails*: You grouped by `rep_id`, which means all rows for Rep 101 will be collapsed into one. However, Rep 101 sold both "CRM Pro" and "Analytics Hub". The database does not know which product name to show in the output.
+*The Rule*: If it's not in the `GROUP BY` clause, it *must* be inside an aggregate function. To fix this query, either add `product` to the grouping clause or aggregate it:
+```sql
+--  Fix Option A: Group by both
+SELECT rep_id, product, SUM(amount)
+FROM sales
+GROUP BY rep_id, product;
+
+--  Fix Option B: Aggregate the column
+SELECT rep_id, COUNT(product) AS products_sold, SUM(amount)
+FROM sales
+GROUP BY rep_id;
+```
+
+### 2. Aggregating Aggregates
+You cannot nest aggregate functions inside one another.
+*   `SELECT SUM(AVG(amount)) FROM sales GROUP BY region` (Invalid).
+*   If you need to calculate the sum of averages, you must use a subquery or Common Table Expression (CTE) to perform the first aggregation, and then run the second aggregation on that temporary result.
+
+---
+
+## Practice Exercises & Mini-Projects
+
+### Exercise 1: Finding Active Products
+**Scenario**: You are a Product Performance Analyst. The product team needs to identify which products are driving volume. Write a query to return the **product name**, the **number of transactions** containing that product, and the **total amount** generated. 
+
+Exclude any transactions that are `'cancelled'`. Only return products that have appeared in **more than 1 transaction**.
+
+*   **Target Table**: `sales`
+*   **Expected Output**:
+    ```text
+    product | transactions | total_amount
+    --------|--------------|-------------
+    CRM Pro | 3            | 42000.00
+    ```
+
+**Answer & Logic Walkthrough**:
+```sql
+SELECT 
     product,
-    COUNT(*)                          AS times_sold,
-    SUM(amount)                       AS total_revenue,
-    ROUND(AVG(amount), 2)             AS avg_price,
-    ROUND(100.0 * SUM(amount) / (SELECT SUM(amount) FROM sales WHERE status = 'closed'), 1)
-                                      AS pct_of_total
+    COUNT(*) AS transactions,
+    SUM(amount) AS total_amount
 FROM sales
-WHERE status = 'closed'
+WHERE status <> 'cancelled'
 GROUP BY product
-ORDER BY total_revenue DESC;
+HAVING COUNT(*) > 1;
 ```
+1.  `WHERE status <> 'cancelled'` filters out transaction 6 before grouping.
+2.  `GROUP BY product` sorts transactions into piles by product name.
+3.  `HAVING COUNT(*) > 1` filters out products like "Analytics Hub" (which only has 1 valid transaction left) and "Data Vault", leaving only "CRM Pro" in the output.
 
-```text
-# Output:
-product       | times_sold | total_revenue | avg_price | pct_of_total
---------------|------------|---------------|-----------|-------------
-Analytics Hub | 4          | 112000        | 28000.00  | 63.1
-CRM Pro       | 5          | 70000         | 14000.00  | 39.4
-Data Vault    | 1          | 8500          | 8500.00   | 4.8
-(3 rows)
-```
+---
 
-## DISTINCT with Aggregation
+### Exercise 2: Regional Average Deal Size Audit
+**Scenario**: Finance wants to audit average deal sizes across regions. They need to find regions where the **average deal size is greater than $10,000**. Write a query to return the region and its average amount, ignoring NULL values.
 
+*   **Target Table**: `sales`
+*   **Expected Output**:
+    ```text
+    region | average_deal
+    -------|-------------
+    West   | 21500.00
+    East   | 10666.67
+    ```
+
+**Answer & Logic Walkthrough**:
 ```sql
--- How many unique products did each rep sell?
-SELECT
-    r.name,
-    COUNT(*)                AS total_deals,
-    COUNT(DISTINCT s.product) AS unique_products
-FROM sales s
-INNER JOIN reps r ON s.rep_id = r.rep_id
-WHERE s.status = 'closed'
-GROUP BY r.name;
-```
-
-```text
-# Output:
-name         | total_deals | unique_products
--------------|-------------|----------------
-Sarah Chen   | 4           | 3
-James Wilson | 3           | 3
-Priya Patel  | 3           | 2
-(3 rows)
-```
-
-## Monthly Revenue Trend
-
-A bread-and-butter analytics query:
-
-```sql
--- Monthly revenue trend
-SELECT
-    DATE_TRUNC('month', sale_date) AS month,
-    COUNT(*)                       AS deals,
-    SUM(amount)                    AS revenue
+SELECT 
+    region,
+    AVG(amount) AS average_deal
 FROM sales
-WHERE status = 'closed'
-GROUP BY DATE_TRUNC('month', sale_date)
-ORDER BY month;
+WHERE amount IS NOT NULL
+GROUP BY region
+HAVING AVG(amount) > 10000;
 ```
+1.  `WHERE amount IS NOT NULL` removes row 6 before grouping.
+2.  `GROUP BY region` calculates the average amounts: West ($21,500), East ($10,666.67), and South ($8,500).
+3.  `HAVING AVG(amount) > 10000` filters out the South region.
 
-```text
-# Output:
-month      | deals | revenue
------------|-------|--------
-2024-01-01 | 2     | 27500
-2024-02-01 | 2     | 43000
-2024-03-01 | 2     | 36500
-2024-04-01 | 1     | 12500
-2024-05-01 | 1     | 28000
-2024-06-01 | 2     | 43000
-(6 rows)
-```
+---
 
-**Note:** `DATE_TRUNC` works in PostgreSQL and Snowflake. In MySQL, use `DATE_FORMAT(sale_date, '%Y-%m-01')`. In SQL Server, use `DATETRUNC(month, sale_date)` or `FORMAT(sale_date, 'yyyy-MM')`.
+## Section Recaps
 
-## Putting It All Together
+*   **Aggregation Collapse**: Aggregate functions collapse multiple rows of data into a single row. This means any column selected must be present in the `GROUP BY` clause or wrapped in an aggregate.
+*   **COUNT Behavior**: `COUNT(*)` counts all rows including NULL values. `COUNT(column)` only counts rows where that specific column has a value (non-NULL).
+*   **AVG & NULLs**: `AVG()` ignores NULLs. This means those rows are not counted in the denominator, which can inflate averages. Use `COALESCE(column, 0)` to count NULLs as zero.
+*   **WHERE vs. HAVING**: `WHERE` filters rows before grouping; `HAVING` filters aggregated groups after grouping. Never put an aggregate function in the `WHERE` clause.
 
-A complete sales performance dashboard query:
-
-```sql
--- Sales team performance report: Q1 2024
-SELECT
-    r.name                        AS rep,
-    r.team,
-    COUNT(*)                      AS deals_closed,
-    SUM(s.amount)                 AS revenue,
-    ROUND(AVG(s.amount), 0)       AS avg_deal,
-    MAX(s.amount)                 AS biggest_deal,
-    COUNT(DISTINCT s.product)     AS products_sold,
-    COUNT(DISTINCT s.region)      AS regions_covered
-FROM sales s
-INNER JOIN reps r ON s.rep_id = r.rep_id
-WHERE s.status = 'closed'
-  AND s.sale_date BETWEEN '2024-01-01' AND '2024-03-31'
-GROUP BY r.name, r.team
-HAVING SUM(s.amount) > 10000
-ORDER BY revenue DESC;
-```
-
-```text
-# Output:
-rep          | team  | deals_closed | revenue | avg_deal | biggest_deal | products_sold | regions_covered
--------------|-------|--------------|---------|----------|--------------|---------------|----------------
-Sarah Chen   | Alpha | 3            | 51500   | 17167    | 28000        | 3             | 2
-James Wilson | Beta  | 2            | 27500   | 13750    | 15000        | 1             | 1
-Priya Patel  | Alpha | 1            | 28000   | 28000    | 28000        | 1             | 1
-(3 rows)
-```
-
-<div class="challenge">
-
-### Challenge: Build a Product Sales Report
-
-Write a query that:
-1. Groups sales by **product**
-2. Shows only **closed** deals
-3. Calculates: total revenue, number of deals, average deal size, number of unique regions sold in
-4. Only includes products with **more than 1 deal**
-5. Sorted by total revenue descending
-
-**Expected output:**
-```text
-product       | total_revenue | num_deals | avg_deal | regions
---------------|---------------|-----------|----------|--------
-Analytics Hub | 112000        | 4         | 28000.00 | 3
-CRM Pro       | 70000         | 5         | 14000.00 | 4
-(2 rows)
-```
-
-**Hint:** Use GROUP BY + HAVING + COUNT(DISTINCT region).
-
-</div>
+---
 
 ## Common Interview Questions
 
-### Q1: What is the difference between COUNT(*), COUNT(column), and COUNT(DISTINCT column)?
+### Q1: What is the difference between WHERE and HAVING?
+**Answer:** The primary differences are timing and the level of data they filter:
+*   `WHERE` is executed **before** rows are grouped. It filters individual records. It cannot reference aggregate functions (e.g., `WHERE SUM(amount) > 100` is invalid).
+*   `HAVING` is executed **after** rows have been grouped and aggregated. It filters the resulting groups. It can reference aggregate functions (e.g., `HAVING SUM(amount) > 100`).
 
-**A:** `COUNT(*)` counts all rows, including those with NULL values. `COUNT(column)` counts only rows where that column is not NULL. `COUNT(DISTINCT column)` counts unique non-NULL values. Example: if a table has 100 rows, `email` is NULL in 10 rows, and 15 emails are duplicates, then `COUNT(*)` = 100, `COUNT(email)` = 90, `COUNT(DISTINCT email)` = 75.
+### Q2: What is the difference between `COUNT(*)` and `COUNT(column_name)`?
+**Answer:** 
+*   `COUNT(*)` counts every row in the dataset or group, including rows where columns contain `NULL` values.
+*   `COUNT(column_name)` only counts rows where the specified column contains a non-NULL value. If the value in that column is `NULL`, it is skipped.
 
-### Q2: Why can't you use an aggregate function in a WHERE clause?
+### Q3: Why does standard SQL reject a query like `SELECT region, product, SUM(amount) FROM sales GROUP BY region`?
+**Answer:** This query violates the structural rules of grouping. Because the table is grouped by `region`, the output will have one row per region. However, a single region can contain multiple different products. Because `product` is not in the `GROUP BY` clause and is not wrapped in an aggregate function (like `MAX` or `MIN`), the database engine cannot determine which product name to display in the single regional output row, resulting in a syntax error.
 
-**A:** Because WHERE filters rows *before* GROUP BY runs, so groups don't exist yet and aggregates can't be computed. Use HAVING to filter on aggregate results. The execution order is: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY. If you write `WHERE SUM(amount) > 1000`, the database hasn't computed any sums yet at that point, so it raises an error.
+### Q4: How does the AVG() function handle NULL values, and how can this cause analytical bugs?
+**Answer:** The `AVG()` function ignores NULL values. When calculating an average, the database sums all non-NULL values and divides by the count of non-NULL records. If you are calculating metrics where a NULL should represent a zero (such as a customer who made zero purchases), this behavior will inflate your average because those customers are excluded from the denominator. To fix this, you must convert the NULLs to zero before averaging: `AVG(COALESCE(column, 0))`.
 
-### Q3: Can you GROUP BY a column that's not in the SELECT?
-
-**A:** Yes. You can group by any column in the table, even if you don't display it. For example, `SELECT COUNT(*) FROM orders GROUP BY customer_id` groups by customer but only shows the count. This is perfectly valid SQL and can be useful when you want aggregated results without exposing the grouping key.
-
-### Q4: What happens if you use AVG with NULL values?
-
-**A:** AVG ignores NULL values entirely — both in the sum and in the count. If you have values [100, 200, NULL, 400], `AVG` computes (100 + 200 + 400) / 3 = 233.33, not (100 + 200 + 0 + 400) / 4. If you want NULLs treated as zero, use `AVG(COALESCE(column, 0))`. This behavior is the same for SUM, MIN, and MAX — all aggregate functions skip NULLs.
-
-### Q5: How do you calculate a percentage of total within each group?
-
-**A:** Use a subquery or window function for the total. Subquery approach: `ROUND(100.0 * SUM(amount) / (SELECT SUM(amount) FROM sales), 1) AS pct_total`. Window function approach: `ROUND(100.0 * SUM(amount) / SUM(SUM(amount)) OVER (), 1)`. The window function version is more efficient because it avoids scanning the table twice. Always multiply by 100.0 (not 100) to force float division.
+### Q5: Can you group by multiple columns? If so, how does the database process it?
+**Answer:** Yes. When you group by multiple columns (e.g., `GROUP BY region, product`), the database engine creates a distinct group for every unique combination of values across those columns. The engine will calculate aggregates for each combination. For example, it will calculate the sum of sales for "West - CRM Pro", "West - Analytics Hub", "East - CRM Pro", and so on.

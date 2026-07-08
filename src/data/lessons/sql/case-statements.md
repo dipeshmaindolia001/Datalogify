@@ -14,12 +14,28 @@ seoDescription: "Master SQL CASE WHEN statements — categorize data, create buc
 
 ## Why This Matters
 
-"Label every customer as high, medium, or low value." "Flag orders over $10K as 'priority.'" "Show revenue in Q1, Q2, Q3, Q4 columns." These aren't simple filters — they're conditional logic. CASE is SQL's if-then-else. It transforms raw data into the categories, labels, and flags that business users actually understand. Every report you build will use CASE somewhere.
+Imagine you work in a massive logistics warehouse. As packages slide down a conveyor belt, they pass through a sorting machine. 
+*   If a package weighs more than 50 pounds, the machine pushes it into the **Heavy Freight** bin.
+*   If it weighs between 10 and 50 pounds, it goes into the **Standard Box** bin.
+*   If it weighs less than 10 pounds, it is routed to the **Flyer Envelope** bin.
+*   Anything else that doesn't fit these rules gets sent to the **Manual Inspection** bin.
+
+In SQL, a **CASE statement** is that sorting machine. 
+It evaluates your data rows against a series of rules (conditions) and routes each row to a specific value or label based on which rule it matches. It is SQL's version of an `if-then-else` statement.
+
+Database tables often store clean, raw metrics (like integers or status codes), but business users need readable categories. Your manager doesn't want to see a list of order totals; they want to see how many orders fell into the "Enterprise", "Mid-Market", or "SMB" tiers. They don't want to see numeric codes like `status = 3`; they want to see "✅ Shipped". 
+
+Mastering the `CASE` statement is how you add business logic directly into your queries, allowing you to categorize data, create custom sorting orders, and perform conditional aggregations.
+
+---
 
 ## The Tables We're Working With
 
+We will use two tables for our analytics scenarios: `orders` and `employees`.
+
+### 1. `orders`
 ```sql
--- orders table
+-- orders table schema and sample data:
 -- | order_id | customer_id | product       | amount | order_date | region | status    |
 -- |----------|-------------|---------------|--------|------------|--------|-----------|
 -- | 1001     | 501         | CRM Pro       | 15000  | 2024-01-10 | East   | completed |
@@ -34,8 +50,11 @@ seoDescription: "Master SQL CASE WHEN statements — categorize data, create buc
 -- | 1010     | 504         | Analytics Hub | 28000  | 2024-05-25 | West   | pending   |
 -- | 1011     | 501         | CRM Pro       | 15000  | 2024-06-01 | East   | completed |
 -- | 1012     | 503         | Cloud Backup  | 3200   | 2024-06-15 | East   | refunded  |
+```
 
--- employees table
+### 2. `employees`
+```sql
+-- employees table schema and sample data:
 -- | emp_id | name           | department  | salary | hire_date  | performance_score |
 -- |--------|----------------|-------------|--------|------------|-------------------|
 -- | 101    | Sarah Chen     | Analytics   | 95000  | 2021-03-15 | 4.5               |
@@ -48,70 +67,34 @@ seoDescription: "Master SQL CASE WHEN statements — categorize data, create buc
 -- | 108    | Tom Rivera     | Marketing   | 78000  | 2023-08-05 | 3.5               |
 ```
 
-## Searched CASE — The Most Common Form
+---
 
-The searched CASE evaluates conditions (boolean expressions) in order and returns the first match.
+## Simple CASE vs. Searched CASE
 
+There are two syntaxes for writing a CASE statement: **Simple CASE** and **Searched CASE**.
+
+### 1. Simple CASE Syntax
+Simple CASE compares a single column or expression to a set of static values.
 ```sql
-SELECT
-    name,
-    salary,
-    CASE
-        WHEN salary >= 100000 THEN 'Senior'
-        WHEN salary >= 80000  THEN 'Mid-Level'
-        WHEN salary >= 70000  THEN 'Junior'
-        ELSE 'Entry'
-    END AS salary_tier
-FROM employees
-ORDER BY salary DESC;
+CASE column_name
+    WHEN value1 THEN result1
+    WHEN value2 THEN result2
+    ELSE fallback_result
+END
 ```
 
-```text
-# Output:
-name          | salary | salary_tier
---------------|--------|------------
-James Wilson  | 115000 | Senior
-Lisa Zhang    | 108000 | Senior
-Sarah Chen    | 95000  | Mid-Level
-Priya Patel   | 88000  | Mid-Level
-David Kim     | 82000  | Mid-Level
-Tom Rivera    | 78000  | Junior
-Marcus Brown  | 72000  | Junior
-Anna Kowalski | 68000  | Entry
-(8 rows)
-```
-
-**How it works:** SQL checks conditions top-to-bottom. James Wilson hits `salary >= 100000` first, so he's "Senior" — it doesn't keep checking the other conditions. Order matters.
-
-### ELSE Is Your Safety Net
-
-```sql
--- Without ELSE, unmatched rows get NULL
-SELECT
-    name,
-    salary,
-    CASE
-        WHEN salary >= 100000 THEN 'Senior'
-        WHEN salary >= 80000  THEN 'Mid-Level'
-    END AS salary_tier  -- No ELSE: anything below 80K becomes NULL
-FROM employees;
-```
-
-**Always include ELSE** unless you intentionally want NULL for unmatched rows. Missing ELSE is a common source of unexpected NULLs in reports.
-
-## Simple CASE — Match Against a Single Value
-
-When you're comparing one column against specific values, simple CASE is cleaner.
+#### Example 1.1: Translating Status Codes
+Let's clean up our order status values for a customer report.
 
 ```sql
 SELECT
     order_id,
     status,
     CASE status
-        WHEN 'completed' THEN '✅ Done'
-        WHEN 'pending'   THEN '⏳ Waiting'
+        WHEN 'completed' THEN '✅ Shipped'
+        WHEN 'pending'   THEN '⏳ Processing'
         WHEN 'cancelled' THEN '❌ Cancelled'
-        WHEN 'refunded'  THEN '↩️ Refunded'
+        WHEN 'refunded'  THEN '↩️ Returned'
         ELSE '❓ Unknown'
     END AS status_label
 FROM orders;
@@ -120,28 +103,76 @@ FROM orders;
 ```text
 # Output:
 order_id | status    | status_label
----------|-----------|---------------
-1001     | completed | ✅ Done
-1002     | completed | ✅ Done
-1003     | completed | ✅ Done
-1004     | completed | ✅ Done
-1005     | pending   | ⏳ Waiting
-1006     | completed | ✅ Done
+---------|-----------|--------------
+1001     | completed | ✅ Shipped
+1002     | completed | ✅ Shipped
+1003     | completed | ✅ Shipped
+1004     | completed | ✅ Shipped
+1005     | pending   | ⏳ Processing
+1006     | completed | ✅ Shipped
 1007     | cancelled | ❌ Cancelled
-1008     | completed | ✅ Done
-1009     | completed | ✅ Done
-1010     | pending   | ⏳ Waiting
-1011     | completed | ✅ Done
-1012     | refunded  | ↩️ Refunded
-(12 rows)
+1008     | completed | ✅ Shipped
+1009     | completed | ✅ Shipped
+1010     | pending   | ⏳ Processing
+1011     | completed | ✅ Shipped
+1012     | refunded  | ↩️ Returned
 ```
 
-**Simple CASE** = `CASE column WHEN value THEN result`. Use when comparing one column to discrete values.
-**Searched CASE** = `CASE WHEN condition THEN result`. Use when you need ranges, expressions, or multiple columns.
+*Note: Simple CASE only performs direct equality checks (`status = 'completed'`).*
 
-## CASE for Data Bucketing — The Analytics Workhorse
+### 2. Searched CASE Syntax
+Searched CASE is much more powerful. Instead of comparing a single column, you write boolean conditions for each `WHEN` clause.
+```sql
+CASE
+    WHEN condition1 THEN result1
+    WHEN condition2 THEN result2
+    ELSE fallback_result
+END
+```
 
-### Revenue Tiers
+#### Example 1.2: Bucketing Numeric Values
+Let's group our employees into organizational levels based on their salaries.
+
+```sql
+SELECT
+    name,
+    salary,
+    CASE
+        WHEN salary >= 100000 THEN 'Principal'
+        WHEN salary >= 80000  THEN 'Senior'
+        WHEN salary >= 70000  THEN 'Associate'
+        ELSE 'Junior'
+    END AS career_tier
+FROM employees
+ORDER BY salary DESC;
+```
+
+```text
+# Output:
+name          | salary | career_tier
+--------------|--------|------------
+James Wilson  | 115000 | Principal
+Lisa Zhang    | 108000 | Principal
+Sarah Chen    | 95000  | Senior
+Priya Patel   | 88000  | Senior
+David Kim     | 82000  | Senior
+Tom Rivera    | 78000  | Associate
+Marcus Brown  | 72000  | Associate
+Anna Kowalski | 68000  | Junior
+```
+
+**How it executes:**
+The engine checks conditions top-to-bottom. Once a row matches a condition, it returns the value and stops checking. 
+For example, James Wilson has a salary of `115000`. The first condition (`salary >= 100000`) is True, so he gets marked "Principal". SQL does not evaluate the remaining conditions for his row.
+
+---
+
+## Step 1: CASE for Data Bucketing
+
+Bucketing is the process of converting raw continuous metrics (such as ages, dates, or prices) into discrete categorical groups.
+
+### Example 2.1: Revenue Deal Segments
+Let's segment our B2B orders to see which deals are critical enterprise contracts vs. standard sales.
 
 ```sql
 SELECT
@@ -151,9 +182,8 @@ SELECT
     CASE
         WHEN amount >= 25000 THEN 'Enterprise'
         WHEN amount >= 10000 THEN 'Mid-Market'
-        WHEN amount >= 5000  THEN 'SMB'
-        ELSE 'Micro'
-    END AS deal_tier
+        ELSE 'SMB'
+    END AS deal_segment
 FROM orders
 WHERE status = 'completed'
 ORDER BY amount DESC;
@@ -161,8 +191,8 @@ ORDER BY amount DESC;
 
 ```text
 # Output:
-order_id | product       | amount | deal_tier
----------|---------------|--------|----------
+order_id | product       | amount | deal_segment
+---------|---------------|--------|-------------
 1008     | ML Studio     | 35000  | Enterprise
 1002     | Analytics Hub | 28000  | Enterprise
 1004     | Analytics Hub | 28000  | Enterprise
@@ -170,88 +200,60 @@ order_id | product       | amount | deal_tier
 1011     | CRM Pro       | 15000  | Mid-Market
 1006     | CRM Pro       | 12500  | Mid-Market
 1003     | Data Vault    | 8500   | SMB
-1009     | Cloud Backup  | 3200   | Micro
-(8 rows)
+1009     | Cloud Backup  | 3200   | SMB
 ```
 
-### Date Bucketing — Fiscal Quarters
+---
+
+## Step 2: Conditional Aggregation
+
+Conditional aggregation is one of the most powerful analytical patterns in SQL. It is used to pivot rows into columns or to count specific statuses inside a single summary statement.
+
+### Example 3.1: Pivoting Sales by Date range (Quarterly Breakdown)
+Suppose you want a single report showing each product's sales in Q1 vs. Q2.
 
 ```sql
 SELECT
-    order_id,
-    order_date,
-    amount,
-    CASE
-        WHEN EXTRACT(MONTH FROM order_date) IN (1, 2, 3)   THEN 'Q1'
-        WHEN EXTRACT(MONTH FROM order_date) IN (4, 5, 6)   THEN 'Q2'
-        WHEN EXTRACT(MONTH FROM order_date) IN (7, 8, 9)   THEN 'Q3'
-        WHEN EXTRACT(MONTH FROM order_date) IN (10, 11, 12) THEN 'Q4'
-    END AS fiscal_quarter
+    product,
+    SUM(CASE WHEN EXTRACT(MONTH FROM order_date) BETWEEN 1 AND 3 
+             THEN amount ELSE 0 END) AS q1_revenue,
+    SUM(CASE WHEN EXTRACT(MONTH FROM order_date) BETWEEN 4 AND 6 
+             THEN amount ELSE 0 END) AS q2_revenue,
+    SUM(amount)                      AS total_revenue
 FROM orders
-ORDER BY order_date;
+WHERE status = 'completed'
+GROUP BY product
+ORDER BY total_revenue DESC;
 ```
 
 ```text
 # Output:
-order_id | order_date | amount | fiscal_quarter
----------|------------|--------|---------------
-1001     | 2024-01-10 | 15000  | Q1
-1002     | 2024-01-18 | 28000  | Q1
-1003     | 2024-02-05 | 8500   | Q1
-1004     | 2024-02-22 | 28000  | Q1
-1005     | 2024-03-01 | 15000  | Q1
-1006     | 2024-03-14 | 12500  | Q1
-1007     | 2024-04-02 | 8500   | Q2
-1008     | 2024-04-19 | 35000  | Q2
-1009     | 2024-05-08 | 3200   | Q2
-1010     | 2024-05-25 | 28000  | Q2
-1011     | 2024-06-01 | 15000  | Q2
-1012     | 2024-06-15 | 3200   | Q2
-(12 rows)
+product       | q1_revenue | q2_revenue | total_revenue
+--------------|------------|------------|--------------
+Analytics Hub | 56000      | 0          | 56000
+CRM Pro       | 27500      | 15000      | 42500
+ML Studio     | 0          | 35000      | 35000
+Data Vault    | 8500       | 0          | 8500
+Cloud Backup  | 0          | 3200       | 3200
 ```
 
-<div class="interview-tip">
+**Step-by-Step Logic:**
+1.  **Group:** The database groups the orders by `product`.
+2.  **Evaluate CASE:** For each order, it checks the month. 
+    *   If it is January (Month 1), the CASE returns the order's `amount`.
+    *   If it is May (Month 5), the CASE returns `0`.
+3.  **Aggregate:** The `SUM()` function totals the values returned by the `CASE` statement, effectively filtering the inputs dynamically for each column.
 
-**Where this is used in real jobs:** Bucketing with CASE is everywhere — revenue tiers for pricing analysis, age groups for demographics, time periods for trend analysis, risk categories for compliance. Any time you see a bar chart with labeled categories on a dashboard, there's likely a CASE statement behind it.
+---
 
-</div>
+## Step 3: CASE in ORDER BY — Custom Sorting
 
-## CASE in WHERE — Conditional Filtering
+By default, SQL sorts alphabetically or numerically. If you want to sort by a custom business priority (e.g., show "Pending" items first, then "Completed", then "Cancelled"), you can write a `CASE` statement inside the `ORDER BY` clause.
+
+### Example 4.1: Sorting by Operational Urgency
+Let's sort our orders so that pending items appear at the top, followed by completed, refunded, and cancelled items.
 
 ```sql
--- Dynamic filtering: only show completed orders for high-value deals,
--- but show all statuses for smaller deals
-SELECT order_id, product, amount, status
-FROM orders
-WHERE CASE
-    WHEN amount >= 20000 THEN status = 'completed'
-    ELSE TRUE
-END;
-```
-
-```text
-# Output:
-order_id | product       | amount | status
----------|---------------|--------|----------
-1001     | CRM Pro       | 15000  | completed
-1002     | Analytics Hub | 28000  | completed
-1003     | Data Vault    | 8500   | completed
-1004     | Analytics Hub | 28000  | completed
-1005     | CRM Pro       | 15000  | pending
-1006     | CRM Pro       | 12500  | completed
-1008     | ML Studio     | 35000  | completed
-1009     | Cloud Backup  | 3200   | completed
-1011     | CRM Pro       | 15000  | completed
-1012     | Cloud Backup  | 3200   | refunded
-(10 rows)
-```
-
-Orders 1007 (cancelled, $8500) still shows because it's under $20K. Order 1010 (pending, $28000) is excluded because high-value orders must be completed.
-
-## CASE in ORDER BY — Custom Sort Orders
-
-```sql
--- Sort by priority: pending first, then completed, then everything else
 SELECT order_id, product, status, amount
 FROM orders
 ORDER BY
@@ -261,7 +263,7 @@ ORDER BY
         WHEN 'refunded'  THEN 3
         WHEN 'cancelled' THEN 4
         ELSE 5
-    END,
+    END ASC,
     amount DESC;
 ```
 
@@ -281,246 +283,208 @@ order_id | product       | status    | amount
 1009     | Cloud Backup  | completed | 3200
 1012     | Cloud Backup  | refunded  | 3200
 1007     | Data Vault    | cancelled | 8500
-(12 rows)
 ```
 
-## CASE with Aggregation — Pivot-Style Reports
-
-This is one of the most powerful CASE patterns. It creates crosstab/pivot reports.
-
-### Revenue by Quarter (Pivot)
-
-```sql
-SELECT
-    product,
-    SUM(CASE WHEN EXTRACT(MONTH FROM order_date) BETWEEN 1 AND 3
-             THEN amount ELSE 0 END)  AS q1_revenue,
-    SUM(CASE WHEN EXTRACT(MONTH FROM order_date) BETWEEN 4 AND 6
-             THEN amount ELSE 0 END)  AS q2_revenue,
-    SUM(amount)                        AS total_revenue
-FROM orders
-WHERE status = 'completed'
-GROUP BY product
-ORDER BY total_revenue DESC;
-```
-
-```text
-# Output:
-product       | q1_revenue | q2_revenue | total_revenue
---------------|------------|------------|-------------
-Analytics Hub | 56000      | 0          | 56000
-CRM Pro       | 27500      | 15000      | 42500
-ML Studio     | 0          | 35000      | 35000
-Data Vault    | 8500       | 0          | 8500
-Cloud Backup  | 0          | 3200       | 3200
-(5 rows)
-```
-
-### Count by Category
-
-```sql
-SELECT
-    region,
-    COUNT(*)                                                    AS total_orders,
-    COUNT(CASE WHEN status = 'completed' THEN 1 END)           AS completed,
-    COUNT(CASE WHEN status = 'pending' THEN 1 END)             AS pending,
-    COUNT(CASE WHEN status IN ('cancelled', 'refunded') THEN 1 END) AS lost
-FROM orders
-GROUP BY region
-ORDER BY total_orders DESC;
-```
-
-```text
-# Output:
-region | total_orders | completed | pending | lost
--------|--------------|-----------|---------|-----
-East   | 5            | 4         | 0       | 1
-West   | 3            | 2         | 1       | 0
-South  | 2            | 1         | 1       | 0
-North  | 1            | 0         | 0       | 1
-(4 rows)
-```
-
-<div class="interview-tip">
-
-**Interview favorite:** "Write a query that pivots rows into columns." This is the SUM(CASE WHEN...) pattern above. Interviewers love it because it tests aggregation, CASE, and GROUP BY together. Practice it until it's muscle memory. In PostgreSQL you can also use `FILTER (WHERE ...)` syntax as a cleaner alternative.
-
-</div>
+---
 
 ## Handling NULLs with CASE
 
-CASE is often used to clean up NULL values in reports.
+In SQL, comparisons with `NULL` (like `performance_score = NULL`) evaluate to `UNKNOWN`, not `TRUE` or `FALSE`. 
+
+### ⚠️ The NULL Comparison Trap
+```sql
+-- ❌ THIS WILL NOT WORK CORRECTLY:
+CASE performance_score
+    WHEN NULL THEN 'No Review'
+    ...
+END
+```
+Because `NULL` cannot be evaluated using `=` operators, the row will fall through to the `ELSE` block.
+
+### The Solution: Use Searched CASE with `IS NULL`
+To check for missing values, you must use searched CASE syntax with the `IS NULL` operator, and place the `NULL` check at the **top** of the list.
 
 ```sql
 SELECT
     name,
     performance_score,
     CASE
-        WHEN performance_score IS NULL THEN 'Not Yet Reviewed'
+        WHEN performance_score IS NULL THEN 'Not Evaluated'
         WHEN performance_score >= 4.5  THEN 'Exceptional'
-        WHEN performance_score >= 3.5  THEN 'Meets Expectations'
-        WHEN performance_score >= 2.5  THEN 'Needs Improvement'
-        ELSE 'Below Standards'
-    END AS review_status
-FROM employees
-ORDER BY performance_score DESC NULLS LAST;
+        WHEN performance_score >= 3.0  THEN 'Meets Standards'
+        ELSE 'Needs Improvement'
+    END AS performance_rating
+FROM employees;
 ```
 
 ```text
 # Output:
-name          | performance_score | review_status
---------------|-------------------|-------------------
-James Wilson  | 4.8               | Exceptional
-Lisa Zhang    | 4.6               | Exceptional
+name          | performance_score | performance_rating
+--------------|-------------------|--------------------
 Sarah Chen    | 4.5               | Exceptional
-Marcus Brown  | 4.1               | Meets Expectations
-Tom Rivera    | 3.5               | Meets Expectations
-Priya Patel   | 3.2               | Needs Improvement
+James Wilson  | 4.8               | Exceptional
+Priya Patel   | 3.2               | Meets Standards
+Marcus Brown  | 4.1               | Meets Standards
+Lisa Zhang    | 4.6               | Exceptional
 David Kim     | 2.8               | Needs Improvement
-Anna Kowalski | NULL              | Not Yet Reviewed
-(8 rows)
+Anna Kowalski | NULL              | Not Evaluated
+Tom Rivera    | 3.5               | Meets Standards
 ```
 
-**Check for NULL first** in your CASE conditions. If a NULL value passes through the other WHEN conditions, `performance_score >= 4.5` evaluates to NULL (not FALSE), and the row falls through to ELSE. Put the NULL check first to be explicit.
+---
 
-## CASE in GROUP BY — Group by Derived Categories
+## Edge Cases & Common Mistakes
+
+### Gotcha 1: The Short-Circuit Execution Trap
+Since SQL evaluates conditions in order, writing rules in the wrong order can result in dead code that never executes.
 
 ```sql
--- Revenue by deal tier
+-- ❌ Incorrect Order:
+CASE
+    WHEN salary >= 70000 THEN 'Junior'
+    WHEN salary >= 90000 THEN 'Senior' -- THIS WILL NEVER EXECUTE!
+    ELSE 'Entry'
+END
+```
+**Why?** If an employee earns $95,000, they match the first condition (`salary >= 70000`) and are labeled "Junior". SQL stops checking and never reaches the "Senior" rule.
+**The Fix:** Always put the most restrictive or highest numeric thresholds first.
+
+### Gotcha 2: Missing the ELSE Clause
+If you omit the `ELSE` clause, and a row does not match any of your `WHEN` conditions, **SQL will return NULL**.
+
+```sql
+-- ❌ Omitted ELSE:
+CASE
+    WHEN status = 'completed' THEN 'Active'
+END
+```
+For any order with a status of 'pending' or 'cancelled', this column will evaluate to `NULL`. Always use `ELSE` to define a default fallback value.
+
+---
+
+## Practice Exercises & Mini-Projects
+
+### Exercise 1: Customer Value Segmentation
+**Scenario:** Segment our customer accounts into loyalty tiers based on their total spend across all **completed** orders.
+*   Tiers:
+    *   Spend >= $50,000 → 'Platinum'
+    *   Spend >= $25,000 → 'Gold'
+    *   Spend >= $10,000 → 'Silver'
+    *   Else → 'Bronze'
+*   **Task:** Write a query that computes total spend per customer and assigns their loyalty tier.
+
+*   **Expected Output:**
+```text
+# Output:
+customer_id | total_spend | loyalty_tier
+------------|-------------|-------------
+501         | 58000       | Platinum
+503         | 43500       | Gold
+502         | 40500       | Gold
+504         | 15000       | Silver
+506         | 3200        | Bronze
+```
+
+<details>
+<summary>View Solution</summary>
+
+```sql
 SELECT
+    customer_id,
+    SUM(amount) AS total_spend,
     CASE
-        WHEN amount >= 25000 THEN 'Enterprise'
-        WHEN amount >= 10000 THEN 'Mid-Market'
-        ELSE 'SMB'
-    END                        AS deal_tier,
-    COUNT(*)                   AS order_count,
-    SUM(amount)                AS total_revenue,
-    ROUND(AVG(amount), 0)      AS avg_deal_size
+        WHEN SUM(amount) >= 50000 THEN 'Platinum'
+        WHEN SUM(amount) >= 25000 THEN 'Gold'
+        WHEN SUM(amount) >= 10000 THEN 'Silver'
+        ELSE 'Bronze'
+    END AS loyalty_tier
 FROM orders
 WHERE status = 'completed'
-GROUP BY
-    CASE
-        WHEN amount >= 25000 THEN 'Enterprise'
-        WHEN amount >= 10000 THEN 'Mid-Market'
-        ELSE 'SMB'
-    END
-ORDER BY total_revenue DESC;
+GROUP BY customer_id
+ORDER BY total_spend DESC;
 ```
+</details>
 
-```text
-# Output:
-deal_tier  | order_count | total_revenue | avg_deal_size
------------|-------------|---------------|-------------
-Enterprise | 3           | 91000         | 30333
-Mid-Market | 3           | 42500         | 14167
-SMB        | 2           | 11700         | 5850
-(3 rows)
-```
+---
 
-**Note:** You have to repeat the full CASE expression in GROUP BY because most databases don't allow aliases in GROUP BY. MySQL is the exception — it lets you GROUP BY the alias directly.
+### Exercise 2: Regional Performance Scorecard
+**Scenario:** Generate a scorecard showing the total orders placed in each region, alongside a count of how many were completed vs. how many were lost (cancelled or refunded).
 
-## Nested CASE — Use Sparingly
-
-You can nest CASE inside CASE, but readability drops fast.
+<details>
+<summary>View Solution</summary>
 
 ```sql
 SELECT
-    name,
-    department,
-    salary,
-    CASE
-        WHEN department IN ('Engineering', 'Analytics') THEN
-            CASE
-                WHEN salary >= 100000 THEN 'Tech Senior'
-                ELSE 'Tech Standard'
-            END
-        WHEN department = 'Sales' THEN
-            CASE
-                WHEN salary >= 70000 THEN 'Sales Senior'
-                ELSE 'Sales Standard'
-            END
-        ELSE 'Other'
-    END AS role_category
-FROM employees
-ORDER BY role_category;
+    region,
+    COUNT(*) AS total_orders,
+    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed_orders,
+    SUM(CASE WHEN status IN ('cancelled', 'refunded') THEN 1 ELSE 0 END) AS lost_orders
+FROM orders
+GROUP BY region
+ORDER BY total_orders DESC;
 ```
+</details>
 
-```text
-# Output:
-name          | department  | role_category
---------------|-------------|---------------
-David Kim     | Marketing   | Other
-Tom Rivera    | Marketing   | Other
-Marcus Brown  | Sales       | Sales Senior
-Anna Kowalski | Sales       | Sales Standard
-James Wilson  | Engineering | Tech Senior
-Lisa Zhang    | Engineering | Tech Senior
-Sarah Chen    | Analytics   | Tech Standard
-Priya Patel   | Analytics   | Tech Standard
-(8 rows)
-```
+---
 
-**Better approach:** Flatten nested CASE into a single searched CASE with compound conditions:
+## Section Recaps
 
-```sql
--- Same result, more readable
-CASE
-    WHEN department IN ('Engineering', 'Analytics') AND salary >= 100000 THEN 'Tech Senior'
-    WHEN department IN ('Engineering', 'Analytics')                       THEN 'Tech Standard'
-    WHEN department = 'Sales' AND salary >= 70000                        THEN 'Sales Senior'
-    WHEN department = 'Sales'                                            THEN 'Sales Standard'
-    ELSE 'Other'
-END AS role_category
-```
+*   **`CASE`** statements evaluate conditions and return specific values.
+*   **Simple CASE** checks a single column for equality against static values.
+*   **Searched CASE** evaluates custom boolean expressions, making it more flexible.
+*   **Order matters:** SQL stops evaluating at the first matching condition. Make sure to put the most restrictive rules first.
+*   **Conditional aggregation** is created by nesting `CASE` statements inside aggregate functions (like `SUM` or `COUNT`) to pivot or filter data columns dynamically.
+*   **Custom sorting:** Write a `CASE` statement inside `ORDER BY` to sort rows by business priorities instead of alphanumeric order.
 
-<div class="challenge">
-
-### Challenge: Customer Value Segmentation Report
-
-Write a query that:
-1. Calculates each customer's **total spend** across all completed orders
-2. Categorizes them into tiers:
-   - **$50,000+** → 'Platinum'
-   - **$25,000 - $49,999** → 'Gold'
-   - **$10,000 - $24,999** → 'Silver'
-   - **Below $10,000** → 'Bronze'
-3. Shows the **customer_id**, **total_spend**, **order_count**, and **tier**
-4. Sorted by **total_spend descending**
-
-**Expected output:**
-```text
-customer_id | total_spend | order_count | tier
-------------|-------------|-------------|--------
-501         | 58000       | 3           | Platinum
-503         | 43500       | 2           | Gold
-502         | 40500       | 2           | Gold
-504         | 15000       | 1           | Silver
-509         | 3200        | 1           | Bronze
-(5 rows)
-```
-
-**Hint:** Use GROUP BY with HAVING to exclude non-completed orders, and CASE for the tier logic.
-
-</div>
+---
 
 ## Common Interview Questions
 
-### Q1: What is the difference between simple CASE and searched CASE?
+### Q1: What is the difference between Simple CASE and Searched CASE?
+**Answer:**
+*   **Simple CASE** compares a single expression or column name against a series of values using equality checks (`CASE column WHEN value1 THEN result1`).
+*   **Searched CASE** evaluates independent boolean conditions for each branch (`CASE WHEN condition1 THEN result1`). It is more flexible and can handle range checks (`>=`, `<`), multiple columns, logical operators (`AND`, `OR`), and check for `IS NULL`.
 
-**Answer:** Simple CASE (`CASE column WHEN value THEN result`) compares one expression against specific values — like a switch statement. Searched CASE (`CASE WHEN condition THEN result`) evaluates boolean expressions — like if/else-if chains. Searched CASE is more flexible: it handles ranges (`WHEN salary > 100000`), multiple columns (`WHEN dept = 'Sales' AND salary > 50000`), and IS NULL checks. Simple CASE only does equality comparisons. In practice, searched CASE is used ~90% of the time.
+---
 
-### Q2: What happens when no CASE condition matches and there's no ELSE?
+### Q2: Does the CASE statement support short-circuit evaluation?
+**Answer:**
+Yes. The SQL standard requires the `CASE` statement to evaluate conditions sequentially. 
 
-**Answer:** The CASE expression returns NULL. This is a common source of bugs — a report shows blank cells or calculations break because of unexpected NULLs. Best practice: always include an ELSE clause, even if it's just `ELSE 'Unknown'` or `ELSE 0`. The only exception is when you intentionally want NULL for unmatched rows, in which case, add a comment explaining why.
+As soon as it encounters a `WHEN` condition that is true, it returns the corresponding result and stops evaluating the rest of the expression. Therefore, you should always place the most specific or narrow conditions first in the list.
 
-### Q3: How do you create a pivot table in SQL?
+---
 
-**Answer:** Use the SUM(CASE WHEN...) pattern. For each column you want in the pivot, write `SUM(CASE WHEN category = 'X' THEN value ELSE 0 END) AS x_column`. Group by the row dimension. Example: revenue by quarter becomes `SUM(CASE WHEN quarter = 'Q1' THEN revenue ELSE 0 END) AS q1_revenue`. Some databases have PIVOT syntax (SQL Server, Oracle), but the CASE approach works everywhere and is what interviewers expect.
+### Q3: What happens if none of the WHEN conditions are met and there is no ELSE clause?
+**Answer:**
+If no conditions match and there is no `ELSE` clause, the `CASE` statement returns `NULL`. 
 
-### Q4: Can you use CASE in a WHERE clause?
+To prevent unexpected `NULL` values in your reports, it is best practice to always include an `ELSE` clause to handle fallback values (e.g., `ELSE 'Unknown'` or `ELSE 0`).
 
-**Answer:** Yes, but it's uncommon and often a sign that the logic could be written more clearly with regular AND/OR conditions. A valid use case is conditional filtering: `WHERE CASE WHEN @report_type = 'summary' THEN status = 'completed' ELSE TRUE END`. More commonly, you'll see CASE in SELECT (categorization), ORDER BY (custom sort), and GROUP BY (bucketing). If your WHERE clause CASE could be replaced with AND/OR, prefer the simpler form.
+---
 
-### Q5: Does CASE short-circuit? What if multiple WHEN conditions are true?
+### Q4: How do you pivot rows into columns in SQL using a CASE statement?
+**Answer:**
+You pivot data by combining `SUM` or `COUNT` with a `CASE` statement, which is called **conditional aggregation**. 
 
-**Answer:** Yes, CASE evaluates conditions in order and returns the result of the first matching WHEN. It does not evaluate subsequent conditions once a match is found — this is called short-circuit evaluation. Order matters: `WHEN salary >= 50000 THEN 'High' WHEN salary >= 100000 THEN 'Very High'` would never reach "Very High" because every salary >= 100000 is also >= 50000. Always put the most specific (or highest threshold) conditions first.
+For example, to calculate sales for a specific year in a separate column:
+```sql
+SUM(CASE WHEN year = 2024 THEN sales ELSE 0 END) AS sales_2024
+```
+By grouping by a dimension (like product), the query sums the values only for rows that match the condition, creating a column-based summary of your row data.
+
+---
+
+### Q5: Can you use a CASE statement inside a JOIN condition?
+**Answer:**
+Yes. You can write conditional logic in your join criteria if you need to join tables differently depending on the row data. 
+
+For example:
+```sql
+JOIN employees e 
+  ON e.dept_id = CASE 
+                    WHEN e.is_contractor = 1 THEN temp_dept_id 
+                    ELSE perm_dept_id 
+                 END
+```
+While functional, this can lead to slower queries because the database optimizer cannot easily optimize joins that contain complex conditional calculations.

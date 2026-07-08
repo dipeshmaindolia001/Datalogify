@@ -14,12 +14,34 @@ seoDescription: "Master SQL subqueries — scalar, column, table, and correlated
 
 ## Why This Matters
 
-"Show me employees who earn more than the average salary." You can't do this with a single WHERE clause — you don't know the average until you calculate it. Subqueries solve this by letting you nest one query inside another. They're how you filter by aggregated values, create temporary datasets, and answer multi-step analytical questions in a single SQL statement.
+Imagine you have a stack of locked nesting boxes. Inside the outer box is a medium box, and inside that is a small box. To find out what is written on a card in the outermost box, you must first open the smallest box to find the key that unlocks the medium box, which in turn unlocks the outer box. 
+
+In SQL, a **subquery** (or nested query) works exactly like these nested boxes. It is a query inside another query. The database engine executes the innermost query first, obtains its result, and passes that result to the outer query to run.
+
+Consider this common business request: **"Show me all employees who earn more than the average salary."**
+
+You cannot answer this with a simple query like:
+```sql
+-- ❌ THIS WILL FAIL:
+SELECT name, salary 
+FROM employees 
+WHERE salary > AVG(salary);
+```
+Why? Because SQL cannot compute the average salary of the entire table while it is filtering individual rows. To solve this, you need a two-step process:
+1.  Compute the average salary (e.g., $88,250).
+2.  Filter the table for anyone earning more than $88,250.
+
+A subquery lets you perform both steps in a single SQL statement. By nesting the average calculation inside the `WHERE` clause, you dynamically pass the result of step 1 directly into step 2.
+
+---
 
 ## The Tables We're Working With
 
+We will use three tables representing a B2B SaaS startup's internal operations: `employees`, `sales`, and `departments`.
+
+### 1. `employees`
 ```sql
--- employees table
+-- employees table schema and sample data:
 -- | emp_id | name           | department  | salary | hire_date  |
 -- |--------|----------------|-------------|--------|------------|
 -- | 101    | Sarah Chen     | Analytics   | 95000  | 2021-03-15 |
@@ -30,8 +52,11 @@ seoDescription: "Master SQL subqueries — scalar, column, table, and correlated
 -- | 106    | David Kim      | Marketing   | 82000  | 2022-11-01 |
 -- | 107    | Anna Kowalski  | Sales       | 68000  | 2024-02-14 |
 -- | 108    | Tom Rivera     | Marketing   | 78000  | 2023-08-05 |
+```
 
--- sales table
+### 2. `sales`
+```sql
+-- sales table schema and sample data:
 -- | sale_id | emp_id | product       | amount | sale_date  | region |
 -- |---------|--------|---------------|--------|------------|--------|
 -- | 1       | 104    | CRM Pro       | 15000  | 2024-01-15 | West   |
@@ -41,8 +66,11 @@ seoDescription: "Master SQL subqueries — scalar, column, table, and correlated
 -- | 5       | 104    | CRM Pro       | 15000  | 2024-03-07 | South  |
 -- | 6       | 107    | Analytics Hub | 28000  | 2024-03-25 | East   |
 -- | 7       | 104    | Analytics Hub | 28000  | 2024-04-10 | West   |
+```
 
--- departments table
+### 3. `departments`
+```sql
+-- departments table schema and sample data:
 -- | dept_name   | budget  | head_count |
 -- |-------------|---------|------------|
 -- | Analytics   | 500000  | 15         |
@@ -51,14 +79,27 @@ seoDescription: "Master SQL subqueries — scalar, column, table, and correlated
 -- | Marketing   | 300000  | 8          |
 ```
 
-## Scalar Subqueries — Returns One Value
+---
 
-A scalar subquery returns exactly one row and one column — a single value. Use it anywhere you'd use a constant.
+## Types of Subqueries
 
-### In WHERE — Compare Against an Aggregate
+Subqueries are classified by the format of the data they return:
+1.  **Scalar Subqueries:** Return exactly one value (one row and one column).
+2.  **Multi-Row (Column) Subqueries:** Return multiple rows but only one column.
+3.  **Table Subqueries (Derived Tables):** Return a full table structure (multiple rows and multiple columns).
+4.  **Correlated Subqueries:** Subqueries that reference columns in the outer query, executing repeatedly for each row in the outer table.
+
+---
+
+## Step 1: Scalar Subqueries — Returning a Single Value
+
+A scalar subquery can be placed anywhere a constant or literal value is expected (in the `SELECT`, `WHERE`, or `HAVING` clauses).
+
+### Example 1.1: Scalar Subquery in `WHERE`
+Let's find all employees who earn more than the company average.
 
 ```sql
--- Employees earning more than the company average
+-- The subquery calculates the average, which is passed to the WHERE filter
 SELECT name, department, salary
 FROM employees
 WHERE salary > (SELECT AVG(salary) FROM employees);
@@ -74,16 +115,20 @@ Lisa Zhang   | Engineering | 108000
 (3 rows)
 ```
 
-The inner query `(SELECT AVG(salary) FROM employees)` returns 88250. The outer query filters employees above that threshold.
+**Under the Hood:**
+1.  The database runs `SELECT AVG(salary) FROM employees` first. It returns the single value `88250`.
+2.  The engine rewrites the outer query to: `SELECT name, department, salary FROM employees WHERE salary > 88250`.
+3.  It returns the 3 matching employees.
 
-### In SELECT — Add Computed Context
+### Example 1.2: Scalar Subquery in `SELECT`
+You can use scalar subqueries to append context columns to your reports, such as comparing a row's value against a global metric.
 
 ```sql
--- Show each employee's salary vs the company average
+-- Append the company average and calculate the individual deviation
 SELECT
     name,
     salary,
-    (SELECT AVG(salary) FROM employees)            AS company_avg,
+    (SELECT AVG(salary) FROM employees)             AS company_avg,
     salary - (SELECT AVG(salary) FROM employees)    AS diff_from_avg
 FROM employees
 ORDER BY diff_from_avg DESC;
@@ -104,20 +149,17 @@ Anna Kowalski | 68000  | 88250       | -20250
 (8 rows)
 ```
 
-<div class="interview-tip">
+---
 
-**Where this is used in real jobs:** Scalar subqueries in SELECT are common in ad-hoc analysis — "show me each product's revenue compared to the category average" or "what percentage of total revenue does each region represent?" They're quick to write but can be slow on large datasets. For production queries, window functions are usually better.
+## Step 2: Multi-Row Subqueries — Returning a List
 
-</div>
+When a subquery returns multiple values, you cannot use standard comparison operators (like `=`, `>`, `<`). You must use operators designed for lists: `IN`, `NOT IN`, `ANY`, or `ALL`.
 
-## Column Subqueries — Returns Multiple Values
-
-A column subquery returns multiple rows but one column. Use it with IN, NOT IN, ANY, or ALL.
-
-### Subquery with IN
+### Example 2.1: Subquery with `IN`
+Let's identify employees who have made at least one sale.
 
 ```sql
--- Find employees who have made at least one sale
+-- Find employees whose IDs appear in the sales table
 SELECT name, department, salary
 FROM employees
 WHERE emp_id IN (SELECT DISTINCT emp_id FROM sales);
@@ -132,53 +174,14 @@ Anna Kowalski | Sales      | 68000
 (2 rows)
 ```
 
-### Subquery with NOT IN
+### Example 2.2: Subquery with `ANY` and `ALL`
+*   `> ANY (list)` means: greater than the **minimum** value in the list.
+*   `> ALL (list)` means: greater than the **maximum** value in the list.
+
+Let's find employees who earn more than *any* single person in the Sales department (i.e., earning more than the lowest Sales salary of 68,000).
 
 ```sql
--- Find employees who have NEVER made a sale
-SELECT name, department, salary
-FROM employees
-WHERE emp_id NOT IN (SELECT DISTINCT emp_id FROM sales);
-```
-
-```text
-# Output:
-name         | department  | salary
--------------|-------------|-------
-Sarah Chen   | Analytics   | 95000
-James Wilson | Engineering | 115000
-Priya Patel  | Analytics   | 88000
-Lisa Zhang   | Engineering | 108000
-David Kim    | Marketing   | 82000
-Tom Rivera   | Marketing   | 78000
-(6 rows)
-```
-
-### ⚠️ NOT IN Trap with NULLs
-
-```sql
--- If the subquery returns any NULL, NOT IN returns NO rows
--- This is a notorious bug:
-SELECT name FROM employees
-WHERE emp_id NOT IN (SELECT manager_id FROM employees);
--- If manager_id has NULLs, this returns ZERO rows. Every time.
-```
-
-**Fix:** Use `NOT EXISTS` instead of `NOT IN` when the subquery column might contain NULLs:
-
-```sql
--- Safe alternative using NOT EXISTS
-SELECT e.name
-FROM employees e
-WHERE NOT EXISTS (
-    SELECT 1 FROM sales s WHERE s.emp_id = e.emp_id
-);
-```
-
-### Subquery with ANY and ALL
-
-```sql
--- Employees earning more than ANY person in Sales (i.e., more than the lowest Sales salary)
+-- Using ANY: checks if salary is greater than the minimum sales salary
 SELECT name, department, salary
 FROM employees
 WHERE salary > ANY (SELECT salary FROM employees WHERE department = 'Sales');
@@ -198,8 +201,10 @@ Tom Rivera   | Marketing   | 78000
 (7 rows)
 ```
 
+Now let's find employees who earn more than *all* people in the Sales department (i.e., earning more than the highest Sales salary of 72,000).
+
 ```sql
--- Employees earning more than ALL people in Sales (i.e., more than the highest Sales salary)
+-- Using ALL: checks if salary is greater than the maximum sales salary
 SELECT name, department, salary
 FROM employees
 WHERE salary > ALL (SELECT salary FROM employees WHERE department = 'Sales');
@@ -218,29 +223,31 @@ Tom Rivera   | Marketing   | 78000
 (6 rows)
 ```
 
-**ANY** = greater than at least one value (same as `> MIN()`).
-**ALL** = greater than every value (same as `> MAX()`).
+---
 
-## Table Subqueries (Derived Tables) — Returns a Dataset
+## Step 3: Table Subqueries — Derived Tables
 
-A table subquery goes in the FROM clause and acts like a temporary table. It must have an alias.
+A subquery in the `FROM` clause acts as a temporary inline table. It must be assigned an alias.
+
+### Example 3.1: Filtering Aggregated Metrics
+Suppose you want to compute the total sales per rep, and then filter for reps who sold more than $50,000. You cannot use `WHERE` on `SUM(amount)` directly. You can use `HAVING`, or you can wrap the calculation in a derived table.
 
 ```sql
--- Find each salesperson's total revenue, then filter to top performers
+-- rep_summary is a derived table
 SELECT
-    rep_summary.name,
-    rep_summary.total_sales,
-    rep_summary.deal_count
+    rep.name,
+    rep.total_sales,
+    rep.deal_count
 FROM (
     SELECT
         e.name,
-        SUM(s.amount)  AS total_sales,
-        COUNT(*)        AS deal_count
+        SUM(s.amount) AS total_sales,
+        COUNT(*)      AS deal_count
     FROM sales s
     JOIN employees e ON s.emp_id = e.emp_id
     GROUP BY e.name
-) AS rep_summary
-WHERE rep_summary.total_sales > 50000;
+) AS rep
+WHERE rep.total_sales > 50000;
 ```
 
 ```text
@@ -252,45 +259,17 @@ Anna Kowalski | 71000       | 3
 (2 rows)
 ```
 
-The inner query calculates totals per salesperson. The outer query filters on those totals. You couldn't do this with a simple WHERE because you can't filter on aggregates without HAVING — and sometimes the logic is cleaner as a derived table.
+---
 
-### Joining Against a Derived Table
+## Step 4: Correlated Subqueries — Row-by-Row Evaluation
 
-```sql
--- Compare each department's average salary to its budget per head
-SELECT
-    dept_avg.department,
-    dept_avg.avg_salary,
-    d.budget,
-    d.head_count,
-    d.budget / d.head_count          AS budget_per_head,
-    dept_avg.avg_salary - (d.budget / d.head_count) AS diff
-FROM (
-    SELECT department, AVG(salary) AS avg_salary
-    FROM employees
-    GROUP BY department
-) AS dept_avg
-JOIN departments d ON dept_avg.department = d.dept_name
-ORDER BY diff DESC;
-```
+A correlated subquery is a nested query that references a column from the outer query. Unlike simple subqueries, which run once, **a correlated subquery executes repeatedly — once for every row returned by the outer query.**
 
-```text
-# Output:
-department  | avg_salary | budget | head_count | budget_per_head | diff
-------------|------------|--------|------------|-----------------|-------
-Analytics   | 91500      | 500000 | 15         | 33333           | 58167
-Marketing   | 80000      | 300000 | 8          | 37500           | 42500
-Engineering | 111500     | 800000 | 25         | 32000           | 79500
-Sales       | 70000      | 350000 | 10         | 35000           | 35000
-(4 rows)
-```
-
-## Correlated Subqueries — Reference the Outer Query
-
-A correlated subquery runs once for *each row* of the outer query. It references the outer query's columns.
+### Example 4.1: Department-Specific Comparisons
+Let's find employees who earn more than their specific department's average salary.
 
 ```sql
--- Employees who earn more than their department's average
+-- The inner query references e.department from the outer query
 SELECT name, department, salary
 FROM employees e
 WHERE salary > (
@@ -311,188 +290,212 @@ Marcus Brown | Sales       | 72000
 (4 rows)
 ```
 
-For each employee, the subquery calculates that specific department's average. Sarah Chen (95K) is above Analytics' average (91.5K). James Wilson (115K) is above Engineering's average (111.5K).
+**Step-by-Step Execution:**
+1.  The engine reads the first row from the outer table: `Sarah Chen (Analytics, 95000)`.
+2.  It replaces `e.department` in the subquery with `'Analytics'` and calculates the average salary for Analytics (`91500`).
+3.  It evaluates: `95000 > 91500` (True). Sarah Chen remains in the result.
+4.  The engine reads the next row: `James Wilson (Engineering, 115000)`.
+5.  It evaluates the subquery for Engineering (`111500`).
+6.  It evaluates: `115000 > 111500` (True). James Wilson remains in the result.
+7.  This repeats for all 8 rows.
 
-### EXISTS — Check If Rows Exist
+---
 
-EXISTS is the most common correlated subquery. It returns TRUE if the subquery finds at least one matching row.
+## EXISTS vs. IN
+
+The `EXISTS` operator is used with correlated subqueries to check if a subquery returns *any* rows. It does not look at the actual values returned — it simply returns `TRUE` as soon as it finds a matching record.
+
+### Example 5.1: Comparing syntax
+These queries retrieve the same results, but their mechanics differ:
 
 ```sql
--- Departments that have at least one employee earning over 100K
-SELECT DISTINCT department
+-- Using IN (Non-correlated)
+SELECT name, department
+FROM employees
+WHERE emp_id IN (SELECT emp_id FROM sales);
+
+-- Using EXISTS (Correlated)
+SELECT name, department
 FROM employees e
 WHERE EXISTS (
-    SELECT 1
-    FROM employees e2
-    WHERE e2.department = e.department
-      AND e2.salary > 100000
+    SELECT 1 
+    FROM sales s 
+    WHERE s.emp_id = e.emp_id
 );
 ```
 
-```text
-# Output:
-department
------------
-Engineering
-(1 row)
-```
+### Performance & Logical Differences
+
+1.  **Short-Circuit Evaluation:** `EXISTS` is highly optimized. If the subquery finds a match on the very first row of an index scan, it immediately stops searching (short-circuits) and returns `TRUE`. Conversely, `IN` must execute the subquery and gather the entire list of values in memory before filtering the outer query.
+2.  **NULL Handling Trap:** This is the most critical difference.
+
+### ⚠️ The NOT IN Trap with NULLs
+If a column in the subquery contains a `NULL` value, a `NOT IN` filter will return **zero rows**.
+
+Let's assume our `employees` table had a column `manager_id` containing: `[101, 102, NULL]`.
+We want to find employees who are not managers:
 
 ```sql
--- Employees who have NOT made any sales (using EXISTS)
-SELECT name, department
+-- ❌ THIS WILL RETURN 0 ROWS:
+SELECT name 
+FROM employees
+WHERE emp_id NOT IN (SELECT manager_id FROM employees);
+```
+
+**Why?**
+The evaluation expands to:
+`emp_id <> 101 AND emp_id <> 102 AND emp_id <> NULL`.
+In SQL, any comparison against `NULL` evaluates to `UNKNOWN`. 
+Since `AND` chains require *all* conditions to be true, and one condition is `UNKNOWN`, the entire filter evaluates to `UNKNOWN` or `FALSE` for every single row.
+
+**The Fix:** Use `NOT EXISTS` instead. `NOT EXISTS` does not use three-valued comparison logic; it checks for row existence, which handles NULLs correctly.
+
+```sql
+-- ✅ Safe and correct:
+SELECT name 
 FROM employees e
 WHERE NOT EXISTS (
-    SELECT 1 FROM sales s WHERE s.emp_id = e.emp_id
+    SELECT 1 
+    FROM employees m 
+    WHERE m.manager_id = e.emp_id
 );
 ```
 
+---
+
+## Edge Cases & Common Mistakes
+
+### Gotcha 1: Subquery Returning More Than One Row
+If you use a scalar operator (like `=`, `>`, `<`) with a subquery, and that subquery accidentally returns more than one row, the query will crash.
+
+```sql
+-- ❌ This will crash if more than one employee is named Sarah:
+SELECT * 
+FROM sales
+WHERE emp_id = (SELECT emp_id FROM employees WHERE name = 'Sarah');
+```
+**Error:** `Subquery returned more than 1 row`.
+**The Fix:** If the column cannot guarantee a single unique result, use `IN` instead of `=`.
+
+### Gotcha 2: Missing Derived Table Alias
+In SQL, any subquery placed in the `FROM` clause must be given an alias, even if you don't reference it elsewhere.
+
+```sql
+-- ❌ Syntax Error in MySQL/PostgreSQL:
+SELECT * 
+FROM (SELECT emp_id, salary FROM employees);
+```
+**The Fix:** Assign an alias:
+```sql
+SELECT * 
+FROM (SELECT emp_id, salary FROM employees) AS temp;
+```
+
+---
+
+## Practice Exercises & Mini-Projects
+
+### Exercise 1: Finding Underperforming Marketing Departments
+**Scenario:** The executive team wants a list of departments whose average employee salary is higher than the average sales revenue generated per deal in the `sales` table.
+
+*   **Task:** Write a query using a scalar subquery to find departments whose average salary is greater than the overall average deal size.
+*   **Expected Output:**
 ```text
 # Output:
-name         | department
--------------|----------
-Sarah Chen   | Analytics
-James Wilson | Engineering
-Priya Patel  | Analytics
-Lisa Zhang   | Engineering
-David Kim    | Marketing
-Tom Rivera   | Marketing
-(6 rows)
+department  | avg_salary
+------------|-----------
+Engineering | 111500
+Analytics   | 91500
 ```
 
-<div class="interview-tip">
-
-**Interview tip:** "When should you use EXISTS vs IN?" EXISTS stops scanning as soon as it finds one match — it's often faster for large datasets. IN materializes the entire subquery result first. Use EXISTS when the subquery table is large and has an index on the correlation column. Use IN when the subquery returns a small, known list. Most optimizers handle both well, but showing you know the difference earns points.
-
-</div>
-
-## Subquery vs JOIN — When to Use Which
-
-Sometimes a subquery and a JOIN solve the same problem:
+<details>
+<summary>View Solution</summary>
 
 ```sql
--- Using a subquery
-SELECT name, department
+SELECT department, AVG(salary) AS avg_salary
 FROM employees
-WHERE department IN (
-    SELECT dept_name FROM departments WHERE budget > 400000
-);
+GROUP BY department
+HAVING AVG(salary) > (SELECT AVG(amount) FROM sales);
+```
+</details>
 
--- Using a JOIN (same result)
-SELECT e.name, e.department
+---
+
+### Exercise 2: Top Sales Rep Identification
+**Scenario:** Find the names of employees whose total sales amount is higher than the sales average of *any* rep.
+
+*   **Task:** Use a derived table to find total sales per rep, and filter for those higher than the overall average.
+
+<details>
+<summary>View Solution</summary>
+
+```sql
+SELECT name 
 FROM employees e
-JOIN departments d ON e.department = d.dept_name
-WHERE d.budget > 400000;
-```
-
-```text
-# Output (both):
-name         | department
--------------|----------
-Sarah Chen   | Analytics
-James Wilson | Engineering
-Priya Patel  | Analytics
-Lisa Zhang   | Engineering
-(4 rows)
-```
-
-### When Subqueries Win
-
-- **Filtering by aggregates:** "Employees above average salary" is cleaner as a subquery
-- **EXISTS/NOT EXISTS:** More readable and often faster than LEFT JOIN + IS NULL
-- **One-off calculated values:** No need to join when you just need a single number
-
-### When JOINs Win
-
-- **Need columns from both tables:** Subqueries in WHERE can't add columns from the inner query
-- **Performance on large datasets:** JOINs are generally better optimized
-- **Readability for multi-table combinations:** Chained subqueries get messy fast
-
-## Nested Subqueries — Going Deeper
-
-You can nest subqueries multiple levels, but readability drops fast.
-
-```sql
--- Find the name of the person with the highest total sales
-SELECT name
-FROM employees
-WHERE emp_id = (
+WHERE e.emp_id IN (
     SELECT emp_id
     FROM sales
     GROUP BY emp_id
-    HAVING SUM(amount) = (
-        SELECT MAX(total)
+    HAVING SUM(amount) > (
+        -- Calculate the average of total sales across all reps
+        SELECT AVG(total_rep_sales)
         FROM (
-            SELECT emp_id, SUM(amount) AS total
+            SELECT emp_id, SUM(amount) AS total_rep_sales
             FROM sales
             GROUP BY emp_id
-        ) AS totals
+        ) AS sub
     )
 );
 ```
+</details>
 
-```text
-# Output:
-name
---------------
-Anna Kowalski
-(1 row)
-```
+---
 
-This works but is hard to follow. **When you hit more than two levels of nesting, use CTEs instead** (covered in the next lesson). They do the same thing but read like a story.
+## Section Recaps
 
-<div class="challenge">
+*   **Scalar subqueries** return a single value. They are used in calculations or filters.
+*   **Multi-row subqueries** return a list of values and must be evaluated using `IN`, `ANY`, or `ALL`.
+*   **Derived tables** are subqueries inside the `FROM` clause and must have an alias.
+*   **Correlated subqueries** reference the outer query and execute once per row, which can impact performance on large datasets.
+*   **`NOT IN` trap:** If the list contains a `NULL`, `NOT IN` will return zero rows. Use `NOT EXISTS` instead.
 
-### Challenge: Department Analysis
-
-Write a query that returns:
-1. Each **department name** and **number of employees**
-2. The **average salary** in that department
-3. Only include departments where the average salary is **above the company-wide average**
-4. Sorted by **average salary descending**
-
-**Expected output:**
-```text
-department  | emp_count | avg_salary
-------------|-----------|----------
-Engineering | 2         | 111500
-Analytics   | 2         | 91500
-(2 rows)
-```
-
-**Hint:** Use a scalar subquery in HAVING to compare each department's average against the overall average.
-
-</div>
-
-## Performance Considerations
-
-1. **Correlated subqueries are expensive.** They run once per row of the outer query. On a million-row table, that's a million subquery executions. Rewrite as JOINs when possible.
-
-2. **Subqueries in SELECT** execute per row too. If you're adding a column via subquery, consider a JOIN or window function instead.
-
-3. **Derived tables** (subqueries in FROM) are generally fine — the database materializes them once.
-
-4. **EXISTS is usually faster than IN** for large subquery results, because EXISTS stops at the first match.
-
-5. **The optimizer may rewrite your subquery** as a JOIN behind the scenes. Check the query plan (`EXPLAIN`) to see what actually runs.
+---
 
 ## Common Interview Questions
 
-### Q1: What is the difference between a correlated and non-correlated subquery?
+### Q1: What is the difference between a correlated and a non-correlated subquery?
+**Answer:**
+*   A **non-correlated subquery** is independent of the outer query. It runs once, retrieves its result, and passes it to the outer query.
+*   A **correlated subquery** references columns from the outer query. It executes repeatedly, once for each candidate row processed by the outer query, making it slower on large datasets.
 
-**Answer:** A non-correlated (simple) subquery is independent — it can run on its own and returns the same result regardless of the outer query. Example: `WHERE salary > (SELECT AVG(salary) FROM employees)`. A correlated subquery references columns from the outer query and runs once for each outer row. Example: `WHERE salary > (SELECT AVG(salary) FROM employees WHERE department = e.department)`. Correlated subqueries are more powerful but slower because they execute repeatedly.
+---
 
-### Q2: Can a subquery return more than one column?
+### Q2: Why does `NOT IN` return zero rows if the subquery returns a NULL value?
+**Answer:**
+SQL uses three-valued logic (True, False, Unknown). When comparing values using `NOT IN`, SQL translates `val NOT IN (1, 2, NULL)` to:
+`val <> 1 AND val <> 2 AND val <> NULL`.
 
-**Answer:** Yes, when used as a derived table in the FROM clause. `FROM (SELECT id, name, SUM(amount) AS total FROM sales GROUP BY id, name) AS summary` returns multiple columns. However, subqueries in WHERE with IN can only return one column, and scalar subqueries (used with =, >, <) must return exactly one row and one column. Subqueries in SELECT must also be scalar.
+Since any comparison with `NULL` (including `<>`) results in `UNKNOWN`, the overall condition evaluates to `UNKNOWN`. As a result, the database engine cannot confirm the condition is true for any row, and it returns an empty result set.
 
-### Q3: Why does NOT IN fail when the subquery returns NULL?
+---
 
-**Answer:** Because of SQL's three-valued logic. `NOT IN (1, 2, NULL)` evaluates as `val <> 1 AND val <> 2 AND val <> NULL`. The `val <> NULL` part always evaluates to NULL, and `TRUE AND NULL = NULL`, so the entire expression can never be TRUE. This means NOT IN returns zero rows whenever the subquery contains any NULL. The fix: use `NOT EXISTS` or add `WHERE column IS NOT NULL` to the subquery.
+### Q3: When should you use EXISTS instead of IN?
+**Answer:**
+*   Use **`EXISTS`** when checking for the existence of matching rows in another table, especially when the subquery table is large. `EXISTS` is faster because it short-circuits as soon as a single match is found.
+*   Use **`IN`** when the subquery returns a small, static set of values, or when the database engine can easily index the subquery result.
 
-### Q4: What is a derived table?
+---
 
-**Answer:** A derived table is a subquery in the FROM clause that acts as a temporary, inline table. It must have an alias. Example: `FROM (SELECT dept, AVG(salary) AS avg_sal FROM employees GROUP BY dept) AS dept_avgs`. The database executes the subquery first, materializes the result, then uses it like any other table in the outer query. Derived tables are useful for filtering on aggregated values or breaking complex logic into steps.
+### Q4: What is a derived table, and why does it need an alias?
+**Answer:**
+A derived table is a subquery nested in the `FROM` clause of an outer query. It behaves like a temporary table for the duration of the query. 
 
-### Q5: When would you use a subquery instead of a JOIN?
+It requires an alias so the database engine and the outer query can identify and reference its columns (e.g., `alias_name.column_name`). Without an alias, the query parser throws a syntax error.
 
-**Answer:** Use subqueries when: (1) filtering by an aggregate value — `WHERE salary > (SELECT AVG(salary)...)`, (2) checking existence — `WHERE EXISTS (SELECT 1 FROM...)`, (3) you need a single computed value for comparison. Use JOINs when: (1) you need columns from both tables in the output, (2) performance matters on large datasets, (3) the relationship between tables is clear. Modern optimizers often convert between the two internally, but readability should guide your choice.
+---
+
+### Q5: Can you rewrite a correlated subquery as a JOIN? What are the benefits?
+**Answer:**
+Yes, most correlated subqueries can be rewritten using `JOIN` (specifically `INNER JOIN` or `LEFT JOIN` with group aggregations). 
+
+Rewriting as a `JOIN` is generally beneficial because modern database query optimizers are better at optimizing join operations than executing subqueries row-by-row, leading to better execution plans and faster runtimes on large datasets.
