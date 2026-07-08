@@ -14,12 +14,87 @@ seoDescription: "Master SQL set operations — UNION ALL, INTERSECT, EXCEPT for 
 
 ## Why This Matters
 
-"Combine this year's sales with last year's into one report." "Which customers bought from us AND attended our webinar?" "Show me products we sell online but NOT in stores." These are set operations — combining, intersecting, and subtracting result sets. You'll use these constantly when working with data from multiple sources, running comparisons, or building reconciliation reports.
+Imagine you are managing two mailing lists in a physical mail room:
+* **List A (Online Signups)**: Sarah, James, Priya, Marcus, Lisa.
+* **List B (In-Store Signups)**: Priya, Lisa, David, Anna, Tom.
+
+If you are asked to combine, compare, or filter these lists, you are performing **set operations**:
+1. **"Send a catalog to everyone."** You stack the lists. If you remove duplicates (Priya and Lisa signed up in both places, but you only want to send them one catalog), you perform a **UNION**. If you don't care about duplicates and just stack them, you perform a **UNION ALL**.
+2. **"Find our omnichannel customers who sign up both online and in-store."** You find the overlap. This is an **INTERSECT** (Priya, Lisa).
+3. **"Find customers who signed up online but *never* in-store."** You subtract List B from List A. This is an **EXCEPT** or **MINUS** operation (Sarah, James, Marcus).
+
+Set operations are fundamental to data analysis. They allow you to combine, match, and subtract result sets vertically, whereas joins combine tables horizontally. In this lesson, you will learn how set operations work under the hood, how to structure them safely, and when to use them for maximum performance.
+
+---
+
+## Step-by-Step Concept Breakdown
+
+Set operations treat the results of individual `SELECT` queries as mathematical sets. Unlike joins which match columns side-by-side, set operations stack rows on top of each other.
+
+```text
+Visualizing Set Operations:
+
+Query 1 Result: [Row 1, Row 2, Row 3]
+Query 2 Result: [Row 3, Row 4, Row 5]
+
+UNION ALL (Stops at stacking):
+[Row 1, Row 2, Row 3, Row 3, Row 4, Row 5] (Duplicates kept)
+
+UNION (Stacks and deduplicates):
+[Row 1, Row 2, Row 3, Row 4, Row 5] (Row 3 merged)
+
+INTERSECT (Finds common rows):
+[Row 3]
+
+EXCEPT / MINUS (Subtracts Query 2 from Query 1):
+[Row 1, Row 2]
+```
+
+### The Three Strict Rules of Set Operations
+For a set operation to succeed, the database requires the queries to be structurally compatible. If they are not, the database will throw a parser error.
+
+1. **Rule 1: Identical Column Count**
+   Both queries must return the exact same number of columns.
+   * `SELECT name, email FROM online_customers UNION SELECT name FROM store_customers` $\rightarrow$ **ERROR**
+
+2. **Rule 2: Compatible Data Types**
+   The columns in corresponding positions must have matching or compatible data types. For example, column 1 in Query 1 and column 1 in Query 2 must both be strings, numbers, or dates.
+   * `SELECT name (VARCHAR) FROM online_customers UNION SELECT customer_id (INT) FROM store_customers` $\rightarrow$ **ERROR**
+
+3. **Rule 3: Order Matters**
+   SQL matches columns based on their order in the `SELECT` list, not their names. If Query 1 has `SELECT name, email` and Query 2 has `SELECT email, name`, SQL will try to combine `name` with `email` and `email` with `name`, which will either fail or lead to corrupt mixed data.
+
+---
+
+## The Core Set Operators
+
+### 1. `UNION ALL` — The Fast Stack
+`UNION ALL` simply takes the result of the first query and appends the result of the second query directly below it. 
+* It **preserves all duplicate rows**.
+* It is extremely fast because the database does not need to read through the data to find and remove duplicates.
+
+### 2. `UNION` — The Clean Merge
+`UNION` (without the word `ALL`) appends the results of both queries, then scans the combined set to remove all duplicate rows.
+* It **eliminates duplicates**.
+* It is significantly slower than `UNION ALL` because the database must perform a sort or build a hash table to identify duplicates.
+
+### 3. `INTERSECT` — The Overlap
+`INTERSECT` returns only the rows that appear in the results of **both** queries.
+* Like `UNION`, it automatically deduplicates the final output.
+
+### 4. `EXCEPT` / `MINUS` — The Subtraction
+`EXCEPT` (called `MINUS` in Oracle) returns rows from the first query that **do not appear** in the second query.
+* It acts as a logical filter: `Query A - Query B`.
+* It also deduplicates the final output.
+
+---
 
 ## The Tables We're Working With
 
+To practice set operations, we will use three tables: `online_customers`, `store_customers`, and quarterly sales tables (`q1_sales` and `q2_sales`).
+
+### The `online_customers` Table
 ```sql
--- online_customers table
 -- | customer_id | name            | email                  | signup_date |
 -- |-------------|-----------------|------------------------|-------------|
 -- | 101         | Sarah Chen      | sarah@email.com        | 2024-01-05  |
@@ -27,8 +102,10 @@ seoDescription: "Master SQL set operations — UNION ALL, INTERSECT, EXCEPT for 
 -- | 103         | Priya Patel     | priya@email.com        | 2024-02-03  |
 -- | 104         | Marcus Brown    | marcus@email.com       | 2024-02-18  |
 -- | 105         | Lisa Zhang      | lisa@email.com         | 2024-03-01  |
+```
 
--- store_customers table
+### The `store_customers` Table
+```sql
 -- | customer_id | name            | email                  | signup_date |
 -- |-------------|-----------------|------------------------|-------------|
 -- | 103         | Priya Patel     | priya@email.com        | 2024-01-20  |
@@ -36,15 +113,19 @@ seoDescription: "Master SQL set operations — UNION ALL, INTERSECT, EXCEPT for 
 -- | 106         | David Kim       | david@email.com        | 2024-01-08  |
 -- | 107         | Anna Kowalski   | anna@email.com         | 2024-03-10  |
 -- | 108         | Tom Rivera      | tom@email.com          | 2024-02-25  |
+```
 
--- q1_sales table
+### The `q1_sales` Table
+```sql
 -- | sale_id | product       | amount | sale_date  |
 -- |---------|---------------|--------|------------|
 -- | 1       | CRM Pro       | 15000  | 2024-01-15 |
 -- | 2       | Analytics Hub | 28000  | 2024-02-10 |
 -- | 3       | Data Vault    | 8500   | 2024-03-22 |
+```
 
--- q2_sales table
+### The `q2_sales` Table
+```sql
 -- | sale_id | product       | amount | sale_date  |
 -- |---------|---------------|--------|------------|
 -- | 4       | CRM Pro       | 15000  | 2024-04-08 |
@@ -53,21 +134,29 @@ seoDescription: "Master SQL set operations — UNION ALL, INTERSECT, EXCEPT for 
 -- | 7       | Cloud Backup  | 3200   | 2024-06-14 |
 ```
 
-## UNION ALL — Stack Results Together (Keep Duplicates)
+---
 
-UNION ALL combines two result sets vertically. It keeps every row, including duplicates. It's fast because it doesn't sort or deduplicate.
+## Code & Practical Walkthroughs
 
+### Example 1: Merging Quarterly Sales Logs (`UNION ALL` vs `UNION`)
+Let's compile a report of all products sold across Q1 and Q2.
+* If we use `UNION ALL`, we get a complete transaction log.
+* If we use `UNION`, we get a list of unique product-price combinations.
+
+#### Option A: Transaction Log using `UNION ALL`
 ```sql
-SELECT product, amount, sale_date, 'Q1' AS quarter
+SELECT product, amount, sale_date, 'Q1' AS sales_quarter
 FROM q1_sales
 UNION ALL
-SELECT product, amount, sale_date, 'Q2' AS quarter
+-- Stack Q2 below Q1
+SELECT product, amount, sale_date, 'Q2' AS sales_quarter
 FROM q2_sales;
 ```
 
 ```text
-product       | amount | sale_date  | quarter
---------------|--------|------------|--------
+# Output:
+product       | amount | sale_date  | sales_quarter
+--------------+--------+------------+--------------
 CRM Pro       | 15000  | 2024-01-15 | Q1
 Analytics Hub | 28000  | 2024-02-10 | Q1
 Data Vault    | 8500   | 2024-03-22 | Q1
@@ -77,431 +166,252 @@ Analytics Hub | 28000  | 2024-06-01 | Q2
 Cloud Backup  | 3200   | 2024-06-14 | Q2
 ```
 
-### Combine and Aggregate
-
+#### Option B: Unique Sales Combinations using `UNION`
+Let's see what unique product offers sold.
 ```sql
-SELECT product,
-       SUM(amount) AS total_revenue,
-       COUNT(*) AS times_sold
-FROM (
-    SELECT product, amount FROM q1_sales
-    UNION ALL
-    SELECT product, amount FROM q2_sales
-) all_sales
-GROUP BY product
-ORDER BY total_revenue DESC;
-```
-
-```text
-product       | total_revenue | times_sold
---------------|---------------|----------
-Analytics Hub | 56000         | 2
-ML Studio     | 35000         | 1
-CRM Pro       | 30000         | 2
-Data Vault    | 8500          | 1
-Cloud Backup  | 3200          | 1
-```
-
-<div class="interview-tip">
-
-**UNION ALL vs UNION**: Always default to UNION ALL unless you specifically need deduplication. UNION ALL is faster because it skips the sort-and-deduplicate step. In analytics, you almost always want all rows — duplicates are usually meaningful (e.g., two identical sales are still two sales).
-
-</div>
-
-## UNION — Stack Results and Remove Duplicates
-
-UNION deduplicates the combined result. It's slower because it sorts all rows to find duplicates.
-
-```sql
--- CRM Pro and Analytics Hub appear in both quarters
--- UNION removes the duplicate rows
-SELECT product FROM q1_sales
-UNION
-SELECT product FROM q2_sales;
-```
-
-```text
-product
------------
-Analytics Hub
-Cloud Backup
-CRM Pro
-Data Vault
-ML Studio
-```
-
-```sql
--- Compare with UNION ALL — keeps duplicates
-SELECT product FROM q1_sales
-UNION ALL
-SELECT product FROM q2_sales;
-```
-
-```text
-product
------------
-CRM Pro
-Analytics Hub
-Data Vault
-CRM Pro
-ML Studio
-Analytics Hub
-Cloud Backup
-```
-
-### Combine All Customers From Both Channels
-
-```sql
-SELECT customer_id, name, email, 'Online' AS channel
-FROM online_customers
-UNION
-SELECT customer_id, name, email, 'Store' AS channel
-FROM store_customers
-ORDER BY customer_id;
-```
-
-```text
-customer_id | name          | email            | channel
-------------|---------------|------------------|--------
-101         | Sarah Chen    | sarah@email.com  | Online
-102         | James Wilson  | james@email.com  | Online
-103         | Priya Patel   | priya@email.com  | Online
-103         | Priya Patel   | priya@email.com  | Store
-105         | Lisa Zhang    | lisa@email.com   | Online
-105         | Lisa Zhang    | lisa@email.com   | Store
-106         | David Kim     | david@email.com  | Store
-107         | Anna Kowalski | anna@email.com   | Store
-108         | Tom Rivera    | tom@email.com    | Store
-```
-
-Notice Priya and Lisa appear twice — because the channel column makes the rows different. UNION only removes rows that are identical across ALL columns.
-
-## The Column Rules — What Must Match
-
-```sql
--- Rule 1: Same number of columns
--- WRONG: column count mismatch
--- SELECT customer_id, name, email FROM online_customers
--- UNION ALL
--- SELECT customer_id, name FROM store_customers;   -- ERROR: 3 vs 2 columns
-
--- Rule 2: Compatible data types
--- WRONG: mixing types
--- SELECT customer_id, name FROM online_customers
--- UNION ALL
--- SELECT name, customer_id FROM store_customers;   -- name vs customer_id types
-
--- Rule 3: Column names come from the FIRST query
-SELECT customer_id AS id, name AS customer_name
-FROM online_customers
-UNION ALL
-SELECT customer_id, name    -- these column names are ignored
-FROM store_customers;
-```
-
-```text
-id  | customer_name
-----|---------------
-101 | Sarah Chen
-102 | James Wilson
-103 | Priya Patel
-104 | Marcus Brown
-105 | Lisa Zhang
-103 | Priya Patel
-105 | Lisa Zhang
-106 | David Kim
-107 | Anna Kowalski
-108 | Tom Rivera
-```
-
-## INTERSECT — Find Common Rows
-
-INTERSECT returns only rows that appear in BOTH result sets. Think of it as a Venn diagram overlap.
-
-```sql
--- Customers who shop BOTH online AND in store
-SELECT customer_id, name
-FROM online_customers
-INTERSECT
-SELECT customer_id, name
-FROM store_customers;
-```
-
-```text
-customer_id | name
-------------|-------------
-103         | Priya Patel
-105         | Lisa Zhang
-```
-
-```sql
--- Products sold in BOTH Q1 and Q2
-SELECT product FROM q1_sales
-INTERSECT
-SELECT product FROM q2_sales;
-```
-
-```text
-product
------------
-Analytics Hub
-CRM Pro
-```
-
-### Practical Use: Verify Data Migration
-
-```sql
--- After migrating data, verify which records exist in both old and new tables
-SELECT customer_id, name, email
-FROM online_customers
-INTERSECT
-SELECT customer_id, name, email
-FROM store_customers;
-```
-
-```text
-customer_id | name        | email
-------------|-------------|---------------
-103         | Priya Patel | priya@email.com
-105         | Lisa Zhang  | lisa@email.com
-```
-
-## EXCEPT (MINUS) — Subtract One Result Set From Another
-
-EXCEPT returns rows from the first query that don't appear in the second query. In Oracle, it's called MINUS.
-
-```sql
--- Online-only customers (not in store)
-SELECT customer_id, name
-FROM online_customers
-EXCEPT
-SELECT customer_id, name
-FROM store_customers;
-```
-
-```text
-customer_id | name
-------------|-------------
-101         | Sarah Chen
-102         | James Wilson
-104         | Marcus Brown
-```
-
-```sql
--- Store-only customers (not online)
-SELECT customer_id, name
-FROM store_customers
-EXCEPT
-SELECT customer_id, name
-FROM online_customers;
-```
-
-```text
-customer_id | name
-------------|---------------
-106         | David Kim
-107         | Anna Kowalski
-108         | Tom Rivera
-```
-
-<div class="interview-tip">
-
-**Order matters with EXCEPT**: `A EXCEPT B` is different from `B EXCEPT A`. The first returns rows in A that aren't in B. The second returns rows in B that aren't in A. This is not commutative — unlike UNION and INTERSECT.
-
-</div>
-
-### Products Exclusive to Q1
-
-```sql
--- Products sold in Q1 but not Q2
-SELECT product FROM q1_sales
-EXCEPT
-SELECT product FROM q2_sales;
-```
-
-```text
-product
---------
-Data Vault
-```
-
-```sql
--- Products sold in Q2 but not Q1
-SELECT product FROM q2_sales
-EXCEPT
-SELECT product FROM q1_sales;
-```
-
-```text
-product
------------
-Cloud Backup
-ML Studio
-```
-
-## Chaining Multiple Set Operations
-
-You can chain set operations. They execute top to bottom (unless you use parentheses):
-
-```sql
--- All products sold in Q1 or Q2, but show each only once
-SELECT product, amount, 'Q1' AS quarter FROM q1_sales
-UNION ALL
-SELECT product, amount, 'Q2' AS quarter FROM q2_sales
-ORDER BY product, quarter;
-```
-
-```text
-product       | amount | quarter
---------------|--------|--------
-Analytics Hub | 28000  | Q1
-Analytics Hub | 28000  | Q2
-Cloud Backup  | 3200   | Q2
-CRM Pro       | 15000  | Q1
-CRM Pro       | 15000  | Q2
-Data Vault    | 8500   | Q1
-ML Studio     | 35000  | Q2
-```
-
-### UNION ALL with Summary Row
-
-```sql
+-- Querying just product and amount to see unique product catalog offers sold
 SELECT product, amount
 FROM q1_sales
-UNION ALL
+UNION
 SELECT product, amount
-FROM q2_sales
-UNION ALL
-SELECT 'TOTAL', SUM(amount)
-FROM (
-    SELECT amount FROM q1_sales
-    UNION ALL
-    SELECT amount FROM q2_sales
-) combined;
+FROM q2_sales;
 ```
 
 ```text
+# Output:
 product       | amount
---------------|-------
+--------------+--------
 CRM Pro       | 15000
 Analytics Hub | 28000
 Data Vault    | 8500
-CRM Pro       | 15000
 ML Studio     | 35000
-Analytics Hub | 28000
 Cloud Backup  | 3200
-TOTAL         | 132700
 ```
+*(Notice that CRM Pro at 15000 and Analytics Hub at 28000 were only returned once, even though they sold in both quarters).*
 
-## Set Operations with WHERE and JOIN
+---
 
-Set operations work on complete queries — you can use WHERE, JOIN, GROUP BY, everything:
+### Example 2: Marketing Channel Overlap (`INTERSECT`)
+The marketing team wants to find customers who signed up online **AND** also signed up in our physical store. These are highly engaged "omnichannel" customers.
 
 ```sql
--- High-value online customers who also shop in-store
-SELECT oc.customer_id, oc.name
-FROM online_customers oc
-WHERE oc.customer_id IN (
-    SELECT customer_id FROM online_customers
-    INTERSECT
-    SELECT customer_id FROM store_customers
-);
+-- Select customer contact details from online list
+SELECT name, email
+FROM online_customers
+INTERSECT
+-- Overlap with customer contact details from store list
+SELECT name, email
+FROM store_customers;
 ```
 
 ```text
-customer_id | name
-------------|-------------
-103         | Priya Patel
-105         | Lisa Zhang
+# Output:
+name        | email
+------------+------------------
+Priya Patel | priya@email.com
+Lisa Zhang  | lisa@email.com
 ```
 
+---
+
+### Example 3: Customer Source Attribution (`EXCEPT`)
+We want to run a promotional campaign targeting online-only customers. These are users who signed up online but have **never** signed up in a physical store.
+* We subtract the store customers from the online customers.
+
 ```sql
--- Year-over-year comparison: customers from Jan who didn't return in Feb
-SELECT customer_id, name
+-- Start with all online customers
+SELECT name, email
 FROM online_customers
-WHERE signup_date BETWEEN '2024-01-01' AND '2024-01-31'
 EXCEPT
-SELECT customer_id, name
-FROM online_customers
-WHERE signup_date BETWEEN '2024-02-01' AND '2024-02-28';
+-- Subtract anyone who signed up in-store
+SELECT name, email
+FROM store_customers;
 ```
 
 ```text
-customer_id | name
-------------|-------------
-101         | Sarah Chen
-102         | James Wilson
+# Output:
+name         | email
+-------------+------------------
+Sarah Chen   | sarah@email.com
+James Wilson | james@email.com
+Marcus Brown | marcus@email.com
 ```
 
-## UNION ALL for Building Date Spines
+---
 
-A common analytics pattern — building a continuous date series:
+## Edge Cases & Common Mistakes (Gotchas)
+
+### Gotcha 1: The Sorting Rules
+You cannot place an `ORDER BY` clause inside individual subqueries within a set operation. The sorting must happen on the final, combined result set.
 
 ```sql
--- Quick date spine for the first 7 days of January
-SELECT '2024-01-01'::date AS report_date
-UNION ALL SELECT '2024-01-02'::date
-UNION ALL SELECT '2024-01-03'::date
-UNION ALL SELECT '2024-01-04'::date
-UNION ALL SELECT '2024-01-05'::date
-UNION ALL SELECT '2024-01-06'::date
-UNION ALL SELECT '2024-01-07'::date;
+-- WRONG: SQL parser error
+SELECT name FROM online_customers ORDER BY name
+UNION
+SELECT name FROM store_customers ORDER BY name;
+
+-- RIGHT: Place ORDER BY at the very end
+SELECT name, email FROM online_customers
+UNION
+SELECT name, email FROM store_customers
+ORDER BY name ASC;
+```
+
+---
+
+### Gotcha 2: Column Naming Priority
+When queries are combined, the final table's column names are inherited from the **first SELECT query**. Aliases defined in subsequent queries are ignored.
+
+```sql
+SELECT name AS online_user_name, email
+FROM online_customers
+UNION
+SELECT name AS retail_user_name, email
+FROM store_customers;
 ```
 
 ```text
-report_date
------------
-2024-01-01
-2024-01-02
-2024-01-03
-2024-01-04
-2024-01-05
-2024-01-06
-2024-01-07
+# Output:
+online_user_name | email
+-----------------+------------------
+Sarah Chen       | sarah@email.com
+...
 ```
+*(The column is named `online_user_name`, completely ignoring `retail_user_name`).*
 
-## Where This Is Used in Real Jobs
+---
 
-| Scenario | Operation | Why |
-|----------|-----------|-----|
-| Combine quarterly reports | UNION ALL | Stack Q1-Q4 into yearly view |
-| Deduplicate customer lists | UNION | Merge lists from multiple sources |
-| Find overlap between segments | INTERSECT | Who's in BOTH segment A and B? |
-| Identify churn | EXCEPT | Last month's users minus this month's |
-| Data migration validation | INTERSECT / EXCEPT | Verify all rows migrated correctly |
-| Build reports with totals | UNION ALL | Append summary rows to detail |
+### Gotcha 3: Set Operations and NULL Values
+Unlike joins and filters where `NULL = NULL` is UNKNOWN, set operations treat NULL values as **identical**.
+* If you run a `UNION`, two rows containing NULL in the same columns are considered duplicates and will be merged into a single row.
+* If you run `INTERSECT`, a row with a NULL value in Query 1 **will match** a row with a NULL value in Query 2.
 
-<div class="challenge">
+```sql
+-- Example showing NULL matches NULL in INTERSECT:
+SELECT product, discount FROM orders WHERE order_id = 1002 -- discount is NULL
+INTERSECT
+SELECT product, discount FROM orders WHERE order_id = 1004; -- discount is NULL
+```
+This query will return one row representing the product and its NULL discount, showing that set operations are "NULL-safe".
 
-### Challenge 1: Full Customer List
-Combine online_customers and store_customers into a single deduplicated list. Show customer_id, name, and email. If a customer appears in both, show them only once.
+---
 
-### Challenge 2: Channel Exclusivity Report
-Write three queries: (1) customers who ONLY shop online, (2) customers who ONLY shop in-store, (3) customers who shop in BOTH channels. Show the count for each group.
+## Performance Considerations
 
-### Challenge 3: Product Gap Analysis
-You have q1_sales and q2_sales. Find: (a) products sold in Q1 but discontinued in Q2, (b) new products launched in Q2, (c) products sold in both quarters with combined revenue.
-
+<div class="interview-tip">
+Always default to <strong>UNION ALL</strong> unless you explicitly need to deduplicate. 
+Under the hood, <strong>UNION</strong> requires the database engine to sort the combined dataset and run a deduplication algorithm, which utilizes temporary disk space and CPU memory. On tables with millions of rows, switching from <strong>UNION</strong> to <strong>UNION ALL</strong> can make a query run 10x to 100x faster.
 </div>
+
+---
+
+## Practice Exercises & Mini-Projects
+
+### Exercise 1: Multi-Source Customer Directory
+Create a unified directory of all customers (online and store). The report must contain:
+1. `customer_id`
+2. `name`
+3. `email`
+4. `source` (a hardcoded text label: 'Online' or 'Physical Store')
+Sort the final list alphabetically by name.
+
+<details>
+<summary>View Solution</summary>
+
+**SQL Query:**
+```sql
+SELECT customer_id, name, email, 'Online' AS source
+FROM online_customers
+UNION ALL
+SELECT customer_id, name, email, 'Physical Store' AS source
+FROM store_customers
+ORDER BY name ASC;
+```
+</details>
+
+---
+
+### Exercise 2: Store-Only Customer Directory
+Identify customers who signed up in the physical store but **never** signed up online. Show their names and email addresses.
+
+<details>
+<summary>View Solution</summary>
+
+**SQL Query:**
+```sql
+SELECT name, email
+FROM store_customers
+EXCEPT
+SELECT name, email
+FROM online_customers;
+```
+</details>
+
+---
+
+### Exercise 3: Segment Comparison Audit
+A retail store manager wants to check if there are any customer records where the name matches but the email addresses differ between the online and physical store signups. Write a query to find such records.
+
+<details>
+<summary>View Solution</summary>
+
+**SQL Query:**
+To find where names are identical but emails differ, we can run a join or set operation analysis. Let's do it using set operations:
+```sql
+-- Find matching names across both channels
+WITH shared_names AS (
+    SELECT name FROM online_customers
+    INTERSECT
+    SELECT name FROM store_customers
+)
+-- Now locate rows for these names where emails do not match
+SELECT name, email, 'Online' AS source
+FROM online_customers
+WHERE name IN (SELECT name FROM shared_names)
+UNION ALL
+SELECT name, email, 'Store' AS source
+FROM store_customers
+WHERE name IN (SELECT name FROM shared_names)
+ORDER BY name;
+```
+</details>
+
+---
+
+### Section Recaps
+
+* **Set operations stack rows vertically**: They combine multiple result sets, compared to joins which match columns horizontally.
+* **Three matching rules**: Columns must have identical counts, compatible data types in order, and align structurally.
+* **UNION ALL vs UNION**: `UNION ALL` stacks queries fast and keeps duplicates. `UNION` removes duplicates but is slower due to sorting.
+* **INTERSECT and EXCEPT**: `INTERSECT` finds overlap between sets, and `EXCEPT` (or `MINUS`) subtracts the second set from the first.
+* **NULLs match NULLs**: In set operations, NULLs are treated as equivalent, unlike standard comparison operators.
+
+---
 
 ## Common Interview Questions
 
 ### Q1: What is the difference between UNION and UNION ALL?
+**Answer:** The primary difference is how they handle duplicate rows and their performance.
+* `UNION ALL` combines all rows from the queries as-is, including duplicates. It is very fast because no processing is required to check for duplicates.
+* `UNION` combines the rows and then filters out duplicate rows. It requires the database engine to sort or hash the combined result set, which is resource-intensive and slower on large tables.
 
-**Answer:** UNION removes duplicate rows from the combined result — it sorts all rows and deduplicates, which makes it slower. UNION ALL keeps all rows including duplicates and is faster because it skips deduplication. In analytics, UNION ALL is preferred unless you specifically need deduplication, because (1) it's faster, (2) duplicates are usually meaningful data, and (3) you can always add DISTINCT later if needed.
+### Q2: What are the requirements for combining two queries using set operations?
+**Answer:** The queries must satisfy three conditions:
+1. They must select the same number of columns.
+2. The columns in corresponding positions must have compatible data types (e.g. both integers, both varchars).
+3. The logical positioning must match since SQL aligns columns by order, not by name.
 
-### Q2: What are the rules for using set operations?
+### Q3: What is the difference between JOIN and UNION?
+**Answer:** 
+* A `JOIN` combines columns from two tables based on a matching key. It expands the dataset **horizontally**.
+* A `UNION` combines rows from two queries. It expands the dataset **vertically** by stacking the rows.
 
-**Answer:** Three rules: (1) Both queries must return the same number of columns. (2) Corresponding columns must have compatible data types (e.g., both integers, both strings). (3) Column names in the result come from the first query — aliases in the second query are ignored. ORDER BY can only appear at the very end, after the last set operation.
+<div class="interview-tip">
+You can illustrate this with a simple drawing analogy: "A join is like adding new rooms to a house (more columns). A union is like adding stories to a building (more rows)."
+</div>
 
-### Q3: What is the difference between EXCEPT and NOT IN?
+### Q4: How does EXCEPT (or MINUS) handle duplicate rows?
+**Answer:** `EXCEPT` returns distinct rows from the first query that are not present in the second query. It automatically performs a deduplication step on the final output. If Query A has three duplicate rows of a record and Query B does not have it, `EXCEPT` will return only one copy of that record.
 
-**Answer:** EXCEPT compares entire rows across all columns and handles NULLs correctly. NOT IN compares a single column and has a dangerous NULL trap — if the subquery returns any NULL, NOT IN returns no rows at all. EXCEPT is generally safer. Also, EXCEPT automatically deduplicates; NOT IN does not. In Oracle, EXCEPT is called MINUS.
-
-### Q4: Can you use ORDER BY with UNION?
-
-**Answer:** ORDER BY can only appear once, at the very end of the entire set operation — it applies to the final combined result, not to individual queries. If you need to control the order of rows from each source, add a sort column (like a label) and ORDER BY that column. For example: `SELECT name, 1 AS sort_order FROM table_a UNION ALL SELECT name, 2 FROM table_b ORDER BY sort_order, name`.
-
-### Q5: How would you use EXCEPT to find data quality issues?
-
-**Answer:** Run your expected result set as the first query and actual data as the second. `expected EXCEPT actual` shows rows that should exist but don't (missing records). `actual EXCEPT expected` shows rows that exist but shouldn't (extra/bad records). If both return zero rows, the data matches perfectly. This is a standard reconciliation technique for data migration, ETL validation, and audit checks.
+### Q5: How do set operations handle NULL values?
+**Answer:** In set operations, NULL values are treated as equal to one another. If two rows have NULL in the same columns, a `UNION` will treat them as duplicates and collapse them. Similarly, an `INTERSECT` will successfully match a row with a NULL value in Table A to a row with a NULL value in Table B. This is different from joins, where `NULL = NULL` is evaluated as UNKNOWN and fails to match.

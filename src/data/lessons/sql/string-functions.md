@@ -12,496 +12,562 @@ seoTitle: "SQL String Functions Tutorial | Datalogify"
 seoDescription: "Master SQL string functions — CONCAT, SUBSTRING, TRIM, REPLACE, UPPER, LOWER, LIKE patterns."
 ---
 
-## Why This Matters
+## Introduction & The "Why"
 
-Real-world data is messy. Names are in mixed case. Addresses have trailing spaces. Phone numbers come in five formats. Emails need domain extraction. If you can't clean and parse text in SQL, you'll spend hours exporting to Excel or Python for what should be a 3-line query.
+Think of messy text data entering your database like a load of dirty clothes entering a laundry machine. 
 
-## The Tables We're Working With
-
-```sql
--- customers table
--- | cust_id | full_name       | email                  | phone          | address                    |
--- |---------|-----------------|------------------------|----------------|----------------------------|
--- | 1001    | Sarah Chen      | sarah.chen@gmail.com   | (555) 123-4567 | 123 Oak St, Portland, OR   |
--- | 1002    | JAMES WILSON    | JAMES@COMPANY.COM      | 555.234.5678   | 456 Elm Ave, Seattle, WA   |
--- | 1003    |  priya patel    | priya_p@yahoo.com      | 5553456789     |  789 Pine Rd, Denver, CO   |
--- | 1004    | Mike  Johnson   | mike.j@outlook.com     | (555) 456-7890 | 321 Maple Dr, Austin, TX   |
--- | 1005    | lisa park       | LISA.PARK@WORK.ORG     | 555-567-8901   | 654 Cedar Ln, Miami, FL    |
--- | 1006    | David Kim Jr.   | d.kim@email.co.uk      | 555 678 9012   | 987 Birch Ct, Boston, MA   |
-
--- products table
--- | product_id | sku           | product_name                      |
--- |------------|---------------|-----------------------------------|
--- | 1          | CRM-PRO-2024  | CRM Pro - Enterprise Edition      |
--- | 2          | AH-BASIC-2024 | Analytics Hub (Basic)             |
--- | 3          | DV-STD-2024   | Data Vault: Standard License      |
--- | 4          | CRM-PRO-2025  | CRM Pro - Enterprise Edition v2   |
+```text
+       ┌──────────────────────────────────────────────────┐
+       │             TEXT LAUNDRY MACHINE                 │
+       │                                                  │
+ INPUT │ [  SArah.cHEN@gMAil.com  ]                       │
+       └──────────────┬───────────────────────────────────┘
+                      │
+                      ▼
+            [ Casing Cycle (LOWER) ]     ──► sarah.chen@gmail.com
+                      │
+                      ▼
+            [ Spin Cycle (TRIM) ]        ──► sarah.chen@gmail.com (spaces gone)
+                      │
+                      ▼
+            [ Split Cycle (SUBSTRING) ]  ──► Username: sarah.chen | Domain: gmail.com
+                      │
+                      ▼
+       ┌──────────────────────────────────────────────────┐
+       │ Clean, Standardized, Structured Output           │
+       └──────────────────────────────────────────────────┘
 ```
 
-## CONCAT — Joining Strings Together
+When you open the washing machine lid, you have a series of specific cycles:
+*   **The Casing Cycle (`LOWER` or `UPPER`)**: Takes shirts of different colors (mixed case) and dyes them all a uniform color (all lowercase or all uppercase) so they match.
+*   **The Spin Cycle (`TRIM`)**: Shakes off all the loose lint and dirt clinging to the edges of the clothes (leading and trailing spaces, tabs, or hidden line breaks).
+*   **The Repair Cycle (`REPLACE`)**: Finds holes or patches in a fabric and replaces them with clean matching cloth (like removing dots, hyphens, or brackets).
+*   **The Scissors Cycle (`SUBSTRING`)**: Cuts a piece of fabric into specific sizes (like extracting the area code from a raw phone number).
+*   **The Stitching Cycle (`CONCAT` or `||`)**: Sews two separate pieces of cloth together to create a single complete garment.
+
+In the real world, data is exceptionally dirty. Users submit sign-up forms with trailing spaces, write names in all caps, paste telephone numbers in different formats (some with dots, some with hyphens, some with brackets), and enter email addresses with accidental spaces. 
+
+If you cannot sanitize, clean, and restructure strings directly in SQL, you will be forced to export millions of rows to Python, R, or Excel just to perform basic cleanups. Text cleaning functions are essential for formatting reports, matching records between CRMs, and performing data preparation.
+
+---
+
+## Step-by-Step Concept Breakdown
+
+### Case Standardization: UPPER() and LOWER()
+
+Case variation is a primary cause of failed query joins. To a database, `'sarah.chen@gmail.com'` and `'Sarah.Chen@Gmail.com'` are completely distinct strings. Joining tables on mismatched case columns will result in dropped rows.
+
+To standardize case, SQL provides two simple functions:
+*   `UPPER(string)`: Converts all characters to uppercase.
+*   `LOWER(string)`: Converts all characters to lowercase.
+
+#### The Search Matching Pattern:
+Always standardize case on both sides of a comparison in your filters:
 
 ```sql
--- Standard SQL: CONCAT()
-SELECT CONCAT(full_name, ' <', email, '>') AS formatted
-FROM customers;
+WHERE LOWER(email) = LOWER('UserEnteredEmail@Email.com')
+```
 
--- PostgreSQL also supports ||
-SELECT full_name || ' <' || email || '>' AS formatted
-FROM customers;
+#### Index Suppression Warning:
+When you apply a function like `LOWER()` to a column in your `WHERE` clause, the database query optimizer cannot use standard indexes on that column. It is forced to run a slow **full-table scan** because it has to calculate the `LOWER()` output for every single row in the table to evaluate the condition.
+
+```text
+WHERE email = 'smith@email.com'       <-- Uses index (Fast)
+WHERE LOWER(email) = 'smith@email.com' <-- Bypasses index (Slow!)
+```
+
+**Best Practice**: In high-performance systems, either store text in lowercase by default at the write layer, or create a function-based index (supported in PostgreSQL and Oracle):
+```sql
+CREATE INDEX idx_customers_email_lower ON customers (LOWER(email));
+```
+
+---
+
+### Whitespace Sanitation: TRIM(), LTRIM(), and RTRIM()
+
+Whitespace characters include trailing spaces, leading spaces, tab characters (`\t`), carriage returns (`\r`), and newlines (`\n`). 
+
+*   `TRIM(string)`: Removes all spaces/tabs from **both** the left and right ends of a string.
+*   `LTRIM(string)`: Removes spaces only from the **left** side (leading spaces).
+*   `RTRIM(string)`: Removes spaces only from the **right** side (trailing spaces).
+
+> [!IMPORTANT]
+> `TRIM` only removes whitespace from the *outer edges* of a string. It does **not** collapse multiple internal spaces. For instance, `TRIM('  Sarah   Chen  ')` returns `'Sarah   Chen'` (the internal spaces remain untouched).
+
+To replace multiple internal spaces, you must use string replacement functions or regular expressions.
+
+---
+
+### Joining Strings: CONCAT(), CONCAT_WS(), and ||
+
+Concatenation is the act of linking multiple strings end-to-end. Different database systems handle this using different syntaxes:
+
+1.  **Standard SQL / PostgreSQL**: Use the pipe operator `||`.
+    ```sql
+    SELECT first_name || ' ' || last_name FROM customers;
+    ```
+2.  **MySQL / SQL Server / Oracle**: Use the `CONCAT()` function.
+    ```sql
+    SELECT CONCAT(first_name, ' ', last_name) FROM customers;
+    ```
+
+#### The NULL Propagation Trap:
+In standard SQL, if you concatenate any string with a `NULL` value, the entire result becomes `NULL`. 
+
+```text
+'Hello' || NULL || 'World'  ──►  NULL
+```
+
+This occurs because `NULL` represents an unknown state, and any operation combining a known value with an unknown value yields an unknown result.
+
+To bypass this trap, use the **`CONCAT_WS()`** (CONCAT With Separator) function (supported in MySQL, Postgres, and SQL Server) or guard each column with `COALESCE`:
+
+*   **`CONCAT_WS(separator, string1, string2, ...)`**: This function automatically ignores `NULL` values and joins only the populated fields using the designated separator.
+    ```sql
+    CONCAT_WS(' ', first_name, middle_name, last_name)
+    -- If middle_name is NULL, it will cleanly join first_name and last_name with a single space.
+    ```
+
+---
+
+### Location Searching: POSITION() vs. CHARINDEX()
+
+To extract a portion of a string, you often need to locate the position of a specific character (like finding the `@` symbol in an email or a space character in a full name).
+
+*   **PostgreSQL / MySQL**: `POSITION(substring IN string)`
+*   **SQL Server**: `CHARINDEX(substring, string)`
+
+If the substring is found, the function returns its **1-indexed position** (meaning the first character of the string is position 1, not 0). If the character is not found, the function returns `0`.
+
+---
+
+### Substring Extraction: SUBSTRING()
+
+The `SUBSTRING` function extracts a slice of text from a larger string based on a starting position and length.
+
+```sql
+SUBSTRING(string, start_position [, length])
+```
+
+*   `start_position`: The index where extraction begins (1-indexed).
+*   `length` (Optional): The number of characters to extract. If omitted, it extracts everything from the start position to the end of the string.
+
+To perform dynamic extraction, combine `SUBSTRING` with `POSITION`:
+
+```text
+Email:  [ s a r a h . c h e n @ g m a i l . c o m ]
+Index:    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18
+POSITION('@' IN email) = 11
+
+To extract username: SUBSTRING(email, 1, 11 - 1)  ──► sarah.chen
+To extract domain:   SUBSTRING(email, 11 + 1)      ──► gmail.com
+```
+
+---
+
+### Text Replacement: REPLACE()
+
+The `REPLACE` function replaces all occurrences of a specified substring with a new substring.
+
+```sql
+REPLACE(string, target_substring, replacement_substring)
+```
+
+For basic swaps (like changing `'Street'` to `'St.'`), `REPLACE` works perfectly. However, if you need to remove multiple different symbols (like stripping brackets, hyphens, and spaces from a phone number), nesting multiple `REPLACE()` calls makes your code unreadable. 
+
+For complex cleanup, use **`REGEXP_REPLACE`** (supported in Postgres, MySQL 8.0+, and Oracle) which applies regular expressions to match patterns:
+
+```sql
+REGEXP_REPLACE(phone, '[^0-9]', '', 'g')
+-- Reads: "Match any character that is NOT a digit [^0-9] and replace it with nothing '', globally 'g'."
+```
+
+---
+
+## Code / Practical Walkthroughs
+
+We will run our walkthroughs using two tables: `customers_raw` and `inventory_products`.
+
+### Schema Setup
+
+```sql
+-- Create customers_raw table
+CREATE TABLE customers_raw (
+    cust_id INT PRIMARY KEY,
+    full_name VARCHAR(100),
+    email VARCHAR(100),
+    phone VARCHAR(50),
+    address VARCHAR(150)
+);
+
+INSERT INTO customers_raw VALUES
+(1001, '  Sarah Chen  ', 'sarah.chen@gmail.com', '(555) 123-4567', '123 Oak St, Portland, OR'),
+(1002, 'JAMES WILSON', 'JAMES@COMPANY.COM', '555.234.5678', '456 Elm Ave, Seattle, WA'),
+(1003, '  priya patel  ', 'priya_p@yahoo.com', '5553456789', ' 789 Pine Rd, Denver, CO'),
+(1004, 'Mike  Johnson', 'mike.j@outlook.com', NULL, '321 Maple Dr, Austin, TX'),
+(1005, 'lisa park', 'LISA.PARK@WORK.ORG', '555-567-8901', '654 Cedar Ln, Miami, FL'),
+(1006, 'David Kim Jr.', 'd.kim@email.co.uk', '555 678 9012', '987 Birch Ct, Boston, MA');
+
+-- Create inventory_products table
+CREATE TABLE inventory_products (
+    product_id INT PRIMARY KEY,
+    sku VARCHAR(50),
+    product_name VARCHAR(100)
+);
+
+INSERT INTO inventory_products VALUES
+(1, 'CRM-PRO-2024', 'CRM Pro - Enterprise Edition'),
+(2, 'AH-BASIC-2024', 'Analytics Hub (Basic)'),
+(3, 'DV-STD-2025', 'Data Vault: Standard License'),
+(4, 'CRM-PRO-2025', 'CRM Pro - Enterprise Edition v2');
+```
+
+---
+
+### Walkthrough 1: Dynamic Email Domain Extraction and Analysis
+
+We need to analyze our database to find which email domains are most popular among our customers. We will extract the domain name and count the occurrences.
+
+#### Query:
+
+```sql
+SELECT 
+    -- Convert domain to lowercase for consistent grouping
+    LOWER(
+        SUBSTRING(
+            email, 
+            POSITION('@' IN email) + 1
+        )
+    ) AS email_domain,
+    COUNT(*) AS customer_count
+FROM customers_raw
+GROUP BY 1
+ORDER BY customer_count DESC;
 ```
 
 ```text
-formatted
------------------------------------
-Sarah Chen <sarah.chen@gmail.com>
-JAMES WILSON <JAMES@COMPANY.COM>
- priya patel <priya_p@yahoo.com>
-Mike  Johnson <mike.j@outlook.com>
-lisa park <LISA.PARK@WORK.ORG>
-David Kim Jr. <d.kim@email.co.uk>
+# Output:
+email_domain | customer_count
+-------------|---------------
+gmail.com    | 1
+company.com  | 1
+yahoo.com    | 1
+outlook.com  | 1
+work.org     | 1
+email.co.uk  | 1
 ```
 
-**CONCAT_WS** (concat with separator) is cleaner for multiple fields:
+#### Step-by-Step Logic Breakdown:
+1.  `POSITION('@' IN email)` searches each email string for the index of the `@` character. For `sarah.chen@gmail.com`, it returns `11`.
+2.  `SUBSTRING(email, 11 + 1)` instructs the engine to extract text starting at index 12 through to the end of the string. This extracts `'gmail.com'`.
+3.  `LOWER()` standardizes the casing (converting `'COMPANY.COM'` to `'company.com'`).
+4.  `GROUP BY 1` groups the results by this computed domain column.
+5.  `COUNT(*)` sums up the records for each domain.
+
+---
+
+### Walkthrough 2: Phone Number Standardization
+
+Our marketing dialer requires all phone numbers to be formatted in a strict E.164 string format: `+1XXXXXXXXXX` (11 digits starting with country code 1, no brackets, dots, spaces, or hyphens).
+
+#### Query:
 
 ```sql
--- CONCAT_WS = concat with separator
-SELECT CONCAT_WS(' | ', cust_id, full_name, email) AS record
-FROM customers;
+SELECT 
+    cust_id,
+    phone AS raw_phone,
+    -- Step 1: Strip all non-numeric characters using REGEXP_REPLACE (Postgres syntax)
+    -- Step 2: Prepend country code '+1'
+    -- Step 3: Handle NULL values with COALESCE
+    COALESCE(
+        '+1' || REGEXP_REPLACE(phone, '[^0-9]', '', 'g'), 
+        'No phone on file'
+    ) AS standardized_phone
+FROM customers_raw;
 ```
 
 ```text
-record
-----------------------------------------------
-1001 | Sarah Chen | sarah.chen@gmail.com
-1002 | JAMES WILSON | JAMES@COMPANY.COM
-1003 |  priya patel | priya_p@yahoo.com
+# Output:
+cust_id | raw_phone      | standardized_phone
+--------|----------------|-------------------
+1001    | (555) 123-4567 | +15551234567
+1002    | 555.234.5678   | +15552345678
+1003    | 5553456789     | +15553456789
+1004    | NULL           | No phone on file
+1005    | 555-567-8901   | +15555678901
+1006    | 555 678 9012   | +15556789012
 ```
 
-## UPPER() and LOWER() — Case Conversion
+#### Step-by-Step Logic Breakdown:
+1.  For row 1, `REGEXP_REPLACE('(555) 123-4567', '[^0-9]', '', 'g')` removes all brackets, spaces, and hyphens, returning `'5551234567'`.
+2.  The pipe operator appends `'+1'` to the front, yielding `'+15551234567'`.
+3.  For row 4 (`cust_id` 1004), the phone field is `NULL`. The regexp evaluation returns `NULL`. `COALESCE` detects the null value and swaps it for `'No phone on file'`.
+
+---
+
+### Walkthrough 3: Proper Name Formatting
+
+Let's clean our customer names. We need to strip leading and trailing whitespace, collapse internal double spaces down to single spaces, and capitalize the first letter of each name.
+
+#### Query (PostgreSQL / systems with `INITCAP`):
 
 ```sql
-SELECT full_name,
-       UPPER(full_name) AS upper_name,
-       LOWER(full_name) AS lower_name
-FROM customers;
+SELECT 
+    full_name AS raw_name,
+    -- Step 1: Trim outer spaces
+    -- Step 2: Replace double spaces with single spaces
+    -- Step 3: Apply proper casing
+    INITCAP(
+        REPLACE(
+            TRIM(full_name), 
+            '  ', 
+            ' '
+        )
+    ) AS clean_name
+FROM customers_raw;
 ```
 
 ```text
-full_name      | upper_name     | lower_name
----------------|----------------|---------------
-Sarah Chen     | SARAH CHEN     | sarah chen
-JAMES WILSON   | JAMES WILSON   | james wilson
- priya patel   |  PRIYA PATEL   |  priya patel
+# Output:
+raw_name        | clean_name
+----------------|-------------
+  Sarah Chen    | Sarah Chen
+JAMES WILSON    | James Wilson
+  priya patel   | Priya Patel
+Mike  Johnson   | Mike Johnson
+lisa park       | Lisa Park
+David Kim Jr.   | David Kim Jr.
 ```
 
-### Case-Insensitive Matching
+#### Step-by-Step Logic Breakdown:
+1.  `TRIM('  Sarah Chen  ')` strips the outer padding to return `'Sarah Chen'`.
+2.  `REPLACE('Mike  Johnson', '  ', ' ')` detects the double space in the center and swaps it for a single space, returning `'Mike Johnson'`.
+3.  `INITCAP('james wilson')` capitalizes the first letter of each word, returning `'James Wilson'`.
+
+---
+
+### Walkthrough 4: SKU / Serial Number Parsing
+
+Our SKU structure contains structured product info: `[ProductCode]-[Tier]-[Year]` (e.g., `CRM-PRO-2024`). Let's extract the individual elements.
+
+#### Query:
 
 ```sql
--- Don't do this (misses mixed case):
-SELECT * FROM customers WHERE full_name = 'james wilson';
-
--- Do this instead:
-SELECT * FROM customers WHERE LOWER(full_name) = 'james wilson';
--- Or:
-SELECT * FROM customers WHERE UPPER(full_name) = 'JAMES WILSON';
-```
-
-<div class="interview-tip">
-
-**Performance Warning**: Using LOWER() or UPPER() in WHERE clauses prevents index usage. In production, consider a computed column or function-based index: `CREATE INDEX idx_name_lower ON customers(LOWER(full_name))` (PostgreSQL supports this).
-
-</div>
-
-## TRIM, LTRIM, RTRIM — Remove Whitespace
-
-```sql
-SELECT full_name,
-       LENGTH(full_name) AS original_len,
-       TRIM(full_name) AS trimmed,
-       LENGTH(TRIM(full_name)) AS trimmed_len
-FROM customers;
+SELECT 
+    sku,
+    -- Extract product code (everything before the first hyphen)
+    SUBSTRING(sku, 1, POSITION('-' IN sku) - 1) AS product_code,
+    -- Extract the release year (the last 4 characters)
+    RIGHT(sku, 4) AS release_year,
+    -- Extract the middle tier
+    SUBSTRING(
+        sku,
+        POSITION('-' IN sku) + 1,
+        -- Calculate length of tier by locating positions of hyphens
+        (POSITION('-' IN RIGHT(sku, LENGTH(sku) - POSITION('-' IN sku))) + POSITION('-' IN sku) - 1) - POSITION('-' IN sku)
+    ) AS product_tier
+FROM inventory_products;
 ```
 
 ```text
-full_name      | original_len | trimmed        | trimmed_len
----------------|--------------|----------------|------------
-Sarah Chen     | 10           | Sarah Chen     | 10
-JAMES WILSON   | 12           | JAMES WILSON   | 12
- priya patel   | 13           | priya patel    | 11
-Mike  Johnson  | 14           | Mike  Johnson  | 13
+# Output:
+sku           | product_code | release_year | product_tier
+--------------|--------------|--------------|-------------
+CRM-PRO-2024  | CRM          | 2024         | PRO
+AH-BASIC-2024 | AH           | 2024         | BASIC
+DV-STD-2025   | DV           | 2025         | STD
+CRM-PRO-2025  | CRM          | 2025         | PRO
 ```
 
-Notice " priya patel" had a leading space — TRIM removed it. But "Mike  Johnson" still has a double space inside — TRIM only handles the edges.
+#### Step-by-Step Logic Breakdown:
+1.  `POSITION('-' IN sku)` finds the first hyphen. For `CRM-PRO-2024`, it's at index 4. `SUBSTRING(sku, 1, 3)` extracts `'CRM'`.
+2.  `RIGHT(sku, 4)` pulls the final 4 characters (`'2024'`).
+3.  The tier extraction dynamically isolates the text between the first and second hyphens.
 
-```sql
--- LTRIM: left side only, RTRIM: right side only
-SELECT LTRIM('  hello  ') AS left_trimmed,
-       RTRIM('  hello  ') AS right_trimmed,
-       TRIM('  hello  ')  AS both_trimmed;
-```
+---
+
+## Edge Cases & Common Mistakes
+
+### 1. NULL Contamination in CONCAT
+As discussed, standard SQL concatenation using the `||` operator returns `NULL` if any element in the chain is `NULL`.
+
+*   **Incorrect Code**:
+    ```sql
+    -- If address is NULL, the entire location is returned as NULL
+    SELECT cust_id, full_name || ' lives at: ' || address AS location
+    FROM customers_raw;
+    ```
+*   **Correct Code**:
+    Use `COALESCE` to provide an empty fallback string, or use the `CONCAT` function (which automatically ignores null elements).
+    ```sql
+    SELECT cust_id, CONCAT(full_name, ' lives at: ', COALESCE(address, 'Unknown Location')) AS location
+    FROM customers_raw;
+    ```
+
+---
+
+### 2. Multi-byte Characters (Unicode)
+Functions like `LENGTH(col)` behave differently depending on the database engine.
+*   `LENGTH()` or `CHAR_LENGTH()` returns the **number of characters** in the string.
+*   `OCTET_LENGTH()` or `DATALENGTH()` returns the **number of bytes** used to store the string.
+
+If your data contains emojis or non-English characters (such as Chinese or Cyrillic letters), a single character can occupy 2 to 4 bytes. 
 
 ```text
-left_trimmed | right_trimmed | both_trimmed
--------------|---------------|------------
-hello        |   hello       | hello
+Character: '🔥'
+LENGTH('🔥')       ──► 1 (character)
+OCTET_LENGTH('🔥') ──► 4 (bytes in UTF-8)
 ```
 
-### Cleaning Internal Double Spaces
+Be careful not to mix up character counts and byte counts when setting column constraints or running substrings on multi-byte text fields.
+
+---
+
+### 3. Case Standardization Index Suppression
+When you use a text function like `LOWER(email) = 'abc@gmail.com'` inside your `WHERE` filter, the database will bypass the index and perform a slow full-table scan. 
+
+*   **Fix**: If your database engine does not support function-based indexing, store all search-critical fields in lowercase at the point of ingestion.
+
+---
+
+## Practice Exercises & Mini-Projects
+
+### Exercise 1: Email Domain Counter
+**Goal**: Write a query that extracts the email domain from the `customers_raw` table, converts it to lowercase, and counts the number of customers on each domain. Do not include domains that have fewer than 1 customer (or write the code to support grouping).
+
+*   *Hint*: Combine `SUBSTRING` and `POSITION` with a `GROUP BY` clause.
+
+<details>
+<summary>View Solution</summary>
 
 ```sql
--- Replace double spaces with single
-SELECT REPLACE(full_name, '  ', ' ') AS clean_name
-FROM customers
-WHERE full_name LIKE '%  %';
+SELECT 
+    LOWER(SUBSTRING(email, POSITION('@' IN email) + 1)) AS domain_name,
+    COUNT(*) AS user_count
+FROM customers_raw
+GROUP BY 1
+ORDER BY user_count DESC;
 ```
+</details>
 
-```text
-clean_name
------------
-Mike Johnson
-```
+---
 
-## SUBSTRING — Extract Parts of a String
+### Exercise 2: Dynamic Address Parser
+**Goal**: Given the address format `'Street Address, City, State'`, write a query that extracts the City and State into separate columns.
+
+*   *Hint*: Look at the positions of the commas.
+
+<details>
+<summary>View Solution</summary>
 
 ```sql
--- SUBSTRING(string, start_position, length)
--- Positions are 1-indexed
-
-SELECT email,
-       SUBSTRING(email, 1, POSITION('@' IN email) - 1) AS username,
-       SUBSTRING(email, POSITION('@' IN email) + 1) AS domain
-FROM customers;
+-- Using Postgres REGEXP_MATCH for clean extraction, or nested substrings:
+SELECT 
+    address,
+    -- Extract City (between first and second comma)
+    TRIM(
+        SUBSTRING(
+            address,
+            POSITION(',' IN address) + 1,
+            POSITION(',' IN RIGHT(address, LENGTH(address) - POSITION(',' IN address))) - 1
+        )
+    ) AS city,
+    -- Extract State (last 2 characters)
+    RIGHT(TRIM(address), 2) AS state
+FROM customers_raw;
 ```
+</details>
 
-```text
-email                  | username   | domain
------------------------|------------|---------------
-sarah.chen@gmail.com   | sarah.chen | gmail.com
-JAMES@COMPANY.COM      | JAMES      | COMPANY.COM
-priya_p@yahoo.com      | priya_p    | yahoo.com
-mike.j@outlook.com     | mike.j     | outlook.com
-LISA.PARK@WORK.ORG     | LISA.PARK  | WORK.ORG
-d.kim@email.co.uk      | d.kim      | email.co.uk
-```
+---
 
-### LEFT() and RIGHT()
+### Exercise 3: SKU Validation Check
+**Goal**: Write a validation query that returns a list of SKUs from `inventory_products` that do not follow the strict 3-segment dash format (e.g. `XXX-XXX-XXXX`).
+
+*   *Hint*: Use `LIKE` with character wildcards or count the occurrences of hyphens.
+
+<details>
+<summary>View Solution</summary>
 
 ```sql
-SELECT sku,
-       LEFT(sku, POSITION('-' IN sku) - 1) AS product_code,
-       RIGHT(sku, 4) AS year_code
-FROM products;
+SELECT sku
+FROM inventory_products
+-- Return rows that don't match pattern of text followed by hyphen, text, hyphen, 4 characters
+WHERE sku NOT LIKE '%-%-%'
+   OR LENGTH(sku) - LENGTH(REPLACE(sku, '-', '')) != 2;
 ```
+</details>
 
-```text
-sku           | product_code | year_code
---------------|--------------|----------
-CRM-PRO-2024  | CRM          | 2024
-AH-BASIC-2024 | AH           | 2024
-DV-STD-2024   | DV           | 2024
-CRM-PRO-2025  | CRM          | 2025
-```
+---
 
-## POSITION / CHARINDEX — Find a Character's Location
+## Section Recaps
 
-```sql
--- PostgreSQL/MySQL: POSITION(substring IN string)
-SELECT email,
-       POSITION('@' IN email) AS at_position
-FROM customers;
+*   Standardize user-submitted text fields using `LOWER()` or `UPPER()` to ensure consistent casing.
+*   **Applying functions to columns** in filters disables standard database index usage. Use function-based indexes to optimize search queries.
+*   Use `TRIM()` to remove outer trailing and leading spaces.
+*   Standard SQL string concatenation using `||` returns `NULL` if any element in the sequence is `NULL`. Protect against this by using `CONCAT()` or `COALESCE()`.
+*   Locate character indices dynamically using `POSITION()` or `CHARINDEX()`.
+*   Perform pattern cleanups on phone numbers and addresses using `REGEXP_REPLACE()`.
 
--- SQL Server: CHARINDEX(substring, string)
--- SELECT email, CHARINDEX('@', email) AS at_position FROM customers;
-```
-
-```text
-email                  | at_position
------------------------|------------
-sarah.chen@gmail.com   | 11
-JAMES@COMPANY.COM      | 6
-priya_p@yahoo.com      | 8
-mike.j@outlook.com     | 7
-LISA.PARK@WORK.ORG     | 10
-d.kim@email.co.uk      | 6
-```
-
-## REPLACE — Swap Text
-
-```sql
--- Standardize phone numbers: strip all non-digits
--- Step by step approach:
-SELECT phone,
-       REPLACE(
-           REPLACE(
-               REPLACE(
-                   REPLACE(phone, '(', ''),
-               ')', ''),
-           '-', ''),
-       ' ', '') AS digits_only
-FROM customers;
-```
-
-```text
-phone          | digits_only
----------------|------------
-(555) 123-4567 | 5551234567
-555.234.5678   | 555.234.5678
-5553456789     | 5553456789
-(555) 456-7890 | 5554567890
-555-567-8901   | 5555678901
-555 678 9012   | 5556789012
-```
-
-Notice dots weren't removed — you'd need another REPLACE. For complex cleaning, REGEXP_REPLACE is better.
-
-```sql
--- PostgreSQL: REGEXP_REPLACE strips all non-digits in one shot
-SELECT phone,
-       REGEXP_REPLACE(phone, '[^0-9]', '', 'g') AS digits_only
-FROM customers;
-```
-
-```text
-phone          | digits_only
----------------|------------
-(555) 123-4567 | 5551234567
-555.234.5678   | 5552345678
-5553456789     | 5553456789
-(555) 456-7890 | 5554567890
-555-567-8901   | 5555678901
-555 678 9012   | 5556789012
-```
-
-## LENGTH / LEN — String Size
-
-```sql
-SELECT full_name,
-       LENGTH(full_name) AS char_count,
-       LENGTH(TRIM(full_name)) AS trimmed_count
-FROM customers;
-
--- SQL Server uses LEN() and it auto-trims trailing spaces
--- SELECT full_name, LEN(full_name) AS char_count FROM customers;
-```
-
-```text
-full_name      | char_count | trimmed_count
----------------|------------|-------------
-Sarah Chen     | 10         | 10
-JAMES WILSON   | 12         | 12
- priya patel   | 13         | 11
-Mike  Johnson  | 14         | 13
-David Kim Jr.  | 13         | 13
-```
-
-## LIKE Patterns — Basic Pattern Matching
-
-```sql
--- % = any characters (including none), _ = exactly one character
-
--- Emails from gmail
-SELECT * FROM customers WHERE email LIKE '%@gmail.com';
-
--- Names starting with 'S' (case-sensitive)
-SELECT * FROM customers WHERE full_name LIKE 'S%';
-
--- Names with exactly 4-letter first names
-SELECT * FROM customers WHERE TRIM(full_name) LIKE '____ %';
-
--- Products containing 'Pro'
-SELECT * FROM products WHERE product_name LIKE '%Pro%';
-```
-
-```text
--- '%@gmail.com' results:
-cust_id | email
---------|---------------------
-1001    | sarah.chen@gmail.com
-
--- 'S%' results:
-cust_id | full_name
---------|----------
-1001    | Sarah Chen
-
--- '%Pro%' results:
-product_id | product_name
------------|----------------------------
-1          | CRM Pro - Enterprise Edition
-4          | CRM Pro - Enterprise Edition v2
-```
-
-## REGEXP — Advanced Pattern Matching (MySQL/PostgreSQL)
-
-```sql
--- PostgreSQL: ~ operator or REGEXP_MATCHES
--- MySQL: REGEXP or RLIKE
-
--- Find emails from any .com domain
-SELECT email FROM customers
-WHERE email ~ '.*@.*\.com$';
-
--- Find names that start with uppercase letter followed by lowercase
-SELECT full_name FROM customers
-WHERE TRIM(full_name) ~ '^[A-Z][a-z]';
-
--- Extract city from address (PostgreSQL)
-SELECT address,
-       (REGEXP_MATCH(address, ',\s*([^,]+),\s*[A-Z]{2}$'))[1] AS city
-FROM customers;
-```
-
-```text
-address                    | city
----------------------------|--------
-123 Oak St, Portland, OR   | Portland
-456 Elm Ave, Seattle, WA   | Seattle
- 789 Pine Rd, Denver, CO   | Denver
-321 Maple Dr, Austin, TX   | Austin
-654 Cedar Ln, Miami, FL    | Miami
-987 Birch Ct, Boston, MA   | Boston
-```
-
-## COALESCE with Strings — Handling NULL Text
-
-```sql
--- Some customers have NULL phone numbers
-SELECT full_name,
-       COALESCE(phone, 'No phone on file') AS contact_phone
-FROM customers;
-
--- Building display names with fallbacks
-SELECT COALESCE(preferred_name, first_name, email) AS display_name
-FROM users;
-```
-
-## Parsing Real Data — Putting It All Together
-
-### Extract First and Last Name
-
-```sql
-SELECT full_name,
-       TRIM(SUBSTRING(
-           TRIM(full_name), 1,
-           POSITION(' ' IN TRIM(full_name)) - 1
-       )) AS first_name,
-       TRIM(SUBSTRING(
-           TRIM(full_name),
-           POSITION(' ' IN TRIM(full_name)) + 1
-       )) AS last_name
-FROM customers;
-```
-
-```text
-full_name      | first_name | last_name
----------------|------------|----------
-Sarah Chen     | Sarah      | Chen
-JAMES WILSON   | JAMES      | WILSON
- priya patel   | priya      | patel
-Mike  Johnson  | Mike       | Johnson
-lisa park       | lisa       | park
-David Kim Jr.  | David      | Kim Jr.
-```
-
-### Standardize Names (Title Case Approximation)
-
-```sql
--- Capitalize first letter, lowercase the rest
-SELECT full_name,
-       CONCAT(
-           UPPER(LEFT(TRIM(full_name), 1)),
-           LOWER(SUBSTRING(TRIM(full_name), 2))
-       ) AS title_case_approx
-FROM customers;
-```
-
-```text
-full_name      | title_case_approx
----------------|------------------
-Sarah Chen     | Sarah chen
-JAMES WILSON   | James wilson
- priya patel   | Priya patel
-```
-
-Note: True title case (capitalizing each word) requires INITCAP in PostgreSQL or a more complex approach.
-
-```sql
--- PostgreSQL has INITCAP
-SELECT INITCAP(TRIM(full_name)) AS proper_name
-FROM customers;
-```
-
-```text
-proper_name
------------
-Sarah Chen
-James Wilson
-Priya Patel
-Mike  Johnson
-Lisa Park
-David Kim Jr.
-```
-
-### Extract State from Address
-
-```sql
-SELECT address,
-       RIGHT(TRIM(address), 2) AS state_code
-FROM customers;
-```
-
-```text
-address                    | state_code
----------------------------|----------
-123 Oak St, Portland, OR   | OR
-456 Elm Ave, Seattle, WA   | WA
- 789 Pine Rd, Denver, CO   | CO
-321 Maple Dr, Austin, TX   | TX
-654 Cedar Ln, Miami, FL    | FL
-987 Birch Ct, Boston, MA   | MA
-```
-
-## Where This Is Used in Real Jobs
-
-| Scenario | Functions | Why |
-|----------|----------|-----|
-| Standardize names | TRIM, UPPER, INITCAP | Clean messy imports |
-| Parse email domains | SUBSTRING, POSITION | Customer analytics |
-| Clean phone numbers | REPLACE, REGEXP_REPLACE | Standardize formats |
-| Extract address parts | SUBSTRING, RIGHT | Geographic analysis |
-| Case-insensitive search | LOWER/UPPER | Flexible matching |
-| SKU parsing | LEFT, RIGHT, SUBSTRING | Product categorization |
-
-<div class="challenge">
-
-### Challenge 1: Email Domain Report
-Extract the email domain from each customer's email. Show the domain in lowercase and count how many customers use each domain.
-
-### Challenge 2: Phone Standardization
-Clean all phone numbers to a standard format: (XXX) XXX-XXXX. First strip to digits only, then format.
-
-### Challenge 3: Name Cleanup
-Write a query that trims whitespace, fixes internal double spaces, and applies proper case (first letter of each word capitalized) to the full_name column.
-
-</div>
+---
 
 ## Common Interview Questions
 
-### Q1: How do you extract the domain from an email address in SQL?
+### Q1: How do you extract the username and domain from an email?
 
-**Answer:** Use SUBSTRING with POSITION: `SUBSTRING(email, POSITION('@' IN email) + 1)`. This gets everything after the @ sign. To make it case-insensitive, wrap in LOWER(). In SQL Server, use CHARINDEX instead of POSITION: `SUBSTRING(email, CHARINDEX('@', email) + 1, LEN(email))`.
+**Answer:**
+You can isolate these elements by finding the index of the `@` symbol using `POSITION()` (or `CHARINDEX()` in SQL Server) and passing it to the `SUBSTRING()` function:
+*   **Username**: Extract characters from index 1 up to the index of `@` minus 1.
+*   **Domain**: Extract characters starting from the index of `@` plus 1.
 
-### Q2: What's the difference between CHAR and VARCHAR?
+```sql
+SELECT 
+    SUBSTRING(email, 1, POSITION('@' IN email) - 1) AS username,
+    SUBSTRING(email, POSITION('@' IN email) + 1) AS domain
+FROM users;
+```
 
-**Answer:** CHAR is fixed-length — CHAR(10) always stores 10 characters, padding with spaces. VARCHAR is variable-length — VARCHAR(10) stores only the characters actually used, up to 10. Use VARCHAR for most text fields. CHAR is only efficient when all values are the same length (like state codes: CHAR(2)).
+---
 
-### Q3: How do you handle case-insensitive searches in SQL?
+### Q2: What happens if you concatenate a string with NULL? How do you prevent this?
 
-**Answer:** Two approaches: (1) Use LOWER() or UPPER() on both sides: `WHERE LOWER(name) = LOWER('Smith')`. (2) Use a case-insensitive collation if your database supports it. PostgreSQL's ILIKE is also an option: `WHERE name ILIKE 'smith'`. Note that wrapping a column in a function prevents index usage — consider a functional index for performance.
+**Answer:**
+Under standard SQL rules, concatenating a string with `NULL` propagates the null value, returning `NULL` for the entire expression.
+To prevent this, you can:
+1.  Use `COALESCE(column, '')` to substitute a blank string for null values.
+2.  Use the `CONCAT()` function, which ignores null values and joins the remaining strings.
 
-### Q4: What is COALESCE and when do you use it with strings?
+---
 
-**Answer:** COALESCE returns the first non-NULL value from its arguments. With strings, it's used for fallback values: `COALESCE(preferred_name, full_name, 'Unknown')`. It's also essential when concatenating nullable columns — since NULL + any string = NULL in most databases, use `CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, ''))`.
+### Q3: Compare the performance of `LIKE '%abc%'` versus `LIKE 'abc%'`.
 
-### Q5: How do you find rows where a column contains a specific substring?
+**Answer:**
+*   `LIKE 'abc%'` can utilize database indexes (index range scan). Because the string's prefix is known, the engine can quickly traverse the index tree to locate matching keys.
+*   `LIKE '%abc%'` cannot utilize standard B-Tree indexes. Since the search pattern can begin anywhere in the string, the query engine is forced to perform a full-table scan, checking every single record.
 
-**Answer:** Use LIKE with wildcards: `WHERE column LIKE '%substring%'`. The % matches any characters. For case-insensitive matching, use `WHERE LOWER(column) LIKE '%substring%'` or PostgreSQL's ILIKE. For complex patterns, use REGEXP (MySQL) or the `~` operator (PostgreSQL). LIKE with a leading % can't use standard indexes — consider full-text search for large tables.
+---
+
+### Q4: What is the difference between `LENGTH()` and `CHAR_LENGTH()` (or `DATALENGTH()`)?
+
+**Answer:**
+*   `LENGTH()` and `CHAR_LENGTH()` measure the number of characters in a string.
+*   `DATALENGTH()` or `OCTET_LENGTH()` measures the number of bytes used to store the string in memory.
+For standard ASCII characters, character count and byte count are identical. For multi-byte characters like emojis or special Unicode characters, byte count will be larger than character count.
+
+---
+
+### Q5: Write a query to capitalize the first letter of each word in a string if your database doesn't have `INITCAP`.
+
+**Answer:**
+If `INITCAP` is not available, you can extract the first letter of each word using substring logic, capitalize them using `UPPER()`, and combine them with the lowercased remaining text. For a simple two-word column (like `first_name` and `last_name` stored separately), you would write:
+
+```sql
+SELECT 
+    CONCAT(
+        UPPER(SUBSTRING(first_name, 1, 1)), 
+        LOWER(SUBSTRING(first_name, 2)), 
+        ' ', 
+        UPPER(SUBSTRING(last_name, 1, 1)), 
+        LOWER(SUBSTRING(last_name, 2))
+    ) AS formatted_name
+FROM users;
+```
