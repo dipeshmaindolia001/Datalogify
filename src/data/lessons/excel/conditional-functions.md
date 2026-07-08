@@ -12,398 +12,456 @@ seoTitle: "Excel IF, SUMIF, COUNTIFS Tutorial | Datalogify"
 seoDescription: "Master Excel conditional functions — IF, nested IF, IFS, SUMIF, SUMIFS, COUNTIF, COUNTIFS, AND, OR, IFERROR."
 ---
 
-## Why This Matters
+## Introduction & The "Why"
 
-Real data isn't clean and uniform. You need to categorize, filter, and aggregate based on conditions — "sum revenue only for the East region," "count orders above $500," "classify customers into tiers." Conditional functions are how analysts turn raw data into business insights.
+Data in the real world is rarely uniform. It is messy, volatile, and full of outliers. As a data analyst, you cannot treat every row of data identically. You need to make decisions dynamically based on specific rules:
+- *If* a customer is in the "Enterprise" tier, *then* apply a 20% discount; otherwise, apply no discount.
+- *If* a transaction occurred in the "East" region *and* the revenue exceeded $10,000, *then* add it to the regional performance bucket.
+- *If* a cell contains a division error due to missing data, *then* display a blank space instead of a scary `#DIV/0!` warning.
 
-## The IF Function
+To perform these tasks, Excel relies on **Conditional Functions**. These functions allow you to introduce logic, decision-making, and targeted queries into your models.
 
-The foundation of all conditional logic. It tests a condition and returns one value if TRUE, another if FALSE.
+### The Metaphor: The Railway Switch Router
 
-**Syntax:** `=IF(logical_test, value_if_true, value_if_false)`
+Think of conditional functions as a **Railway Switch Router**. 
 
-### Sample Data: Sales Team Performance
-
-| | A | B | C | D |
-|---|---|---|---|---|
-| **1** | Rep | Region | Revenue | Quota |
-| **2** | Sarah Chen | East | 125000 | 100000 |
-| **3** | Mike Patel | West | 78000 | 100000 |
-| **4** | Lisa Nguyen | East | 156000 | 120000 |
-| **5** | James Wilson | South | 92000 | 100000 |
-| **6** | Amy Rodriguez | West | 143000 | 120000 |
-| **7** | Tom Garcia | South | 67000 | 80000 |
+Imagine a train (representing your data row) rolling down a track. Up ahead, the track splits into multiple directions. There is a mechanical switch (representing your logical test) sitting at the junction:
 
 ```text
-' In E2 — Did the rep hit quota?
-=IF(C2>=D2, "Hit", "Missed")
+               ┌── [Track A: "Approve Bonus"] (Condition is TRUE)
+               │
+══ [Data Row] ═┼─ [Switch: "Did Sales exceed $100k?"]
+               │
+               └── [Track B: "No Bonus"]      (Condition is FALSE)
 ```
 
-```text
-E2: Hit      (125000 >= 100000)
-E3: Missed   (78000 < 100000)
-E4: Hit      (156000 >= 120000)
-E5: Missed   (92000 < 100000)
-E6: Hit      (143000 >= 120000)
-E7: Missed   (67000 < 80000)
+As the train approaches, the switch checks a specific attribute of the cargo (e.g., *"Is sales revenue greater than or equal to $100,000?"*). 
+- If the cargo meets the condition (`TRUE`), the lever pulls and the train is redirected down **Track A** (where it receives a bonus calculation).
+- If the cargo fails the condition (`FALSE`), the lever stays put and the train travels down **Track B** (where it receives zero bonus).
+
+By chaining these switches together, you can build incredibly complex, automated pathways that sort, calculate, and clean your data with zero manual intervention.
+
+---
+
+## Step-by-Step Concept Breakdown
+
+To build effective switches, we must understand the structure of logical tests and how Excel processes logical operators.
+
+### 1. The Anatomy of an IF Function
+
+The core `IF` function is the foundation of all logical statements. It requires three arguments:
+
+```excel
+=IF(logical_test, value_if_true, value_if_false)
 ```
 
-### IF with Calculations
+1. **`logical_test`:** A statement or comparison that evaluates to either `TRUE` or `FALSE` (e.g., `C2 >= 100000`).
+2. **`value_if_true`:** What Excel should output if the test is `TRUE`. This can be a text string (like `"Hit"`), a number (like `500`), a calculation (like `C2 * 10%`), or even another formula.
+3. **`value_if_false`:** What Excel should output if the test is `FALSE`.
 
-You can put formulas inside the IF — not just text.
+### 2. Nested IF Statements vs. The Modern IFS Function
 
-```text
-' In F2 — Calculate bonus: 5% of revenue if quota hit, otherwise $0
-=IF(C2>=D2, C2*0.05, 0)
-```
+What happens if you have more than two possible outcomes? For example, you need to classify sales reps into **four** performance tiers: Platinum, Gold, Silver, and Bronze.
 
-```text
-F2: 6250    (125000 × 5%)
-F3: 0       (missed quota)
-F4: 7800    (156000 × 5%)
-F5: 0       (missed quota)
-F6: 7150    (143000 × 5%)
-F7: 0       (missed quota)
-```
+#### Nested IF (The Traditional Approach)
+To handle multiple branches, you must place an `IF` function inside the `value_if_false` argument of another `IF` function. This is called "nesting":
 
-## Nested IF — Multiple Conditions
-
-When you need more than two outcomes, nest IF functions inside each other.
-
-```text
-' Classify reps into tiers based on revenue:
-' Platinum: >= 150000
-' Gold: >= 100000
-' Silver: >= 75000
-' Bronze: < 75000
-
+```excel
 =IF(C2>=150000, "Platinum", IF(C2>=100000, "Gold", IF(C2>=75000, "Silver", "Bronze")))
 ```
 
-```text
-Sarah:  Gold       (125000)
-Mike:   Silver     (78000)
-Lisa:   Platinum   (156000)
-James:  Silver     (92000)
-Amy:    Gold       (143000)
-Tom:    Bronze     (67000)
+Excel evaluates this from left to right. As soon as it finds a logical test that evaluates to `TRUE`, it stops evaluating and returns that value. If none of the tests are `TRUE`, it defaults to the final argument (`"Bronze"`).
+
+*The Problem:* Nested IFs are notoriously difficult to read, write, and audit. If you miss a single closing parenthesis at the end, the entire formula breaks.
+
+#### The IFS Function (Excel 2019+ and Office 365)
+The `IFS` function allows you to test multiple conditions without nesting. The syntax is a clean pairing of conditions and values:
+
+```excel
+=IFS(condition1, value1, condition2, value2, condition3, value3, ...)
 ```
 
-**Warning:** Nested IFs get ugly fast. Excel allows up to 64 levels, but if you need more than 3, use IFS instead.
+Excel tests the conditions in the order they are written. 
 
-## IFS — The Clean Alternative (Excel 2019+/365)
+> [!IMPORTANT]
+> The `IFS` function does not have a built-in default/else argument. If none of the conditions evaluate to `TRUE`, the formula will return a `#N/A` error. To prevent this, you must add a catch-all condition at the very end of your formula: write `TRUE` as the final condition, followed by your default value (e.g., `..., TRUE, "Bronze"`).
 
-Same logic, much cleaner syntax. Tests conditions in order and returns the first TRUE result.
+---
 
-**Syntax:** `=IFS(condition1, value1, condition2, value2, ...)`
+## Combining Logical Operators: AND, OR, NOT
 
-```text
-' Same tier classification, but readable:
+Sometimes a single comparison isn't enough. You might need to check if a sales rep hit their quota **and** has more than 5 years of experience, or if a transaction occurred in the North region **or** the South region.
+
+Unlike programming languages where you write `X and Y` or `X or Y`, Excel wraps the comparisons inside functions.
+
+### 1. The AND Function
+Returns `TRUE` only if **all** arguments inside evaluate to `TRUE`.
+
+```excel
+=AND(C2>=D2, E2>5)
+```
+*Evaluates to:* `TRUE` if C2 is greater than or equal to D2 **and** E2 is greater than 5. Otherwise, returns `FALSE`.
+
+### 2. The OR Function
+Returns `TRUE` if **at least one** argument inside evaluates to `TRUE`.
+
+```excel
+=OR(B2="East", B2="West")
+```
+*Evaluates to:* `TRUE` if the region is East **or** West. Returns `FALSE` only if the region is something else (like South or North).
+
+### 3. The NOT Function
+Inverts the logical outcome. It turns `TRUE` into `FALSE` and `FALSE` into `TRUE`.
+
+```excel
+=NOT(B2="East")
+```
+*Evaluates to:* `TRUE` if the region is NOT East.
+
+---
+
+## Conditional Aggregations: SUMIFS, COUNTIFS, AVERAGEIFS
+
+Standard aggregate functions look at a whole column. But what if you want to sum revenue *only* if the region is "East"? Or count the number of orders *only* if the transaction is over $5,000?
+
+Excel provides a suite of conditional aggregation functions. 
+
+> [!CAUTION]
+> Excel contains legacy single-condition functions (`SUMIF`, `COUNTIF`, `AVERAGEIF`) and multi-condition functions (`SUMIFS`, `COUNTIFS`, `AVERAGEIFS`). 
+> The order of arguments is **different** between them! 
+> - In `SUMIF`, the range to sum is the **last** argument: `=SUMIF(range, criteria, sum_range)`.
+> - In `SUMIFS`, the range to sum is the **first** argument: `=SUMIFS(sum_range, criteria_range1, criteria1, ...)`.
+> 
+> Because `SUMIFS` can do everything `SUMIF` does (even with a single condition) and maintains a cleaner syntax for scaling, modern database analysts recommend **always using the plural versions (SUMIFS, COUNTIFS, AVERAGEIFS)**.
+
+---
+
+## Code / Practical Walkthroughs
+
+Let's work through hands-on examples using realistic corporate datasets.
+
+### Walkthrough 1: Customer Tiering & Bonus Calculations
+
+You are a business analyst. You need to assign performance tiers and calculate commission bonuses for the following sales team.
+
+#### Example Data Table
+
+| | A (Rep Name) | B (Region) | C (Sales Revenue) | D (Quota) | E (Tier) | F (Bonus) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1** | **Rep Name** | **Region** | **Revenue** | **Quota** | **Tier** | **Bonus** |
+| **2** | Sarah Chen | West | 125000 | 100000 | | |
+| **3** | Mike Patel | East | 89000 | 100000 | | |
+| **4** | Lisa Nguyen | West | 156000 | 120000 | | |
+| **5** | James Wilson | South | 92000 | 100000 | | |
+| **6** | Amy Rodriguez | East | 143000 | 120000 | | |
+| **7** | Tom Garcia | South | 67000 | 80000 | | |
+
+#### Formulas
+
+We will write two formulas:
+1. In Column E, use `IFS` to classify each rep into a tier based on their revenue:
+   - `>= 150000` → `"Platinum"`
+   - `>= 100000` → `"Gold"`
+   - `>= 75000` → `"Silver"`
+   - Anything less → `"Bronze"`
+2. In Column F, calculate a bonus. A rep receives a bonus *only* if they hit or exceeded their Quota **AND** their revenue is greater than $100,000. The bonus is `5%` of their revenue; otherwise, they receive `$0`.
+
+```excel
+' 1. Classify Tier (in cell E2):
 =IFS(C2>=150000, "Platinum", C2>=100000, "Gold", C2>=75000, "Silver", TRUE, "Bronze")
+
+' 2. Calculate Bonus using AND inside IF (in cell F2):
+=IF(AND(C2>=D2, C2>100000), C2*0.05, 0)
 ```
+
+#### Tracing Excel’s Calculations
+
+Let's walk through row-by-row evaluations of the formulas:
+
+- **Sarah Chen (Row 2):**
+  - **Tier:** `=IFS(125000>=150000 (False), 125000>=100000 (True) → "Gold")`. Stops evaluation. Output: `"Gold"`.
+  - **Bonus:** `=IF(AND(125000>=100000 (True), 125000>100000 (True)) (AND is True) → 125000*0.05)`. Output: `6250`.
+- **Mike Patel (Row 3):**
+  - **Tier:** `=IFS(89000>=150000 (False), 89000>=100000 (False), 89000>=75000 (True) → "Silver")`. Output: `"Silver"`.
+  - **Bonus:** `=IF(AND(89000>=100000 (False), 89000>100000 (False)) (AND is False) → 0)`. Output: `0`.
+- **Lisa Nguyen (Row 4):**
+  - **Tier:** `=IFS(156000>=150000 (True) → "Platinum")`. Output: `"Platinum"`.
+  - **Bonus:** `=IF(AND(156000>=120000 (True), 156000>100000 (True)) (AND is True) → 156000*0.05)`. Output: `7800`.
+- **James Wilson (Row 5):**
+  - **Tier:** `=IFS(92000>=150000 (False), 92000>=100000 (False), 92000>=75000 (True) → "Silver")`. Output: `"Silver"`.
+  - **Bonus:** `=IF(AND(92000>=100000 (False), 92000>100000 (False)) (AND is False) → 0)`. Output: `0`.
+- **Amy Rodriguez (Row 6):**
+  - **Tier:** `=IFS(143000>=150000 (False), 143000>=100000 (True) → "Gold")`. Output: `"Gold"`.
+  - **Bonus:** `=IF(AND(143000>=120000 (True), 143000>100000 (True)) (AND is True) → 143000*0.05)`. Output: `7150`.
+- **Tom Garcia (Row 7):**
+  - **Tier:** `=IFS(67000>=150000 (False), 67000>=100000 (False), 67000>=75000 (False), TRUE (True) → "Bronze")`. Output: `"Bronze"`.
+  - **Bonus:** `=IF(AND(67000>=80000 (False), 67000>100000 (False)) (AND is False) → 0)`. Output: `0`.
+
+The resulting table looks like this:
 
 ```text
-Same results as the nested IF above — but you can actually read this formula.
+# Output:
+[E2:F7]
+Sarah Chen:    Tier = Gold,     Bonus = 6250
+Mike Patel:    Tier = Silver,   Bonus = 0
+Lisa Nguyen:   Tier = Platinum, Bonus = 7800
+James Wilson:  Tier = Silver,   Bonus = 0
+Amy Rodriguez: Tier = Gold,     Bonus = 7150
+Tom Garcia:    Tier = Bronze,   Bonus = 0
 ```
 
-The `TRUE, "Bronze"` at the end acts as a catch-all default (like "else" in programming). Always include it — without a default, IFS returns `#N/A` if no conditions match.
+---
 
-<div class="interview-tip">
+### Walkthrough 2: Multi-Criteria Sales Summary (SUMIFS, COUNTIFS, AVERAGEIFS)
 
-**Interview Tip:** When asked to classify data into tiers, use IFS if the company uses Excel 365, nested IF otherwise. Always mention you'd check conditions from highest to lowest (or most specific to least specific) to avoid logic errors. If conditions overlap, order matters.
+Now, suppose you are asked to generate a summary dashboard to analyze performance. You have a transaction database of purchases.
 
-</div>
+#### Example Data Table
 
-## AND, OR, NOT — Combine Multiple Conditions
+| | A | B | C | D |
+| :--- | :--- | :--- | :--- | :--- |
+| **1** | **Date** | **Region** | **Product** | **Revenue** |
+| **2** | 2026-01-05 | East | Laptop | 1500 |
+| **3** | 2026-01-08 | West | Phone | 800 |
+| **4** | 2026-01-12 | East | Tablet | 600 |
+| **5** | 2026-01-15 | East | Laptop | 1500 |
+| **6** | 2026-01-18 | West | Laptop | 1500 |
+| **7** | 2026-01-22 | East | Phone | 800 |
+| **8** | 2026-01-25 | West | Tablet | 600 |
+| **9** | 2026-01-28 | East | Laptop | 1500 |
 
-### AND — All Conditions Must Be True
+#### Tasks:
+1. Calculate the total Laptop revenue generated *only* in the **East** region.
+2. Count the number of Laptop transactions that occurred in the **East** region.
+3. Calculate the average purchase revenue for **all products** in the **West** region.
+
+#### Formulas
+
+```excel
+' 1. Total East Laptop Revenue (SUMIFS):
+=SUMIFS(D2:D9, B2:B9, "East", C2:C9, "Laptop")
+
+' 2. Count East Laptop Transactions (COUNTIFS):
+=COUNTIFS(B2:B9, "East", C2:C9, "Laptop")
+
+' 3. Average West Revenue (AVERAGEIFS):
+=AVERAGEIFS(D2:D9, B2:B9, "West")
+```
+
+#### Tracing Excel’s Calculations
+
+1. **`SUMIFS(D2:D9, B2:B9, "East", C2:C9, "Laptop")`**:
+   - Excel scans Column B for `"East"` and Column C for `"Laptop"`.
+   - Match found in Row 2 (1500), Row 5 (1500), and Row 9 (1500).
+   - Calculation: `1500 + 1500 + 1500` = `4500`.
+   - *Result:* `4500`
+
+2. **`COUNTIFS(B2:B9, "East", C2:C9, "Laptop")`**:
+   - Excel scans Column B for `"East"` and Column C for `"Laptop"`.
+   - Matches found in Row 2, Row 5, and Row 9.
+   - *Result:* `3`
+
+3. **`AVERAGEIFS(D2:D9, B2:B9, "West")`**:
+   - Excel scans Column B for `"West"`.
+   - Match found in Row 3 (800), Row 6 (1500), and Row 8 (600).
+   - Calculation: `(800 + 1500 + 600) / 3` = `2900 / 3` = `966.67`.
+   - *Result:* `966.67`
+
+The summary metrics evaluate as:
 
 ```text
-' Bonus only if quota hit AND revenue > 120000:
-=IF(AND(C2>=D2, C2>120000), "Bonus", "No Bonus")
+# Output:
+East Laptop Revenue:  4500
+East Laptop Count:    3
+West Average Revenue: 966.67
 ```
+
+---
+
+### Walkthrough 3: Error Isolation (IFERROR and IFNA)
+
+You are pulling employee designations using a lookup table. However, some designations are missing, which creates `#N/A` errors, and some calculations division-by-zero errors.
+
+#### Example Data Table
+
+| | A | B | C | D |
+| :--- | :--- | :--- | :--- | :--- |
+| **1** | **Rep Name** | **Lookup Designation** | **Raw Commission** | **Sales Transactions** |
+| **2** | Sarah Chen | Gold | 15000 | 25 |
+| **3** | Mike Patel | #N/A | 12000 | 0 |
+| **4** | Lisa Nguyen | Platinum | 20000 | 40 |
+
+#### Formulas
+
+```excel
+' 1. Gracefully handle lookup errors in Column B (in cell B2):
+=IFNA(B2, "Designation Pending")
+
+' 2. Calculate Comm per Transaction and handle zero division errors (in cell E2):
+=IFERROR(C2/D2, 0)
+```
+
+#### Tracing Excel’s Calculations
+
+- **Mike Patel (Row 3):**
+  - Designation: `=IFNA(#N/A, "Designation Pending")` → Returns `"Designation Pending"` (It caught the lookup failure and output a clean string).
+  - Comm per Transaction: `=IFERROR(12000 / 0, 0)` → Returns `0` (Instead of showing `#DIV/0!`, Excel returned `0` because it detected a math error).
 
 ```text
-Sarah:  Bonus      (hit quota AND > 120000)
-Mike:   No Bonus   (missed quota)
-Lisa:   Bonus      (hit quota AND > 120000)
-James:  No Bonus   (missed quota)
-Amy:    Bonus      (hit quota AND > 120000)
-Tom:    No Bonus   (missed quota)
+# Output:
+Mike Patel Designation: Designation Pending
+Mike Patel Comm/Trans:  0
 ```
 
-### OR — At Least One Condition Must Be True
+---
 
-```text
-' Flag for review if missed quota OR revenue below 80000:
-=IF(OR(C2<D2, C2<80000), "Review", "OK")
+## Edge Cases & Common Mistakes
+
+Even intermediate users can fall into logic traps. Here are the gotchas to look out for.
+
+### 1. Tier Logic Evaluation Order
+When using `IFS` or nested `IF` statements with inequalities (`>`, `>=`, `<`, `<=`), **the order of conditions is critical.**
+
+```excel
+' BAD LOGIC:
+=IFS(C2>=50000, "Silver", C2>=100000, "Gold", C2>=150000, "Platinum")
 ```
 
-```text
-Sarah:  OK         (hit quota, above 80k)
-Mike:   Review     (missed quota)
-Lisa:   OK         (hit quota, above 80k)
-James:  Review     (missed quota)
-Amy:    OK         (hit quota, above 80k)
-Tom:    Review     (both: missed quota AND below 80k)
+If cell `C2` contains `160,000`:
+- Excel checks `160,000 >= 50,000`. This is `TRUE`.
+- Excel immediately stops and outputs **`"Silver"`**! The rep has missed out on their Platinum status because the check for Silver happened first.
+- **Rule:** When using `>=` (greater than or equal to), always sort your conditions from **highest to lowest** value. When using `<=` (less than or equal to), sort from **lowest to highest** value.
+
+### 2. Double Quotes for Strings in Criteria
+When using criteria in `SUMIFS` or `COUNTIFS`, any math operators (like `>`, `<`, `<>`) must be enclosed in double quotes. If you are comparing against a cell reference, you must use the ampersand (`&`) to join the operator string with the cell.
+
+```excel
+' BAD: Will throw a name error or fail to parse:
+=SUMIFS(D2:D9, B2:B9, West)
+=SUMIFS(D2:D9, D2:D9, >1000)
+
+' GOOD: Correct quote wrapping:
+=SUMIFS(D2:D9, B2:B9, "West")
+=SUMIFS(D2:D9, D2:D9, ">1000")
+
+' GOOD: Dynamic cell reference syntax:
+=SUMIFS(D2:D9, D2:D9, ">"&F1)
 ```
 
-### NOT — Reverse a Condition
+### 3. The Blanket IFERROR Trap
+Wrapping an entire workbook's calculations in `IFERROR` is a dangerous practice. 
 
-```text
-' Everyone who is NOT in the East region:
-=IF(NOT(B2="East"), "Non-East", "East")
+```excel
+' DANGEROUS:
+=IFERROR(SUMIFS(D2:D9, B2:B9, "East") / F1, 0)
 ```
 
-```text
-Sarah:  East
-Mike:   Non-East
-Lisa:   East
-James:  Non-East
-Amy:    Non-East
-Tom:    Non-East
-```
+If you make a typo inside the `SUMIFS` function name, or if you delete a column creating a `#REF!` error, `IFERROR` will catch it and return `0`. You will never know that your formula is completely broken under the hood.
+- **Rule:** Use `IFNA` specifically for lookups to catch missing records. Only use `IFERROR` on highly targeted calculations (like division) where you have predicted and verified the specific error case.
 
-## SUMIF — Conditional Sum (Single Condition)
+---
 
-**Syntax:** `=SUMIF(range, criteria, sum_range)`
+## Practice Exercises & Mini-Projects
 
-Think of it as: "Look through this range, find matches, and sum the corresponding values."
+### Exercise 1: Building a Tiered Commission Plan
+You are designing a payroll sheet for a retail sales team. 
 
-```text
-' Total revenue for East region:
-=SUMIF(B2:B7, "East", C2:C7)
-```
+| Employee | Total Sales | Commission |
+| :--- | :--- | :--- |
+| Frank | 12000 | |
+| Grace | 45000 | |
+| Heidi | 85000 | |
+| Ivan | 150000 | |
 
-```text
-Result: 281000  (125000 + 156000)
-```
+**Task:**
+1. Write a formula to calculate a tiered commission using these rules:
+   - Sales up to `$20,000` get a **1%** commission.
+   - Sales between `$20,001` and `$80,000` get a **3%** commission.
+   - Sales over `$80,000` get a **5%** commission.
+2. Ensure you use cell references for the thresholds and rates rather than hardcoding them, and lock them so they can be dragged down.
 
-```text
-' Total revenue above 100000:
-=SUMIF(C2:C7, ">100000", C2:C7)
-```
+---
 
-```text
-Result: 424000  (125000 + 156000 + 143000)
-```
+### Exercise 2: Dashboard Metrics for a Regional Manager
+Using this transaction dataset:
 
-```text
-' Total revenue for reps with "a" in their name (wildcard):
-=SUMIF(A2:A7, "*a*", C2:C7)
-```
+| Date | Store ID | Manager | Sales | Returns | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 2026-02-01 | Store-A | Julia | 25000 | 1200 | Active |
+| 2026-02-02 | Store-B | Carlos | 18000 | 0 | Active |
+| 2026-02-03 | Store-A | Julia | 32000 | 4500 | Active |
+| 2026-02-04 | Store-C | Lin | 12000 | 800 | Pending |
+| 2026-02-05 | Store-B | Carlos | 21000 | 1500 | Active |
 
-```text
-Result: 661000  (Sarah + Lisa + James + Amy + Garcia — all contain "a")
-```
+**Task:**
+1. Calculate the total Sales for manager `Julia` (SUMIFS).
+2. Count the number of active transactions where returns were greater than `$1,000`.
+3. Calculate the average sales for store `Store-B` when the Status is `"Active"`.
 
-### Wildcard Characters in SUMIF/COUNTIF
+---
 
-| Wildcard | Meaning | Example |
-|---|---|---|
-| `*` | Any number of characters | `"*son"` matches "Wilson", "Johnson" |
-| `?` | Exactly one character | `"M?ke"` matches "Mike", "Make" |
-| `~` | Escape a wildcard | `"~*"` matches a literal asterisk |
+## Section Recaps
 
-## SUMIFS — Multiple Conditions
+- **IF Statements:** Act as logic switches. Syntax: `=IF(test, true_output, false_output)`.
+- **IFS:** Simplifies multiple logical tests. Always add `TRUE, "Default"` at the end to catch edge cases and prevent `#N/A` errors.
+- **AND/OR/NOT:** Combine comparisons. Remember to nest them inside the function call, e.g., `=IF(AND(A, B), TrueVal, FalseVal)`.
+- **SUMIFS / COUNTIFS / AVERAGEIFS:** Put the result range first (except for `COUNTIFS`, which has no result range). Criteria parameters require quotation marks for operators: `">50"`.
 
-**Syntax:** `=SUMIFS(sum_range, criteria_range1, criteria1, criteria_range2, criteria2, ...)`
-
-**Critical difference from SUMIF:** In SUMIFS, the sum_range comes FIRST. This trips up everyone.
-
-```text
-' Revenue for East region where revenue > 100000:
-=SUMIFS(C2:C7, B2:B7, "East", C2:C7, ">100000")
-```
-
-```text
-Result: 281000  (Sarah: 125000 + Lisa: 156000)
-```
-
-```text
-' Revenue for West region reps who missed quota:
-=SUMIFS(C2:C7, B2:B7, "West", C2:C7, "<"&D2)
-```
-
-```text
-Result: 78000  (Mike: 78000 — West rep who missed quota)
-```
-
-## COUNTIF — Count with a Condition
-
-**Syntax:** `=COUNTIF(range, criteria)`
-
-```text
-' How many reps in the East region?
-=COUNTIF(B2:B7, "East")
-```
-
-```text
-Result: 2
-```
-
-```text
-' How many reps exceeded 100k in revenue?
-=COUNTIF(C2:C7, ">100000")
-```
-
-```text
-Result: 3
-```
-
-```text
-' How many unique regions? (trick — count each region once)
-' Count East + Count West + Count South:
-=COUNTIF(B2:B7, "East")
-=COUNTIF(B2:B7, "West")
-=COUNTIF(B2:B7, "South")
-```
-
-```text
-East: 2, West: 2, South: 2  → 3 unique regions
-```
-
-## COUNTIFS — Multiple Criteria
-
-**Syntax:** `=COUNTIFS(criteria_range1, criteria1, criteria_range2, criteria2, ...)`
-
-```text
-' East region reps with revenue > 100000:
-=COUNTIFS(B2:B7, "East", C2:C7, ">100000")
-```
-
-```text
-Result: 2  (Sarah and Lisa)
-```
-
-```text
-' Reps who hit quota AND have revenue > 120000:
-=COUNTIFS(C2:C7, ">="&D2, C2:C7, ">120000")
-```
-
-```text
-Result: 3
-```
-
-## AVERAGEIF and AVERAGEIFS
-
-Same pattern, but for averages:
-
-```text
-' Average revenue for East reps:
-=AVERAGEIF(B2:B7, "East", C2:C7)
-```
-
-```text
-Result: 140500  ((125000 + 156000) / 2)
-```
-
-```text
-' Average revenue for reps who hit quota:
-=AVERAGEIF(C2:C7, ">="&D2, C2:C7)
-```
-
-```text
-Result: 141333.33
-```
-
-## The SUMIF/COUNTIF/AVERAGEIF Pattern
-
-All three follow the same pattern. Once you learn one, you know them all:
-
-| Function | Single Condition | Multiple Conditions |
-|---|---|---|
-| Sum | `SUMIF(range, criteria, sum_range)` | `SUMIFS(sum_range, range1, criteria1, ...)` |
-| Count | `COUNTIF(range, criteria)` | `COUNTIFS(range1, criteria1, range2, criteria2, ...)` |
-| Average | `AVERAGEIF(range, criteria, avg_range)` | `AVERAGEIFS(avg_range, range1, criteria1, ...)` |
-
-**Key difference:** In the "S" versions (SUMIFS, COUNTIFS, AVERAGEIFS), the result range comes FIRST. In the single versions (SUMIF, AVERAGEIF), it comes LAST. This is an Excel design inconsistency that everyone needs to memorize.
-
-## IFERROR — Handle Errors Gracefully
-
-Wraps any formula and catches errors. Essential for dashboards and reports.
-
-**Syntax:** `=IFERROR(formula, value_if_error)`
-
-```text
-' Division that might fail:
-=IFERROR(C2/D2, "N/A")
-
-' VLOOKUP that might not find a match:
-=IFERROR(VLOOKUP(A2, LookupTable, 2, FALSE), "Not Found")
-
-' Return 0 instead of division error:
-=IFERROR(B2/C2, 0)
-```
-
-### IFNA — Catch Only #N/A
-
-If you only want to handle `#N/A` (not other errors), use IFNA. This is better for lookups because you still want to see real errors like `#REF!` or `#VALUE!`.
-
-```text
-' Only catch #N/A, let other errors show:
-=IFNA(VLOOKUP(A2, Products, 2, FALSE), "Product not found")
-```
-
-<div class="interview-tip">
-
-**Interview Tip:** Using IFERROR everywhere is lazy — it hides real bugs. Tell interviewers: "I prefer IFNA for lookups because I want to catch only missing matches. If there's a #REF! or #VALUE! error, I need to see it so I can fix the root cause, not mask it."
-
-</div>
-
-## Where This Gets Used on the Job
-
-- **Customer segmentation:** IF/IFS to classify customers into tiers based on spend
-- **Regional reports:** SUMIFS to total revenue by region AND product AND date range
-- **Data quality:** COUNTIF to find duplicates (`COUNTIF(A:A, A2) > 1`)
-- **KPI dashboards:** IFERROR to ensure dashboards never show ugly errors to stakeholders
-- **Commission calculations:** Nested IF for tiered commission structures
-
-<div class="challenge">
-
-**Challenge: Build a Commission Calculator**
-
-Using this sales data:
-
-| Rep | Region | Q1 Revenue | Q2 Revenue |
-|---|---|---|---|
-| Alice | East | 85000 | 112000 |
-| Bob | West | 62000 | 78000 |
-| Carol | East | 145000 | 168000 |
-| Dave | South | 98000 | 95000 |
-| Eve | West | 110000 | 132000 |
-
-Build these calculations:
-1. **Total Revenue** per rep (Q1 + Q2)
-2. **Tier** using IFS: Platinum (>250k), Gold (>180k), Silver (>150k), Bronze (<=150k)
-3. **Commission Rate**: Platinum=8%, Gold=6%, Silver=4%, Bronze=2%
-4. **Commission Amount**: Total Revenue × Rate
-5. Use SUMIF to find: Total East revenue, Total West revenue
-6. Use COUNTIF to find: How many Platinum reps, how many Bronze reps
-7. Use AVERAGEIFS to find: Average revenue for East reps with revenue > 200000
-
-**Expected:** Carol is Platinum (313k), Eve is Gold (242k), Alice is Silver (197k), Dave and Bob are Bronze.
-
-</div>
+---
 
 ## Common Interview Questions
 
-### Q1: What is the difference between SUMIF and SUMIFS?
+### Q1: Why does `IFS` return a `#N/A` error and how do you prevent it?
 
-**Answer:** SUMIF handles a single condition: `=SUMIF(range, criteria, sum_range)`. SUMIFS handles multiple conditions: `=SUMIFS(sum_range, range1, criteria1, range2, criteria2)`. The critical syntax difference is that SUMIFS puts the sum_range first, while SUMIF puts it last. For example, to sum revenue for East region in Q1: `=SUMIFS(Revenue, Region, "East", Quarter, "Q1")`.
+**Answer:** 
+The `IFS` function evaluates conditions sequentially. If none of the conditions you wrote evaluate to `TRUE`, Excel does not know what to output and throws a `#N/A` (Not Available) error.
 
-### Q2: How would you classify customers into tiers based on their spending?
+To prevent this, you must write a default catch-all argument at the very end of your condition list. By writing `TRUE` as the final condition, Excel will always evaluate that final check as true if all previous checks failed. You then pair it with your default value:
+`=IFS(Condition1, Value1, Condition2, Value2, TRUE, "Default Value")`.
 
-**Answer:** For 2-3 tiers, I'd use nested IF: `=IF(spend>=10000, "Platinum", IF(spend>=5000, "Gold", "Silver"))`. For more tiers, I'd use IFS in Excel 365: `=IFS(spend>=10000, "Platinum", spend>=5000, "Gold", spend>=1000, "Silver", TRUE, "Bronze")`. The conditions must go from highest to lowest to work correctly, and IFS needs a `TRUE` catch-all at the end.
+---
 
-### Q3: What's the difference between IFERROR and IFNA?
+### Q2: What is the syntax difference between `SUMIF` and `SUMIFS`? Why is this difference important to remember?
 
-**Answer:** IFERROR catches ALL error types — #N/A, #VALUE!, #REF!, #DIV/0!, etc. IFNA catches only #N/A errors. I prefer IFNA for lookup formulas because #N/A means "not found," which is expected and should be handled. But #REF! or #VALUE! indicate real bugs that I want to see and fix. IFERROR masks everything, which can hide problems.
+**Answer:** 
+The syntax difference lies in the position of the `sum_range` argument:
+- **`SUMIF` (Single condition):** `=SUMIF(range, criteria, [sum_range])` -> The sum range is at the **end**.
+- **`SUMIFS` (Multiple conditions):** `=SUMIFS(sum_range, criteria_range1, criteria1, ...)` -> The sum range is at the **beginning**.
 
-### Q4: How would you use COUNTIF to find duplicate values in a column?
+This difference is important because if you attempt to convert a `SUMIF` formula to a `SUMIFS` formula by simply adding criteria parameters at the end, Excel will throw a formula syntax error or attempt to evaluate your criteria range as the sum range, returning incorrect numbers. Modern best practice is to use `SUMIFS` exclusively to maintain syntax consistency.
 
-**Answer:** Use `=COUNTIF(A:A, A2)` next to each value. If the result is greater than 1, that value appears more than once — it's a duplicate. To flag duplicates: `=IF(COUNTIF(A:A, A2)>1, "Duplicate", "Unique")`. You can also use conditional formatting with the formula `=COUNTIF($A:$A, $A2)>1` to highlight duplicates visually.
+---
 
-### Q5: Write a formula to calculate a tiered commission: 3% on first $50k, 5% on next $50k, 8% above $100k.
+### Q3: How do you check if a cell contains duplicate records using `COUNTIF`?
 
-**Answer:** `=IF(revenue<=50000, revenue*0.03, IF(revenue<=100000, 50000*0.03+(revenue-50000)*0.05, 50000*0.03+50000*0.05+(revenue-100000)*0.08))`. For $120,000 revenue: first 50k at 3% = $1,500, next 50k at 5% = $2,500, remaining 20k at 8% = $1,600. Total commission = $5,600. This is a common payroll/finance interview question.
+**Answer:** 
+You can use `COUNTIF` to check for duplicates by referencing the entire column range and checking if the output is greater than 1.
+
+For example, if you have user IDs in Column A starting in cell `A2`, you write this formula in an adjacent column:
+`=COUNTIF(A:A, A2) > 1`
+- If the ID is unique, the function returns `FALSE`.
+- If the ID appears elsewhere in the column, the function returns `TRUE`.
+
+You can wrap this in an `IF` statement to display `"Duplicate"` or `"Unique"`, or apply it inside a Conditional Formatting custom rule to automatically highlight duplicate cells in red.
+
+---
+
+### Q4: Explain the difference in behavior between `AND()` and `OR()` functions when combined with an `IF` statement.
+
+**Answer:** 
+The difference lies in how many conditions must pass to trigger the `value_if_true` path:
+- **`AND()`:** Expects all logical arguments inside it to evaluate to `TRUE`. If even one argument is `FALSE`, the entire `AND()` evaluates to `FALSE`, and the `IF` statement triggers the `value_if_false` output.
+- **`OR()`:** Expects at least one of the logical arguments inside it to evaluate to `TRUE`. The only way the `OR()` function evaluates to `FALSE` is if every single argument inside it is `FALSE`.
+
+For example, `=IF(AND(Region="East", Sales>1000), "Yes", "No")` requires **both** conditions to be met for a "Yes". `=IF(OR(Region="East", Sales>1000), "Yes", "No")` returns "Yes" if the region is East (regardless of sales size) OR if sales are above 1000 (regardless of region).
+
+---
+
+### Q5: If an interviewer asks you to write a formula to calculate commission where employees are paid 10% on sales *over* their quota, but nothing if they miss quota, what formula would you write?
+
+**Answer:** 
+I would write a formula combining a logical comparison and arithmetic subtraction:
+`=IF(Sales > Quota, (Sales - Quota) * 10%, 0)`
+- **`Sales > Quota`:** Evaluates if the employee qualified for the commission.
+- **`(Sales - Quota) * 10%`:** Calculates the commission rate specifically on the surplus sales amount above quota (using parentheses to ensure subtraction happens before multiplication).
+- **`0`:** Ensures that employees who missed or exactly met their quota receive `$0` commission rather than a negative payout.
