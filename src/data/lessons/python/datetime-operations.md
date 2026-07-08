@@ -2,9 +2,9 @@
 title: "Working with Dates & Times"
 description: "Parse, format, and calculate with dates — critical for time-series analysis, reporting periods, and data pipelines."
 category: "python"
-order: 14
+order: 13
 phase: 1
-tags: ["python", "datetime", "time-series", "dates"]
+tags: ["python", "datetime", "time-series", "dates", "timezone"]
 publishedDate: 2025-01-29
 prevSlug: "oop-basics"
 nextSlug: "regex-patterns"
@@ -12,536 +12,467 @@ seoTitle: "Python DateTime Tutorial for Analytics | Datalogify"
 seoDescription: "Master Python datetime — parse dates, calculate differences, handle timezones, and work with time-series data."
 ---
 
-## Why This Matters
+## Introduction & The "Why"
 
-Sales by month, user signups by week, revenue trends by quarter — almost every analytics task involves dates. Mess up a timezone or date format and your numbers are wrong. This lesson makes sure that doesn't happen.
+Almost every dataset you encounter in data analytics has a temporal dimension. User signup logs, hourly server metrics, monthly financial reports, transactional histories — all rely on dates and times. 
 
-## Creating Dates and Times
+Despite its importance, datetime manipulation is notorious for causing head-scratching bugs. Timezones shift, daylight saving adjustments add or subtract hours, formats change across regions, and leap years introduce extra days. A small miscalculation in date logic can skew reporting metrics, lead to billing errors, or corrupt time-series analyses.
+
+### The Time Ruler Analogy
+
+Think of time in Python as a **ruler**, and the `datetime` module as your set of drafting tools:
+
+```text
+               [ Time-scale Ruler ]
+  ├──────────────┼──────────────┼──────────────┼──────────────┤
+  2026-01-01   2026-04-01     2026-07-01     2026-10-01     2027-01-01
+  [ Date Point ]  <─────── Timedelta Interval ───────>  [ Date Point ]
+```
+
+* **The Ruler (Date Points):** A specific point on the ruler represents a distinct moment in history (e.g., `July 8, 2026, at 10:30 AM`). In Python, this is represented by `date` or `datetime` objects.
+* **The Distance (Intervals):** If you measure the distance between two marks on the ruler, you get a duration (e.g., `90 days and 4 hours`). In Python, this duration is represented by a `timedelta` object.
+* **The Perspective (Timezones):** Depending on where you stand, the mark on the ruler represents different local times (e.g., a meeting at 3:00 PM in London occurs at 10:00 AM in New York). Timezones act as a lens that shifts the window of observation without altering the physical point of time.
+
+---
+
+## Step-by-Step Concept Breakdown
+
+To work with dates in Python, you must import the built-in `datetime` module. Let's break down its core elements.
+
+### 1. The Core Objects
+* `datetime.date`: Represents a day containing year, month, and day (e.g., `2026-07-08`).
+* `datetime.time`: Represents a time of day independent of any date (e.g., `10:30:15`).
+* `datetime.datetime`: Combines date and time (e.g., `2026-07-08 10:30:15`).
+* `datetime.timedelta`: Represents the difference between two date or datetime points.
+
+### 2. Strptime vs. Strftime (Parsing vs. Formatting)
+These two methods are the most common source of confusion for beginners.
+* **`strptime` (String Parse Time):** Used to convert a raw **string** (like `"08-07-2026"`) into a Python **datetime object**.
+* **`strftime` (String Format Time):** Used to convert a Python **datetime object** into a customized, human-readable **string** (like `"Wednesday, July 8, 2026"`).
+
+#### Memory Trigger:
+* `strptime` = String **P**arse Time (String ➔ Object)
+* `strftime` = String **F**ormat Time (Object ➔ String)
+
+### 3. Naive vs. Aware Datetime
+* **Naive Datetime:** A datetime object containing no timezone information. Python doesn't know if the time represents London, Tokyo, or New York. It is simple to compute but risky in global networks.
+* **Aware Datetime:** A datetime object containing a reference to a timezone timezone database, making it globally unique and safe for conversions. Since Python 3.9, the standard library includes `zoneinfo` to manage timezones natively.
+
+---
+
+## Code Walkthroughs & Practical Examples
+
+Let's look at how to perform these operations in Python.
+
+### 1. Creating and Combining Date Objects
 
 ```python
-from datetime import date, time, datetime
+import datetime
 
-# Date only
-today = date.today()
-print(f"Today: {today}")
+# Create a date object (Year, Month, Day)
+my_date = datetime.date(2026, 7, 8)
+print("Date Object:", my_date)
 
-# Specific date
-launch_date = date(2025, 3, 15)
-print(f"Launch: {launch_date}")
+# Create a time object (Hour, Minute, Second, Microsecond)
+my_time = datetime.time(14, 30, 45)
+print("Time Object:", my_time)
 
-# Date and time
-now = datetime.now()
-print(f"Now: {now}")
+# Combine them into a datetime object
+combined = datetime.datetime.combine(my_date, my_time)
+print("Combined Datetime:", combined)
 
-# Specific datetime
-meeting = datetime(2025, 1, 29, 14, 30, 0)
-print(f"Meeting: {meeting}")
-
-# Access individual components
-print(f"Year: {now.year}, Month: {now.month}, Day: {now.day}")
-print(f"Hour: {now.hour}, Minute: {now.minute}")
-print(f"Day of week: {now.strftime('%A')}")
+# Get current system time (Naive)
+now = datetime.datetime.now()
+print("Current System Datetime:", now)
 ```
 
 ```text
-Today: 2025-01-29
-Launch: 2025-03-15
-Now: 2025-01-29 14:30:45.123456
-Meeting: 2025-01-29 14:30:00
-Year: 2025, Month: 1, Day: 29
-Hour: 14, Minute: 30
-Day of week: Wednesday
+# Output:
+Date Object: 2026-07-08
+Time Object: 14:30:45
+Combined Datetime: 2026-07-08 14:30:45
+Current System Datetime: 2026-07-08 10:55:38.123456
 ```
 
-## Formatting Dates — strftime
+---
 
-`strftime` = "string format time". Converts datetime objects to strings.
+### 2. Parsing and Formatting (strptime & strftime)
 
+To use these methods, we must pass formatting directives. Here are the most common tokens:
+
+| Directive | Description | Example |
+| :--- | :--- | :--- |
+| `%Y` | Year (4-digit) | `2026` |
+| `%y` | Year (2-digit) | `26` |
+| `%m` | Month (2-digit) | `07` |
+| `%B` | Month Name (Full) | `July` |
+| `%b` | Month Name (Abbreviated) | `Jul` |
+| `%d` | Day of the Month (2-digit) | `08` |
+| `%H` | Hour (24-hour clock) | `14` |
+| `%I` | Hour (12-hour clock) | `02` |
+| `%M` | Minute (2-digit) | `30` |
+| `%S` | Second (2-digit) | `45` |
+| `%p` | AM or PM | `PM` |
+| `%A` | Weekday Name (Full) | `Wednesday` |
+
+#### Parsing Strings into Datetime Objects (`strptime`)
 ```python
-from datetime import datetime
+# Raw dates in different formats
+raw_date_1 = "2026-07-08 14:30:00"
+raw_date_2 = "08/07/2026"
+raw_date_3 = "Jul 8, 2026 2:30 PM"
 
-now = datetime(2025, 1, 29, 14, 30, 0)
+# Parse them (Must match the exact structure of the string)
+dt1 = datetime.datetime.strptime(raw_date_1, "%Y-%m-%d %H:%M:%S")
+dt2 = datetime.datetime.strptime(raw_date_2, "%d/%m/%Y")
+dt3 = datetime.datetime.strptime(raw_date_3, "%b %d, %Y %I:%M %p")
 
-# Common formats
-print(now.strftime("%Y-%m-%d"))           # ISO format
-print(now.strftime("%m/%d/%Y"))           # US format
-print(now.strftime("%d-%b-%Y"))           # Day-Month-Year
-print(now.strftime("%B %d, %Y"))          # Full month name
-print(now.strftime("%Y-%m-%d %H:%M:%S"))  # With time
-print(now.strftime("%I:%M %p"))           # 12-hour time
-print(now.strftime("%A, %B %d"))          # Day name + month
-
-# For filenames and logs
-print(now.strftime("report_%Y%m%d.csv"))
-print(now.strftime("backup_%Y%m%d_%H%M.sql"))
+print("Parsed 1:", dt1)
+print("Parsed 2 (Date only):", dt2.date())
+print("Parsed 3:", dt3)
 ```
 
 ```text
-2025-01-29
-01/29/2025
-29-Jan-2025
-January 29, 2025
-2025-01-29 14:30:00
-02:30 PM
-Wednesday, January 29
-report_20250129.csv
-backup_20250129_1430.sql
+# Output:
+Parsed 1: 2026-07-08 14:30:00
+Parsed 2 (Date only): 2026-07-08
+Parsed 3: 2026-07-08 14:30:00
 ```
 
-### Quick Reference
-
-```text
-%Y → 2025    (4-digit year)
-%m → 01      (zero-padded month)
-%d → 29      (zero-padded day)
-%H → 14      (24-hour)
-%I → 02      (12-hour)
-%M → 30      (minute)
-%S → 00      (second)
-%p → PM      (AM/PM)
-%A → Wednesday  (full day name)
-%a → Wed        (short day name)
-%B → January    (full month name)
-%b → Jan        (short month name)
-```
-
-## Parsing Dates — strptime
-
-`strptime` = "string parse time". Converts strings to datetime objects.
-
+#### Formatting Datetime Objects to Custom Strings (`strftime`)
 ```python
-from datetime import datetime
+# Starting datetime object
+dt = datetime.datetime(2026, 7, 8, 14, 30, 0)
 
-# Parse various date formats from CSVs and APIs
-date1 = datetime.strptime("2025-01-29", "%Y-%m-%d")
-date2 = datetime.strptime("01/29/2025", "%m/%d/%Y")
-date3 = datetime.strptime("29-Jan-2025", "%d-%b-%Y")
-date4 = datetime.strptime("January 29, 2025 2:30 PM", "%B %d, %Y %I:%M %p")
+# Format to various styles
+style_a = dt.strftime("%A, %B %d, %Y")
+style_b = dt.strftime("%d-%m-%y")
+style_c = dt.strftime("%I:%M %p (%H:%M)")
 
-print(f"Parsed 1: {date1}")
-print(f"Parsed 2: {date2}")
-print(f"Parsed 3: {date3}")
-print(f"Parsed 4: {date4}")
-
-# Real scenario: parsing dates from messy CSV data
-raw_dates = ["2025-01-15", "2025-02-20", "2025-03-10"]
-parsed = [datetime.strptime(d, "%Y-%m-%d") for d in raw_dates]
-months = [d.strftime("%B") for d in parsed]
-print(f"Months: {months}")
+print("Style A:", style_a)
+print("Style B:", style_b)
+print("Style C:", style_c)
 ```
 
 ```text
-Parsed 1: 2025-01-29 00:00:00
-Parsed 2: 2025-01-29 00:00:00
-Parsed 3: 2025-01-29 00:00:00
-Parsed 4: 2025-01-29 14:30:00
-Months: ['January', 'February', 'March']
+# Output:
+Style A: Wednesday, July 08, 2026
+Style B: 08-07-26
+Style C: 02:30 PM (14:30)
 ```
 
-<div class="interview-tip">
+---
 
-**Interview Insight:** The difference between `strftime` and `strptime` trips people up. Memory trick: strftime = "**f**ormat" (object → string), strptime = "**p**arse" (string → object). You'll use `strptime` constantly when loading CSV dates and API timestamps.
+### 3. Date Math with `timedelta`
 
-</div>
-
-## timedelta — Date Arithmetic
-
-```python
-from datetime import datetime, timedelta
-
-today = datetime(2025, 1, 29)
-
-# Add/subtract days
-tomorrow = today + timedelta(days=1)
-last_week = today - timedelta(weeks=1)
-print(f"Tomorrow: {tomorrow.date()}")
-print(f"Last week: {last_week.date()}")
-
-# Business scenarios
-invoice_date = datetime(2025, 1, 15)
-due_date = invoice_date + timedelta(days=30)
-print(f"Invoice: {invoice_date.date()} → Due: {due_date.date()}")
-
-# Difference between dates
-start = datetime(2025, 1, 1)
-end = datetime(2025, 3, 31)
-duration = end - start
-print(f"Q1 duration: {duration.days} days")
-
-# Hours and minutes
-shift_start = datetime(2025, 1, 29, 9, 0)
-shift_end = datetime(2025, 1, 29, 17, 30)
-worked = shift_end - shift_start
-hours = worked.total_seconds() / 3600
-print(f"Hours worked: {hours}")
-```
-
-```text
-Tomorrow: 2025-01-30
-Last week: 2025-01-22
-Invoice: 2025-01-15 → Due: 2025-02-14
-Q1 duration: 89 days
-Hours worked: 8.5
-```
-
-## Real Analytics: Date Ranges and Periods
+`timedelta` represents durations. You can add or subtract them from dates to calculate future/past dates or check intervals.
 
 ```python
 from datetime import datetime, timedelta
 
-# Generate a date range (like Pandas date_range)
-def date_range(start, end):
-    current = start
-    dates = []
-    while current <= end:
-        dates.append(current)
-        current += timedelta(days=1)
-    return dates
+start_date = datetime(2026, 7, 8, 10, 0, 0)
 
-start = datetime(2025, 1, 1)
-end = datetime(2025, 1, 7)
-week = date_range(start, end)
-print("First week of 2025:")
-for d in week:
-    print(f"  {d.strftime('%a %b %d')}")
+# Define offsets
+offset_days = timedelta(days=30)
+offset_hours = timedelta(hours=4, minutes=30)
+
+# Calculate new datetimes
+future_date = start_date + offset_days
+exact_future_time = start_date + offset_hours
+
+print("Start Date:", start_date)
+print("30 Days Later:", future_date)
+print("4h 30m Later:", exact_future_time)
+
+# Calculate difference between two dates
+delivery_date = datetime(2026, 7, 15, 18, 0, 0)
+duration = delivery_date - start_date
+
+print(f"Time to Delivery: {duration}")
+print(f"Total Days: {duration.days}")
+print(f"Total Seconds: {duration.total_seconds():,.0f}")
 ```
 
 ```text
-First week of 2025:
-  Wed Jan 01
-  Thu Jan 02
-  Fri Jan 03
-  Sat Jan 04
-  Sun Jan 05
-  Mon Jan 06
-  Tue Jan 07
+# Output:
+Start Date: 2026-07-08 10:00:00
+30 Days Later: 2026-08-07 10:00:00
+4h 30m Later: 2026-07-08 14:30:00
+Time to Delivery: 7 days, 8:00:00
+Total Days: 7
+Total Seconds: 633,600
 ```
 
-### Grouping Sales by Month
+---
 
-```python
-from datetime import datetime
-from collections import defaultdict
+### 4. Working with Timezones (`zoneinfo`)
 
-sales = [
-    ("2025-01-05", 12000), ("2025-01-18", 15000), ("2025-01-22", 9000),
-    ("2025-02-03", 18000), ("2025-02-14", 11000),
-    ("2025-03-01", 22000), ("2025-03-15", 14000), ("2025-03-28", 19000),
-]
-
-monthly = defaultdict(int)
-for date_str, amount in sales:
-    dt = datetime.strptime(date_str, "%Y-%m-%d")
-    month_key = dt.strftime("%Y-%m")
-    monthly[month_key] += amount
-
-print("Monthly Revenue:")
-for month, total in sorted(monthly.items()):
-    print(f"  {month}: ${total:,}")
-
-# Calculate month-over-month growth
-months = sorted(monthly.keys())
-for i in range(1, len(months)):
-    prev = monthly[months[i-1]]
-    curr = monthly[months[i]]
-    growth = (curr - prev) / prev * 100
-    print(f"  {months[i-1]} → {months[i]}: {growth:+.1f}%")
-```
-
-```text
-Monthly Revenue:
-  2025-01: $36,000
-  2025-02: $29,000
-  2025-03: $55,000
-
-  2025-01 → 2025-02: -19.4%
-  2025-02 → 2025-03: +89.7%
-```
-
-## Fiscal Quarters
-
-```python
-from datetime import datetime
-
-def get_fiscal_quarter(dt, fiscal_start_month=1):
-    """Get fiscal quarter. Default: calendar year (Jan start).
-    For Apr fiscal year (like many companies): fiscal_start_month=4
-    """
-    adjusted_month = (dt.month - fiscal_start_month) % 12
-    quarter = adjusted_month // 3 + 1
-    fiscal_year = dt.year if dt.month >= fiscal_start_month else dt.year - 1
-    return f"FY{fiscal_year} Q{quarter}"
-
-# Calendar year quarters
-dates = [
-    datetime(2025, 1, 15), datetime(2025, 4, 20),
-    datetime(2025, 7, 10), datetime(2025, 10, 5),
-]
-print("Calendar year quarters:")
-for d in dates:
-    print(f"  {d.strftime('%b %d')} → {get_fiscal_quarter(d)}")
-
-# April fiscal year (common in finance)
-print("\nApril fiscal year quarters:")
-for d in dates:
-    print(f"  {d.strftime('%b %d')} → {get_fiscal_quarter(d, fiscal_start_month=4)}")
-```
-
-```text
-Calendar year quarters:
-  Jan 15 → FY2025 Q1
-  Apr 20 → FY2025 Q2
-  Jul 10 → FY2025 Q3
-  Oct 05 → FY2025 Q4
-
-April fiscal year quarters:
-  Jan 15 → FY2024 Q4
-  Apr 20 → FY2025 Q1
-  Jul 10 → FY2025 Q2
-  Oct 05 → FY2025 Q3
-```
-
-## Timezone Handling
-
-```python
-from datetime import datetime, timezone, timedelta
-
-# UTC timestamp — always use this for storage
-utc_now = datetime.now(timezone.utc)
-print(f"UTC: {utc_now.strftime('%Y-%m-%d %H:%M %Z')}")
-
-# Create timezone-aware datetimes manually
-est = timezone(timedelta(hours=-5))
-pst = timezone(timedelta(hours=-8))
-ist = timezone(timedelta(hours=5, minutes=30))
-
-meeting_utc = datetime(2025, 1, 29, 18, 0, tzinfo=timezone.utc)
-meeting_est = meeting_utc.astimezone(est)
-meeting_pst = meeting_utc.astimezone(pst)
-meeting_ist = meeting_utc.astimezone(ist)
-
-print(f"\nTeam meeting at {meeting_utc.strftime('%H:%M %Z')}:")
-print(f"  New York:  {meeting_est.strftime('%I:%M %p')}")
-print(f"  San Fran:  {meeting_pst.strftime('%I:%M %p')}")
-print(f"  Mumbai:    {meeting_ist.strftime('%I:%M %p')}")
-```
-
-```text
-UTC: 2025-01-29 14:30 UTC
-
-Team meeting at 18:00 UTC:
-  New York:  01:00 PM
-  San Fran:  10:00 AM
-  Mumbai:    11:30 PM
-```
-
-### Using zoneinfo (Python 3.9+)
+Since Python 3.9, the standard library includes `zoneinfo` to provide full support for the IANA Time Zone Database.
 
 ```python
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-# Named timezones — handles daylight saving automatically
-utc = ZoneInfo("UTC")
-eastern = ZoneInfo("America/New_York")
-pacific = ZoneInfo("America/Los_Angeles")
-london = ZoneInfo("Europe/London")
+# Create a datetime localized to UTC
+utc_time = datetime(2026, 7, 8, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+print("UTC time:", utc_time)
 
-now_utc = datetime.now(utc)
-print(f"UTC:      {now_utc.strftime('%Y-%m-%d %I:%M %p %Z')}")
-print(f"New York: {now_utc.astimezone(eastern).strftime('%I:%M %p %Z')}")
-print(f"LA:       {now_utc.astimezone(pacific).strftime('%I:%M %p %Z')}")
-print(f"London:   {now_utc.astimezone(london).strftime('%I:%M %p %Z')}")
+# Convert to Eastern Time (New York)
+ny_time = utc_time.astimezone(ZoneInfo("America/New_York"))
+print("NY time:", ny_time)
+
+# Convert to Tokyo Time (Tokyo)
+tokyo_time = utc_time.astimezone(ZoneInfo("Asia/Tokyo"))
+print("Tokyo time:", tokyo_time)
+
+# Show offsets
+print("New York Offset:", ny_time.utcoffset())
 ```
 
 ```text
-UTC:      2025-01-29 02:30 PM UTC
-New York: 09:30 AM EST
-LA:       06:30 AM PST
-London:   02:30 PM GMT
+# Output:
+UTC time: 2026-07-08 12:00:00+00:00
+NY time: 2026-07-08 08:00:00-04:00
+Tokyo time: 2026-07-08 21:00:00+09:00
+New York Offset: -1 day, 20:00:00
 ```
 
-<div class="interview-tip">
+---
 
-**Interview Insight:** Always store datetimes in UTC. Convert to local time only for display. This prevents bugs when data comes from multiple timezones. In databases, use `TIMESTAMP WITH TIME ZONE`. In Python, always attach `tzinfo` to avoid "naive vs aware" comparison errors.
+### 5. Real Business Metrics Calculations
 
-</div>
+Let's look at three real-world calculations analysts use daily.
 
-## Calendar Module
+#### A. Calculating User Age (Handling Leap Years)
+To accurately calculate age, we compare the current year against the birth year, adjusting by -1 if the current date is calendar-wise before the birthday.
 
 ```python
-import calendar
+def calculate_age(birth_date_str):
+    birth_date = datetime.strptime(birth_date_str, "%Y-%m-%d").date()
+    today = datetime.today().date()
+    
+    # Calculate age base
+    age = today.year - birth_date.year
+    
+    # Adjust down if birthday has not occurred yet this calendar year
+    has_birthday_occurred = (today.month, today.day) >= (birth_date.month, birth_date.day)
+    if not has_birthday_occurred:
+        age -= 1
+        
+    return age
 
-# Days in a month (useful for reporting periods)
-days_feb = calendar.monthrange(2025, 2)  # (weekday of 1st, days in month)
-print(f"Feb 2025: starts on {calendar.day_name[days_feb[0]]}, {days_feb[1]} days")
 
-# Check leap year
-print(f"2024 leap year: {calendar.isleap(2024)}")
-print(f"2025 leap year: {calendar.isleap(2025)}")
-
-# Get last day of each month (for end-of-month reporting)
-for month in range(1, 13):
-    _, last_day = calendar.monthrange(2025, month)
-    print(f"  {calendar.month_abbr[month]} 2025: {last_day} days", end="")
-    print()
+print("Age of User A (born 1995-02-15):", calculate_age("1995-02-15"))
+print("Age of User B (born 2010-09-22):", calculate_age("2010-09-22"))
 ```
 
 ```text
-Feb 2025: starts on Saturday, 28 days
-2024 leap year: True
-2025 leap year: False
-  Jan 2025: 31 days
-  Feb 2025: 28 days
-  Mar 2025: 31 days
-  Apr 2025: 30 days
-  May 2025: 31 days
-  Jun 2025: 30 days
-  Jul 2025: 31 days
-  Aug 2025: 31 days
-  Sep 2025: 30 days
-  Oct 2025: 31 days
-  Nov 2025: 30 days
-  Dec 2025: 31 days
+# Output:
+Age of User A (born 1995-02-15): 31
+Age of User B (born 2010-09-22): 15
 ```
 
-## Real-World: Reporting Period Calculator
+#### B. Subscription Durations & Expired Flags
+A system flags subscriptions as expired if they exceed the duration limit.
 
 ```python
-from datetime import datetime, timedelta
-import calendar
-
-def get_reporting_period(dt):
-    """Get the full reporting period info for a given date."""
-    _, last_day = calendar.monthrange(dt.year, dt.month)
-
-    period_start = dt.replace(day=1)
-    period_end = dt.replace(day=last_day)
-    days_elapsed = (dt - period_start).days + 1
-    days_remaining = (period_end - dt).days
-    pct_complete = (days_elapsed / last_day) * 100
-
+def get_subscription_status(signup_date_str, plan_days=30):
+    signup_dt = datetime.strptime(signup_date_str, "%Y-%m-%d")
+    today = datetime.now()
+    
+    expiration_date = signup_dt + timedelta(days=plan_days)
+    days_remaining = (expiration_date - today).days
+    
+    status = "Active" if days_remaining > 0 else "Expired"
     return {
-        "current_date": dt.strftime("%Y-%m-%d"),
-        "period": dt.strftime("%B %Y"),
-        "start": period_start.strftime("%Y-%m-%d"),
-        "end": period_end.strftime("%Y-%m-%d"),
-        "days_elapsed": days_elapsed,
-        "days_remaining": days_remaining,
-        "pct_complete": round(pct_complete, 1),
+        "signup": signup_dt.strftime("%Y-%m-%d"),
+        "expires": expiration_date.strftime("%Y-%m-%d"),
+        "days_remaining": max(0, days_remaining),
+        "status": status
     }
 
-report = get_reporting_period(datetime(2025, 1, 20))
-print("Current Reporting Period:")
-for key, val in report.items():
-    print(f"  {key}: {val}")
 
-# Forecast based on pace
-actual_revenue = 450000
-projected = actual_revenue / (report["pct_complete"] / 100)
-print(f"\nRevenue pace: ${actual_revenue:,} actual")
-print(f"Month-end projection: ${projected:,.0f}")
+print(get_subscription_status("2026-07-01", plan_days=30))
+print(get_subscription_status("2026-05-10", plan_days=30))
 ```
 
 ```text
-Current Reporting Period:
-  current_date: 2025-01-20
-  period: January 2025
-  start: 2025-01-01
-  end: 2025-01-31
-  days_elapsed: 20
-  days_remaining: 11
-  pct_complete: 64.5
-
-Revenue pace: $450,000 actual
-Month-end projection: $697,674
+# Output:
+{'signup': '2026-07-01', 'expires': '2026-07-31', 'days_remaining': 22, 'status': 'Active'}
+{'signup': '2026-05-10', 'expires': '2026-06-09', 'days_remaining': 0, 'status': 'Expired'}
 ```
 
-## Comparing Dates and Sorting
+#### C. Period Indicators (Financial Quarters)
+Frequently, analysts need to assign quarters to transactions.
 
 ```python
-from datetime import datetime
+def get_quarter(date_str):
+    dt = datetime.strptime(date_str, "%Y-%m-%d")
+    # Determine quarter based on month
+    quarter = (dt.month - 1) // 3 + 1
+    return f"{dt.year}-Q{quarter}"
 
-# Employee hire dates
-employees = [
-    {"name": "Alice", "hired": "2019-03-15", "salary": 95000},
-    {"name": "Bob", "hired": "2022-07-01", "salary": 72000},
-    {"name": "Carol", "hired": "2018-11-20", "salary": 98000},
-    {"name": "Dave", "hired": "2023-01-10", "salary": 65000},
-]
 
-today = datetime(2025, 1, 29)
-
-for emp in employees:
-    hire_date = datetime.strptime(emp["hired"], "%Y-%m-%d")
-    tenure = (today - hire_date).days / 365.25
-    emp["tenure_years"] = round(tenure, 1)
-    emp["hire_dt"] = hire_date
-
-# Sort by tenure (longest first)
-by_tenure = sorted(employees, key=lambda e: e["tenure_years"], reverse=True)
-
-print("Employees by tenure:")
-for emp in by_tenure:
-    print(f"  {emp['name']}: {emp['tenure_years']} years (since {emp['hired']})")
-
-# Who's been here 5+ years?
-senior = [e for e in employees if e["tenure_years"] >= 5]
-print(f"\n5+ years tenure: {[e['name'] for e in senior]}")
+transactions = ["2026-01-15", "2026-05-22", "2026-08-11", "2026-12-30"]
+quarter_mapping = {tx: get_quarter(tx) for tx in transactions}
+print("Financial Quarters:", quarter_mapping)
 ```
 
 ```text
-Employees by tenure:
-  Carol: 6.2 years (since 2018-11-20)
-  Alice: 5.9 years (since 2019-03-15)
-  Bob: 2.6 years (since 2022-07-01)
-  Dave: 2.1 years (since 2023-01-10)
-
-5+ years tenure: ['Alice', 'Carol']
+# Output:
+Financial Quarters: {'2026-01-15': '2026-Q1', '2026-05-22': '2026-Q2', '2026-08-11': '2026-Q3', '2026-12-30': '2026-Q4'}
 ```
 
-<div class="interview-tip">
+---
 
-**Where This Shows Up in Real Jobs:**
-- Calculating reporting periods (MTD, QTD, YTD) for dashboards
-- Parsing mixed date formats from CSV exports and API responses
-- Building time-series aggregations (daily → weekly → monthly)
-- Handling timezone conversions for global analytics
-- Computing SLA windows, invoice due dates, and retention periods
+## Gotchas & Common Mistakes
 
-</div>
+### 1. Mixing Timezone-Naive and Timezone-Aware Datetimes
+This is the most common datetime runtime error in Python. If you attempt to subtract a naive datetime from an aware datetime, Python will throw a `TypeError`.
 
-<div class="challenge">
+#### ❌ The Mistake:
+```python
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
-**Mini-Challenge:** Write a function `business_days_between(start, end)` that:
-1. Accepts two date strings in "YYYY-MM-DD" format
-2. Counts only weekdays (Monday–Friday) between them
-3. Returns the count
+# Naive datetime
+start = datetime.now()
 
-Test it: how many business days between "2025-01-01" and "2025-01-31"? (Answer: 23)
+# Aware datetime
+end = datetime.now(ZoneInfo("UTC"))
 
-Bonus: Add a `holidays` parameter that accepts a list of date strings to exclude.
+# Will crash: TypeError: can't subtract offset-naive and offset-aware datetimes
+duration = end - start
+```
 
-</div>
+#### ✅ The Fix:
+Always ensure both datetimes are either timezone-naive or localized to the same timezone before doing subtraction or comparison operations.
+
+```python
+# Force start to be aware in UTC
+start_aware = start.astimezone(ZoneInfo("UTC"))
+duration = end - start_aware
+```
+
+### 2. Time Math: Adding Months with `timedelta`
+A `timedelta` object supports offsets in `days`, `seconds`, `microseconds`, `milliseconds`, `minutes`, `hours`, and `weeks`. It does **not** support `months` or `years` because months have varying lengths (28, 29, 30, or 31 days).
+If you attempt to do `timedelta(months=1)`, Python will raise a `TypeError`.
+
+To add months, use a custom function or the external `dateutil` library.
+
+#### ✅ Custom monthly increment logic:
+```python
+def add_months(source_date, months_to_add):
+    month = source_date.month - 1 + months_to_add
+    year = source_date.year + month // 12
+    month = month % 12 + 1
+    # Handle end-of-month day rollover (e.g., Jan 31 + 1 month -> Feb 28)
+    day = min(source_date.day, [31, 29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1])
+    return datetime(year, month, day, source_date.hour, source_date.minute, source_date.second)
+
+
+my_dt = datetime(2026, 1, 31)
+print("Jan 31 + 1 Month:", add_months(my_dt, 1))
+```
+
+```text
+# Output:
+Jan 31 + 1 Month: 2026-02-28 00:00:00
+```
+
+---
+
+## Practice Exercises & Mini-Projects
+
+### Exercise 1: Build a Subscription Billing Schedule Generator
+**Scenario:** A client purchases a monthly subscription. You need to write a function that takes a signup date (string) and prints the scheduled payment dates for the next 6 months.
+
+```python
+# Create a script that prints a billing schedule (6 dates) starting 1 month after signup.
+```
+
+#### Solution:
+```python
+def generate_billing_schedule(signup_date_str, total_months=6):
+    start_dt = datetime.strptime(signup_date_str, "%Y-%m-%d")
+    
+    print(f"Generating billing schedule for signup: {signup_date_str}")
+    current = start_dt
+    for i in range(1, total_months + 1):
+        # We can increment by adding approximately 30 days, or use our add_months utility
+        current = add_months(current, 1)
+        print(f"Billing Invoice #{i}: {current.strftime('%Y-%m-%d')}")
+
+
+# Run
+generate_billing_schedule("2026-07-08")
+```
+
+```text
+# Output:
+Generating billing schedule for signup: 2026-07-08
+Billing Invoice #1: 2026-08-08
+Billing Invoice #2: 2026-09-08
+Billing Invoice #3: 2026-10-08
+Billing Invoice #4: 2026-11-08
+Billing Invoice #5: 2026-12-08
+Billing Invoice #6: 2027-01-08
+```
+
+---
+
+## Section Recaps
+
+* **Core Objects:** `date` holds day coordinates, `time` holds daily clock values, `datetime` holds both, and `timedelta` measures the math gap between two events.
+* **Format vs. Parse:** Use `strptime` to interpret unstructured text strings as datetime objects. Use `strftime` to output datetimes into presentation-ready strings.
+* **Timezones:** Naive datetimes carry no context. Use the `zoneinfo` module to localize date structures globally.
+* **Comparisons:** Never compare naive and aware datetimes. Use `astimezone()` to align them first.
+* **Math Limits:** Timedelta cannot calculate month or year offsets directly due to leap-calendar shifts. Use custom functions or third-party wrappers to adjust these.
+
+---
 
 ## Common Interview Questions
 
-### Q1: What's the difference between `strftime` and `strptime`?
+### Q1: What is the difference between `strptime` and `strftime`? How do you remember which is which?
+**Answer:** 
+* `strptime` is used to **parse** a string into a datetime object. The "p" stands for **Parse**.
+  * Syntax: `datetime.strptime("2026-07-08", "%Y-%m-%d")`
+* `strftime` is used to **format** a datetime object into a readable string. The "f" stands for **Format**.
+  * Syntax: `dt_object.strftime("%d %B %Y")`
 
-**Answer:** `strftime` formats a datetime object into a string — "f" for format. `strptime` parses a string into a datetime object — "p" for parse. Example: `datetime.now().strftime("%Y-%m-%d")` gives you `"2025-01-29"`. `datetime.strptime("2025-01-29", "%Y-%m-%d")` gives you a datetime object. You'll use `strptime` when loading data from CSVs and APIs, and `strftime` when generating reports and filenames.
+### Q2: What happens if you try to subtract a timezone-naive datetime from a timezone-aware datetime? How do you fix it?
+**Answer:** It raises a `TypeError` stating `can't subtract offset-naive and offset-aware datetimes`.
+To resolve this, you must make the naive datetime aware of the timezone (typically UTC or the target timezone) before executing subtraction:
+```python
+from zoneinfo import ZoneInfo
+naive_dt = naive_dt.replace(tzinfo=ZoneInfo("UTC"))
+# Or convert using astimezone
+naive_dt = naive_dt.astimezone(ZoneInfo("UTC"))
+```
 
-### Q2: How do you handle timezone-aware vs naive datetimes?
+### Q3: Why does `timedelta` support arguments like `days` and `weeks` but not `months` or `years`?
+**Answer:** Months and years do not represent a fixed, unchanging quantity of time. A month can contain 28, 29, 30, or 31 days. A year can contain 365 or 366 days. Since the length is variable and depends on the specific starting point in the calendar, Python's `timedelta` object refuses to accept `months` or `years` arguments to prevent silent errors.
 
-**Answer:** A "naive" datetime has no timezone info (`datetime.now()`). An "aware" datetime includes timezone (`datetime.now(timezone.utc)`). You can't compare naive and aware datetimes — Python raises a `TypeError`. Best practice: always work in UTC internally, convert to local time only for display. Use `zoneinfo.ZoneInfo` (Python 3.9+) for named timezones with automatic DST handling.
+### Q4: How does Python 3.9's `zoneinfo` module improve timezone handling compared to historical methods?
+**Answer:** Historically, Python relied on third-party libraries like `pytz` for timezone support. However, `pytz` had non-standard behaviors that required developers to use its custom `.localize()` and `.normalize()` methods instead of standard constructors, which caused subtle conversion bugs.
+Python 3.9's built-in `zoneinfo` integrates directly with Python's standard `tzinfo` API. It lets you pass timezone labels directly into `datetime` constructors and handles standard calendar arithmetic safely using system zone databases.
 
-### Q3: How do you calculate the difference between two dates?
+### Q5: Write a function to check if a given year is a leap year.
+**Answer:** A year is a leap year if it is divisible by 4, except for end-of-century years (ending in 00), which must also be divisible by 400.
+```python
+def is_leap_year(year):
+    if year % 400 == 0:
+        return True
+    if year % 100 == 0:
+        return False
+    return year % 4 == 0
+```
+Alternatively, Python provides a built-in function in the `calendar` module:
+```python
+import calendar
+print(calendar.isleap(2026)) # False
+```
 
-**Answer:** Subtract them: `delta = date2 - date1` returns a `timedelta` object. Access the difference with `delta.days` for total days, or `delta.total_seconds()` for total seconds. For months and years, there's no built-in — you calculate manually or use `dateutil.relativedelta`. Note that `timedelta` only stores days and seconds internally, not months or years.
-
-### Q4: How would you get the first and last day of a month?
-
-**Answer:** First day: `date.replace(day=1)`. Last day: use `calendar.monthrange(year, month)` which returns a tuple of (weekday of first day, number of days in month). Then `date.replace(day=last_day)`. This correctly handles February, leap years, and all month lengths without hardcoding.
-
-### Q5: What's the best way to parse dates from messy data that has mixed formats?
-
-**Answer:** Use `dateutil.parser.parse()` which auto-detects most formats: `"Jan 5, 2025"`, `"2025-01-05"`, `"05/01/2025"`. For performance-critical code, try known formats in order with `strptime` wrapped in try/except. In Pandas, `pd.to_datetime()` handles mixed formats with `format='mixed'`. Always validate parsed results — `"01/02/2025"` could be Jan 2 or Feb 1 depending on locale.
+<div class="interview-tip">
+When writing dates in analytics portfolios, standardizing all databases to UTC is the industry best practice. Always perform math operations in UTC and convert to the user's local timezone only when presenting reports or visual charts.
+</div>

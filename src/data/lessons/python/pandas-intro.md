@@ -2,12 +2,12 @@
 title: "Intro to Pandas — Your Data Analytics Superpower"
 description: "Get started with Pandas DataFrames — loading, exploring, filtering, and aggregating data like a pro."
 category: "python"
-order: 5
+order: 102
 phase: 1
 tags: ["python", "pandas", "dataframe", "data-analysis"]
 publishedDate: 2025-01-19
-prevSlug: "lists-and-dicts"
-nextSlug: "conditionals"
+prevSlug: "numpy-essentials"
+nextSlug: "pandas-data-cleaning"
 seoTitle: "Pandas for Data Analytics Beginners — DataFrames, Filtering, GroupBy | Datalogify"
 seoDescription: "Learn Pandas DataFrames from scratch — create, explore, filter, and aggregate data with hands-on examples."
 ---

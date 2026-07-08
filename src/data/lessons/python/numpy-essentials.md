@@ -7,7 +7,7 @@ phase: 1
 tags: ["python", "numpy", "arrays", "vectorization"]
 publishedDate: 2025-02-01
 prevSlug: "regex-patterns"
-nextSlug: "pandas-data-cleaning"
+nextSlug: "pandas-intro"
 seoTitle: "Python NumPy Tutorial for Data Analytics | Datalogify"
 seoDescription: "Master NumPy arrays, vectorized operations, broadcasting, and statistical functions for fast data processing."
 ---

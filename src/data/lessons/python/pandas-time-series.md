@@ -2,7 +2,7 @@
 title: "Pandas Time Series — Dates, Resampling & Rolling"
 description: "Analyze time-based data with Pandas — date parsing, resampling, rolling windows, and time-based filtering."
 category: "python"
-order: 105
+order: 106
 phase: 1
 tags: ["python", "pandas", "time-series", "resampling", "rolling"]
 publishedDate: 2025-02-05

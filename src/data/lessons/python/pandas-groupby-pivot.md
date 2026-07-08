@@ -2,7 +2,7 @@
 title: "Pandas GroupBy & Pivot Tables — Aggregate Like a Pro"
 description: "Group, aggregate, and pivot your data — the Pandas operations that replace hours of Excel work in seconds."
 category: "python"
-order: 104
+order: 105
 phase: 1
 tags: ["python", "pandas", "groupby", "pivot-table", "aggregation"]
 publishedDate: 2025-02-04

@@ -2,7 +2,7 @@
 title: "Matplotlib — Create Professional Data Visualizations"
 description: "Build bar charts, line plots, scatter plots, and histograms that tell a clear data story."
 category: "python"
-order: 106
+order: 107
 phase: 1
 tags: ["python", "matplotlib", "visualization", "charts"]
 publishedDate: 2025-02-06

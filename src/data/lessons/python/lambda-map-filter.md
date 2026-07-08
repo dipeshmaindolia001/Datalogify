@@ -2,7 +2,7 @@
 title: "Lambda, Map, Filter & Reduce"
 description: "Write concise functional-style Python — lambda functions and higher-order functions for data transformation."
 category: "python"
-order: 109
+order: 110
 phase: 1
 tags: ["python", "lambda", "map", "filter", "functional"]
 publishedDate: 2025-02-09

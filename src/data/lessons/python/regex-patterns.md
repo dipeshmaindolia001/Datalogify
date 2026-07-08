@@ -2,9 +2,9 @@
 title: "Regular Expressions — Pattern Matching Power"
 description: "Extract emails, phone numbers, and patterns from messy text data using Python's re module."
 category: "python"
-order: 15
+order: 14
 phase: 1
-tags: ["python", "regex", "patterns", "text-processing"]
+tags: ["python", "regex", "patterns", "text-processing", "re"]
 publishedDate: 2025-01-30
 prevSlug: "datetime-operations"
 nextSlug: "numpy-essentials"
@@ -12,531 +12,392 @@ seoTitle: "Python Regular Expressions Tutorial | Datalogify"
 seoDescription: "Learn Python regex with practical examples — extract emails, validate data, clean text for analytics."
 ---
 
-## Why This Matters
+## Introduction & The "Why"
 
-Customer data has emails in 5 different formats. Phone numbers are entered as "(555) 123-4567", "555.123.4567", and "5551234567". Dates show up as "Jan 5, 2025" and "01/05/2025". Regex lets you find, extract, and clean all of these in one pass.
+Data analysts do not always work with clean, structured tables. Often, valuable information is locked away in unstructured text formats: system log files, user comment fields, scraped web articles, PDF invoices, or email strings. 
 
-## re.search — Find the First Match
+If you need to find an email address inside a 10,000-line customer feedback file, you cannot use basic string methods like `.find()` or `.split()`. The email could be anything from `alice@gmail.com` to `bob.jones_12@company.co.uk`. Writing manual loop logic to check every word's character structure would require dozens of lines of error-prone code.
+
+**Regular Expressions** (commonly abbreviated as **Regex**) solve this problem. A regular expression is a sequence of characters that forms a search pattern, allowing you to match, find, extract, and replace complex string structures with a single line of code.
+
+### The Metal Detector Analogy
+
+Think of using Regex as scanning a beach with a **programmable metal detector**:
+
+```text
+       [ Unstructured Text (The Beach) ]
+  ┌──────────────────────────────────────────┐
+  │ "Call us at 555-0199 or email info@a.com" │
+  └──────────────────────────────────────────┘
+                       ▲
+                       │  (Beep!)
+             [ Metal Detector (Regex) ]
+             Configured for: "\d{3}-\d{4}" (Phone pattern)
+```
+
+1. **The Beach (The Text):** The beach is a messy mix of sand, shells, seaweed, and water. This represents your unstructured text logs.
+2. **The Detector (The Regex Engine):** The detector sweeps across the beach. If it is set to default, it might beep for everything, which is useless.
+3. **The Settings (The Pattern):** You program the detector to beep only for a specific metallic signature (e.g., gold coins or steel pins). In Regex, you define a pattern (e.g., "three digits, a hyphen, and four digits"). As the detector sweeps over the text, it ignores all the sand (words) and beeps only when it passes over a matching phone number.
+
+With Regex, you can fine-tune your settings to locate even the most elusive text treasures.
+
+---
+
+## Step-by-Step Concept Breakdown
+
+To write regular expressions, you must learn the language of the regex engine. Let's look at the symbols (metacharacters) used to define patterns.
+
+### 1. Core Regex Metacharacters
+
+| Character | Description | Metaphor / Example |
+| :--- | :--- | :--- |
+| `.` | Matches **any single character** except a newline. | wildcard card |
+| `^` | Matches the **start** of a string. | Anchor: Must begin here |
+| `$` | Matches the **end** of a string. | Anchor: Must terminate here |
+| `*` | Matches **zero or more** repetitions of the preceding character. | "Optional and infinite" |
+| `+` | Matches **one or more** repetitions of the preceding character. | "At least one, up to infinite" |
+| `?` | Matches **zero or one** repetition of the preceding character. | "Optional" (0 or 1) |
+| `\` | Escapes a metacharacter (e.g., `\.` matches a literal period). | "Treat this literally" |
+
+### 2. Character Classes & Sets
+
+| Set Syntax | Description | Example |
+| :--- | :--- | :--- |
+| `[abc]` | Matches any **one** of the characters inside the brackets. | `[aeiou]` matches any vowel |
+| `[^abc]` | Matches any character **not** inside the brackets. | `[^0-9]` matches any non-digit |
+| `[a-z]` | Matches any character in the defined range. | `[A-Z]` matches any uppercase letter |
+| `(abc)` | **Group:** Matches the exact sequence inside, and captures it as a subgroup. | `(USD|EUR)` matches currency codes |
+
+### 3. Shorthand Character Classes
+
+| Shorthand | Description | Match Matches | Non-Match Example |
+| :--- | :--- | :--- | :--- |
+| `\d` | Matches **any digit** (0-9). | `5` | `a` |
+| `\D` | Matches **any non-digit**. | `X` | `7` |
+| `\w` | Matches **any alphanumeric** character (letters, numbers, underscore). | `r` or `8` or `_` | `@` or `!` |
+| `\W` | Matches **any non-alphanumeric** character. | `$` or `.` | `k` |
+| `\s` | Matches **any whitespace** (spaces, tabs, newlines). | ` ` or `\n` | `T` |
+| `\S` | Matches **any non-whitespace** character. | `p` | ` ` |
+
+### 4. Quantifiers
+
+Quantifiers specify how many times a character or group must repeat:
+* `{n}`: Exactly `n` times. (e.g., `\d{5}` matches a 5-digit ZIP code).
+* `{n,}`: At least `n` times.
+* `{n,m}`: Between `n` and `m` times. (e.g., `\d{2,4}` matches years like `99` or `2026`).
+
+---
+
+## The Python `re` Module
+
+Python provides regex functionality through the built-in `re` module. The core methods you need to know are:
+
+1. `re.search(pattern, string)`: Scans the string for the **first occurrence** of the pattern. Returns a match object if found, otherwise `None`.
+2. `re.match(pattern, string)`: Checks if the pattern matches **only at the very beginning** of the string.
+3. `re.findall(pattern, string)`: Scans the string and returns a **list of all matches** as strings.
+4. `re.finditer(pattern, string)`: Returns an iterator yielding match objects for all matches (excellent for retrieving match indexes/positions).
+5. `re.sub(pattern, replacement, string)`: Finds all occurrences of the pattern and **replaces them** with a new string (great for data cleaning).
+
+---
+
+## Code Walkthroughs & Practical Examples
+
+Let's look at how to run these operations inside Python.
+
+### 1. Basic Matching and Groups with `re.search`
+
+We want to search a text log for a transaction ID pattern (two letters, a dash, and four digits, e.g., `TX-1045`).
 
 ```python
 import re
 
-# Does this string contain a dollar amount?
-text = "Total revenue for Q1 was $1,250,000 across all regions"
-match = re.search(r"\$[\d,]+", text)
+# Raw text log entry
+log_message = "ERROR: Payment processing failed for customer. reference: TX-9021. Please review."
+
+# Define pattern using a RAW string prefix r""
+# r"" prevents Python from interpreting backslashes as escape sequences
+pattern = r"([A-Z]{2})-(\d{4})"
+
+# Search the string
+match = re.search(pattern, log_message)
 
 if match:
-    print(f"Found: {match.group()}")
-    print(f"Position: {match.start()}-{match.end()}")
+    print("Match found!")
+    # The entire match
+    print("Full Match:", match.group(0))
+    # Subgroup 1 (the letters)
+    print("Group 1 (Prefix):", match.group(1))
+    # Subgroup 2 (the digits)
+    print("Group 2 (ID):", match.group(2))
+else:
+    print("No match found.")
 ```
 
 ```text
-Found: $1,250,000
-Position: 27-37
+# Output:
+Match found!
+Full Match: TX-9021
+Group 1 (Prefix): TX
+Group 2 (ID): 9021
 ```
 
-## re.findall — Find ALL Matches
+---
+
+### 2. Global Extractions with `re.findall`
+
+Suppose we need to extract all phone numbers from a customer notes field. The phone numbers can be written as `555-1234` or `555-5678`.
 
 ```python
 import re
 
-# Extract all dollar amounts from a report
-report = """
-Q1 Revenue: $450,000
-Q2 Revenue: $520,000
-Q3 Revenue: $380,000
-Operating costs: $1,200,000
-Net profit: $150,000
-"""
+notes = "Customer service contacts: Alice at 555-1029, Bob at 555-4432, and support at 800-9999."
 
-amounts = re.findall(r"\$[\d,]+", report)
-print(f"All amounts: {amounts}")
+# Pattern: 3 digits, a dash, 4 digits
+phone_pattern = r"\d{3}-\d{4}"
 
-# Convert to integers for calculation
-values = [int(a.replace("$", "").replace(",", "")) for a in amounts]
-print(f"Values: {values}")
-print(f"Sum: ${sum(values):,}")
+# Find all matches
+all_phones = re.findall(phone_pattern, notes)
+
+print("Extracted Phone Numbers:", all_phones)
 ```
 
 ```text
-All amounts: ['$450,000', '$520,000', '$380,000', '$1,200,000', '$150,000']
-Values: [450000, 520000, 380000, 1200000, 150000]
-Sum: $2,700,000
+# Output:
+Extracted Phone Numbers: ['555-1029', '555-4432', '800-9999']
 ```
 
-## re.match vs re.search
+---
+
+### 3. Data Cleaning with `re.sub`
+
+Suppose customer inputs contain various forms of formatting for account IDs (whitespace, dashes, slashes), and we want to normalize them to a clean, alphanumeric string.
 
 ```python
 import re
 
-line = "Employee ID: EMP-4521"
-
-# re.match — only checks the BEGINNING of the string
-result1 = re.match(r"EMP-\d+", line)
-print(f"match result: {result1}")  # None — "EMP" isn't at the start
-
-# re.search — checks ANYWHERE in the string
-result2 = re.search(r"EMP-\d+", line)
-print(f"search result: {result2.group()}")
-
-# re.match works when the pattern IS at the start
-result3 = re.match(r"Employee", line)
-print(f"match at start: {result3.group()}")
-```
-
-```text
-match result: None
-search result: EMP-4521
-match at start: Employee
-```
-
-## Metacharacters — The Building Blocks
-
-```python
-import re
-
-text = "Alice joined on 2023-03-15. Bob on 2022-11-30. Carol on 2024-01-10."
-
-# .   → any character (except newline)
-# \d  → any digit [0-9]
-# \w  → any word char [a-zA-Z0-9_]
-# \s  → any whitespace
-# \b  → word boundary
-
-# +   → one or more
-# *   → zero or more
-# ?   → zero or one
-# {n} → exactly n times
-
-# Find all dates (YYYY-MM-DD)
-dates = re.findall(r"\d{4}-\d{2}-\d{2}", text)
-print(f"Dates: {dates}")
-
-# Find all names (capitalized words at start of sentences)
-names = re.findall(r"[A-Z][a-z]+", text)
-print(f"Names: {names}")
-
-# Find words that are exactly 3 letters
-words = re.findall(r"\b\w{3}\b", text)
-print(f"3-letter words: {words}")
-```
-
-```text
-Dates: ['2023-03-15', '2022-11-30', '2024-01-10']
-Names: ['Alice', 'Bob', 'Carol']
-3-letter words: ['Bob']
-```
-
-### Character Classes
-
-```python
-import re
-
-# [abc]   → matches a, b, or c
-# [a-z]   → matches any lowercase letter
-# [0-9]   → matches any digit (same as \d)
-# [^abc]  → matches anything EXCEPT a, b, c
-
-data = "SKU-A100, SKU-B205, PROD-C310, SKU-D450, ITEM-E500"
-
-# Find all SKU codes (SKU followed by dash, letter, digits)
-skus = re.findall(r"SKU-[A-Z]\d{3}", data)
-print(f"SKUs: {skus}")
-
-# Find any product code (letters-letterdigits)
-all_codes = re.findall(r"[A-Z]+-[A-Z]\d{3}", data)
-print(f"All codes: {all_codes}")
-
-# Extract just the numeric parts
-numbers = re.findall(r"[A-Z]-([A-Z])(\d{3})", data)
-print(f"Letter-Number pairs: {numbers}")
-```
-
-```text
-SKUs: ['SKU-A100', 'SKU-B205', 'SKU-D450']
-All codes: ['SKU-A100', 'SKU-B205', 'PROD-C310', 'SKU-D450', 'ITEM-E500']
-Letter-Number pairs: [('A', '100'), ('B', '205'), ('C', '310'), ('D', '450'), ('E', '500')]
-```
-
-## Groups — Extract Specific Parts
-
-```python
-import re
-
-# Parentheses create capture groups
-log = "2025-01-29 14:30:15 ERROR Database connection timeout after 30s"
-
-pattern = r"(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) (\w+) (.+)"
-match = re.search(pattern, log)
-
-if match:
-    print(f"Date:    {match.group(1)}")
-    print(f"Time:    {match.group(2)}")
-    print(f"Level:   {match.group(3)}")
-    print(f"Message: {match.group(4)}")
-```
-
-```text
-Date:    2025-01-29
-Time:    14:30:15
-Level:   ERROR
-Message: Database connection timeout after 30s
-```
-
-### Named Groups
-
-```python
-import re
-
-# Named groups make code more readable
-employee_line = "Alice Johnson | Engineering | $95,000 | 2019-03-15"
-
-pattern = r"(?P<name>[\w ]+) \| (?P<dept>\w+) \| \$(?P<salary>[\d,]+) \| (?P<hired>\d{4}-\d{2}-\d{2})"
-match = re.search(pattern, employee_line)
-
-if match:
-    print(f"Name:   {match.group('name')}")
-    print(f"Dept:   {match.group('dept')}")
-    print(f"Salary: ${match.group('salary')}")
-    print(f"Hired:  {match.group('hired')}")
-
-    # Or as a dictionary
-    print(f"\nAs dict: {match.groupdict()}")
-```
-
-```text
-Name:   Alice Johnson
-Dept:   Engineering
-Salary: $95,000
-Hired:  2019-03-15
-
-As dict: {'name': 'Alice Johnson', 'dept': 'Engineering', 'salary': '95,000', 'hired': '2019-03-15'}
-```
-
-## re.sub — Find and Replace
-
-```python
-import re
-
-# Clean phone numbers to a standard format
-phones = [
-    "(555) 123-4567",
-    "555.123.4567",
-    "555-123-4567",
-    "5551234567",
-    "+1 555 123 4567",
+raw_inputs = [
+    "ACC-101 202",
+    "ACC/505/909",
+    "ACC_808-111",
+    "  ACC 909 222  "
 ]
 
-for phone in phones:
-    # Remove all non-digit characters
-    clean = re.sub(r"\D", "", phone)
-    # Take last 10 digits (drop country code)
-    clean = clean[-10:]
-    formatted = f"({clean[:3]}) {clean[3:6]}-{clean[6:]}"
-    print(f"  {phone:20s} → {formatted}")
+# Pattern: Matches any non-alphanumeric character (e.g., spaces, dashes, slashes)
+cleaning_pattern = r"[\s\-/]+"
+
+cleaned_inputs = []
+for item in raw_inputs:
+    # Strip leading/trailing space first, then substitute patterns with nothing ""
+    clean = re.sub(cleaning_pattern, "", item.strip())
+    cleaned_inputs.append(clean)
+
+print("Normalized Account IDs:", cleaned_inputs)
 ```
 
 ```text
-  (555) 123-4567      → (555) 123-4567
-  555.123.4567        → (555) 123-4567
-  555-123-4567        → (555) 123-4567
-  5551234567           → (555) 123-4567
-  +1 555 123 4567     → (555) 123-4567
+# Output:
+Normalized Account IDs: ['ACC101202', 'ACC505909', 'ACC_808111', 'ACC909222']
 ```
 
-### More Replacements
+*Note: In the character set `[\s\-/]+`, the hyphen `-` is escaped as `\-` because inside square brackets, a hyphen usually indicates a range (like `a-z`). Escaping it tells Python we want to match a literal hyphen.*
+
+---
+
+### 4. Real-World Case Study: Email Extraction
+
+Let's build a robust email extractor that pulls emails from messy corporate documentation.
 
 ```python
 import re
 
-# Redact sensitive data in logs
-log = "User alice@company.com logged in from 192.168.1.45 with card 4532-1234-5678-9012"
-
-redacted = re.sub(r"[\w.]+@[\w.]+", "[EMAIL_REDACTED]", log)
-redacted = re.sub(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", "[IP_REDACTED]", redacted)
-redacted = re.sub(r"\d{4}-\d{4}-\d{4}-\d{4}", "[CARD_REDACTED]", redacted)
-
-print(f"Original: {log}")
-print(f"Redacted: {redacted}")
-```
-
-```text
-Original: User alice@company.com logged in from 192.168.1.45 with card 4532-1234-5678-9012
-Redacted: User [EMAIL_REDACTED] logged in from [IP_REDACTED] with card [CARD_REDACTED]
-```
-
-## Common Analytics Patterns
-
-### Email Extraction
-
-```python
-import re
-
-customer_notes = """
-Contact Alice at alice.johnson@company.com or her assistant bob@marketing.io.
-Previous email was alice_j@old-company.co.uk. Support: help+urgent@support.company.com
+text_corpus = """
+Hello Team, please send your reports to reports@analytics-corp.com by EOD. 
+If you encounter technical issues, contact dev_support@it.service-provider.org. 
+Do not send invoices to billing@datalogify.net.
 """
 
-emails = re.findall(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", customer_notes)
-print("Emails found:")
-for email in emails:
-    print(f"  {email}")
+# Let's break down the email pattern:
+# [\w\.-]+  -> Match letters, numbers, underscores, dots, or hyphens (username)
+# @         -> Match literal @ symbol
+# [\w\.-]+  -> Match letters, numbers, underscores, dots, or hyphens (domain)
+# \.        -> Match a literal dot
+# [a-zA-Z]{2,6} -> Match the TLD extension (2 to 6 characters, like .com, .org, .edu)
+email_pattern = r"[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,6}"
 
-# Extract domains
-domains = [email.split("@")[1] for email in emails]
-print(f"\nUnique domains: {set(domains)}")
+emails = re.findall(email_pattern, text_corpus)
+print("Extracted Emails:", emails)
 ```
 
 ```text
-Emails found:
-  alice.johnson@company.com
-  bob@marketing.io
-  alice_j@old-company.co.uk
-  help+urgent@support.company.com
-
-Unique domains: {'old-company.co.uk', 'company.com', 'marketing.io', 'support.company.com'}
+# Output:
+Extracted Emails: ['reports@analytics-corp.com', 'dev_support@it.service-provider.org', 'billing@datalogify.net']
 ```
 
-### Date Extraction from Mixed Formats
+---
+
+### 5. Real-World Case Study: Log File Parser
+
+System logs contain timestamps, categories, process IDs, and messages. Let's parse unstructured logs and structure them into dictionaries (ready to be converted to a Pandas DataFrame).
 
 ```python
 import re
 
-messy_text = """
-Invoice #1001 dated 01/15/2025 for $5,000
-Contract signed on January 20, 2025
-Payment received 2025-02-01
-Meeting scheduled for 15-Mar-2025
-"""
-
-# ISO format: YYYY-MM-DD
-iso_dates = re.findall(r"\d{4}-\d{2}-\d{2}", messy_text)
-
-# US format: MM/DD/YYYY
-us_dates = re.findall(r"\d{2}/\d{2}/\d{4}", messy_text)
-
-# Written format: Month DD, YYYY
-written_dates = re.findall(r"[A-Z][a-z]+ \d{1,2}, \d{4}", messy_text)
-
-# European format: DD-Mon-YYYY
-eu_dates = re.findall(r"\d{2}-[A-Z][a-z]{2}-\d{4}", messy_text)
-
-print(f"ISO dates:     {iso_dates}")
-print(f"US dates:      {us_dates}")
-print(f"Written dates: {written_dates}")
-print(f"EU dates:      {eu_dates}")
-```
-
-```text
-ISO dates:     ['2025-02-01']
-US dates:      ['01/15/2025']
-Written dates: ['January 20, 2025']
-EU dates:      ['15-Mar-2025']
-```
-
-### Cleaning Product Names
-
-```python
-import re
-
-raw_products = [
-    "  Widget Pro (v2.1)  ",
-    "MEGA widget---pro",
-    "Widget    Pro   2.1",
-    "widget_pro_v2.1!!!",
+log_lines = [
+    "[2026-07-08T10:15:30] [INFO] [PID-4512] Database connection established successfully.",
+    "[2026-07-08T10:16:12] [WARNING] [PID-4512] High disk space utilization detected (88%).",
+    "[2026-07-08T10:18:45] [ERROR] [PID-1049] Connection timeout. Server failed to respond."
 ]
 
-def clean_product_name(raw):
-    # Remove special characters except spaces and dots
-    cleaned = re.sub(r"[^a-zA-Z0-9\s.]", " ", raw)
-    # Collapse multiple spaces
-    cleaned = re.sub(r"\s+", " ", cleaned)
-    # Strip and title case
-    return cleaned.strip().title()
+# We will use named groups (?P<name>pattern) to extract values into fields
+log_pattern = r"^\[(?P<timestamp>[^\]]+)\]\s+\[(?P<level>[^\]]+)\]\s+\[PID-(?P<pid>\d+)\]\s+(?P<message>.+)$"
 
-print("Cleaned product names:")
-for raw in raw_products:
-    print(f"  '{raw}' → '{clean_product_name(raw)}'")
+structured_logs = []
+
+for line in log_lines:
+    match = re.search(log_pattern, line)
+    if match:
+        # Get a dictionary of the named subgroups
+        structured_logs.append(match.groupdict())
+
+# Display the parsed database
+for entry in structured_logs:
+    print(entry)
 ```
 
 ```text
-Cleaned product names:
-  '  Widget Pro (v2.1)  ' → 'Widget Pro V2.1'
-  'MEGA widget---pro' → 'Mega Widget Pro'
-  'Widget    Pro   2.1' → 'Widget Pro 2.1'
-  'widget_pro_v2.1!!!' → 'Widget Pro V2.1'
+# Output:
+{'timestamp': '2026-07-08T10:15:30', 'level': 'INFO', 'pid': '4512', 'message': 'Database connection established successfully.'}
+{'timestamp': '2026-07-08T10:16:12', 'level': 'WARNING', 'pid': '4512', 'message': 'High disk space utilization detected (88%).'}
+{'timestamp': '2026-07-08T10:18:45', 'level': 'ERROR', 'pid': '1049', 'message': 'Connection timeout. Server failed to respond.'}
 ```
 
-## Lookahead and Lookbehind
+---
 
+## Edge Cases & Common Mistakes
+
+### 1. Greedy vs. Lazy Matching (The `*?` gotcha)
+By default, the quantifiers `*`, `+`, and `?` are **greedy**. They will match as much text as possible.
+
+#### Scenario:
+We want to extract everything inside parentheses in the string: `"User (Alice) purchased item (Laptop)"`.
+
+#### ❌ The Greedy Mistake:
 ```python
-import re
+text = "User (Alice) purchased item (Laptop)"
+pattern = r"\(.*\)" # Match literal (, then anything, then literal )
 
-text = "Revenue: $500,000 Costs: $320,000 Profit: $180,000"
-
-# Lookbehind: (?<=...) — match something AFTER a pattern
-# Get numbers that come after a dollar sign
-amounts = re.findall(r"(?<=\$)[\d,]+", text)
-print(f"Amounts (lookbehind): {amounts}")
-
-# Lookahead: (?=...) — match something BEFORE a pattern
-# Get labels that come before a colon and dollar amount
-labels = re.findall(r"\w+(?=: \$)", text)
-print(f"Labels (lookahead): {labels}")
-
-# Negative lookahead: (?!...) — match if NOT followed by
-data = "EMP001 EMP002 TEMP003 EMP004 TEMP005"
-permanent = re.findall(r"EMP\d+", data)
-print(f"Permanent IDs: {permanent}")
+match = re.findall(pattern, text)
+print("Greedy Output:", match)
 ```
 
 ```text
-Amounts (lookbehind): ['500,000', '320,000', '180,000']
-Labels (lookahead): ['Revenue', 'Costs', 'Profit']
-Permanent IDs: ['EMP001', 'EMP002', 'EMP004']
+# Output:
+Greedy Output: ['(Alice) purchased item (Laptop)']
 ```
+*Why?* The `.*` starts at `Alice` and keeps expanding, matching right through the first closing parenthesis `)` and the intermediate words, stopping only at the *last* closing parenthesis.
 
-<div class="interview-tip">
-
-**Interview Insight:** Lookahead and lookbehind are "zero-width assertions" — they check for a pattern without including it in the match. This is powerful for extracting values next to labels, or matching patterns in specific contexts. Most interview questions only test basic regex, but knowing these sets you apart.
-
-</div>
-
-## Compiled Patterns — Better Performance
+#### ✅ The Lazy Solution:
+Adding a `?` after a quantifier (e.g., `*?` or `+?`) tells the engine to be **lazy** (non-greedy) and stop at the *first* possible match match.
 
 ```python
-import re
+text = "User (Alice) purchased item (Laptop)"
+pattern = r"\(.*?\)" # Note the ? after *
 
-# When you use the same pattern many times, compile it
-email_pattern = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
-phone_pattern = re.compile(r"\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}")
-
-records = [
-    "Alice Johnson, alice@company.com, (555) 123-4567",
-    "Bob Smith, bob.smith@email.co.uk, 555.987.6543",
-    "Carol Davis, carol_d@analytics.io, 555-456-7890",
-]
-
-print("Parsed contacts:")
-for record in records:
-    email = email_pattern.search(record)
-    phone = phone_pattern.search(record)
-    name = record.split(",")[0]
-    print(f"  {name}")
-    print(f"    Email: {email.group() if email else 'N/A'}")
-    print(f"    Phone: {phone.group() if phone else 'N/A'}")
+match = re.findall(pattern, text)
+print("Lazy Output:", match)
 ```
 
 ```text
-Parsed contacts:
-  Alice Johnson
-    Email: alice@company.com
-    Phone: (555) 123-4567
-  Bob Smith
-    Email: bob.smith@email.co.uk
-    Phone: 555.987.6543
-  Carol Davis
-    Email: carol_d@analytics.io
-    Phone: 555-456-7890
+# Output:
+Lazy Output: ['(Alice)', '(Laptop)']
 ```
 
-## Real-World: Parsing Log Files
+### 2. Forgetting Raw String Prefix `r""`
+In Python strings, backslashes are used for escape characters (like `\n` for newline or `\t` for tab). If your regex uses shorthands like `\d` or `\s`, Python might interpret them as string escapes before they ever reach the regex engine.
+* **Bad:** `"\\d{3}-\\d{4}"` (requires double backslashes to escape the escape).
+* **Good:** `r"\d{3}-\d{4}"` (raw string prefix tells Python: "Do not touch these backslashes; pass them directly to the regex engine").
+
+### 3. Escaping Literal Metacharacters
+If you want to match a literal period (like in a domain `google.com`), a question mark, or parentheses, you **must** escape them with a backslash.
+* `google.com` matched with `google.com` (no escape) will match `googleAcom`, `google-com`, etc., because `.` is a wildcard matching any character.
+* Correct: `google\.com`
+
+---
+
+## Practice Exercises & Mini-Projects
+
+### Exercise 1: Extract and Validate IP Addresses
+**Scenario:** You need to audit server logs and extract all valid IP v4 addresses. An IP address consists of four numbers separated by periods (e.g., `192.168.1.1`). 
+
+Write a script that extracts all matches from the test string.
 
 ```python
-import re
-from collections import Counter
+log_data = "Unauthorized access attempt from IP 192.168.1.105 at 04:00 AM, routing through proxy 10.0.0.1."
 
-logs = """
-2025-01-29 09:15:22 INFO  User login: alice@company.com
-2025-01-29 09:16:45 ERROR Database timeout: connection pool exhausted
-2025-01-29 09:17:01 INFO  Query executed: SELECT * FROM sales (235ms)
-2025-01-29 09:18:30 WARN  Slow query detected: 4500ms
-2025-01-29 09:19:12 ERROR API rate limit exceeded: endpoint /v2/reports
-2025-01-29 09:20:00 INFO  User login: bob@company.com
-2025-01-29 09:21:15 INFO  Report generated: monthly_revenue.pdf
-2025-01-29 09:22:33 ERROR File not found: /data/archive/2024_q4.csv
-"""
+# Write a regex pattern to extract both IP addresses.
+```
 
-# Count log levels
-levels = re.findall(r"(INFO|WARN|ERROR)", logs)
-print(f"Log levels: {Counter(levels)}")
-
-# Extract all error messages
-errors = re.findall(r"ERROR\s+(.+)", logs)
-print(f"\nErrors ({len(errors)}):")
-for err in errors:
-    print(f"  ⚠ {err}")
-
-# Find query execution times
-times = re.findall(r"(\d+)ms", logs)
-print(f"\nQuery times: {times}ms")
-
-# Extract all email addresses
-logins = re.findall(r"User login: ([\w.]+@[\w.]+)", logs)
-print(f"Logins: {logins}")
+#### Solution:
+```python
+# Match: 1-3 digits followed by a dot, repeated 3 times, ending with 1-3 digits
+ip_pattern = r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
+ips = re.findall(ip_pattern, log_data)
+print("Extracted IPs:", ips)
 ```
 
 ```text
-Log levels: Counter({'INFO': 4, 'ERROR': 3, 'WARN': 1})
-
-Errors (3):
-  ⚠ Database timeout: connection pool exhausted
-  ⚠ API rate limit exceeded: endpoint /v2/reports
-  ⚠ File not found: /data/archive/2024_q4.csv
-
-Query times: ['235', '4500']ms
-Logins: ['alice@company.com', 'bob@company.com']
+# Output:
+Extracted IPs: ['192.168.1.105', '10.0.0.1']
 ```
 
-<div class="interview-tip">
+---
 
-**Where This Shows Up in Real Jobs:**
-- Cleaning messy customer data (names, phones, addresses)
-- Parsing log files for error analysis and monitoring
-- Extracting structured data from unstructured text fields
-- Validating data inputs (email format, phone numbers, dates)
-- Redacting PII (emails, SSNs, credit cards) before sharing datasets
+## Section Recaps
 
-</div>
+* **The Goal:** Regex is a specialized search syntax designed to locate and manipulate structural patterns in unstructured text.
+* **Metacharacters:** `.`, `^`, `$`, `*`, `+`, `?` govern positioning and repetitions.
+* **Shorthands:** Use `\d` for numbers, `\w` for words/letters, and `\s` for spacing layouts.
+* **Python API:** `re.search` retrieves the first match; `re.findall` retrieves all occurrences; `re.sub` performs find-and-replace cleanup.
+* **Greediness:** Standard quantifiers match as much text as possible. Append a `?` (e.g., `.*?`) to make them lazy.
+* **Raw Strings:** Always prefix your patterns with `r""` to prevent Python from parsing backslashes.
 
-<div class="challenge">
-
-**Mini-Challenge:** You have this messy customer data:
-```python
-raw_data = [
-    "John Smith | john.smith@gmail.com | (555) 111-2222 | Spent: $1,500",
-    "Jane Doe | jane_doe@company.co.uk | 555.333.4444 | Spent: $12,350",
-    "Bob Wilson | bob@startup.io | 555-555-6666 | Spent: $450",
-]
-```
-Write regex to extract from each line:
-1. Full name
-2. Email address
-3. Phone number (standardize to XXX-XXX-XXXX)
-4. Spend amount as an integer
-
-Build a list of clean dictionaries from the results.
-
-</div>
+---
 
 ## Common Interview Questions
 
-### Q1: What's the difference between `re.match()` and `re.search()`?
+### Q1: What is the difference between `re.search` and `re.match`?
+**Answer:**
+* `re.match(pattern, string)` searches for a match **only at the very beginning** of the string. If the pattern matches starting at index 1 or later, `re.match` returns `None`.
+* `re.search(pattern, string)` scans the **entire string** from left to right and returns the first occurrence of the pattern, regardless of its position in the string.
 
-**Answer:** `re.match()` only checks the beginning of the string. `re.search()` scans the entire string for the first match. If your pattern isn't at position 0, `match()` returns `None`. In practice, `search()` is used far more often. Use `match()` when you're validating that a string starts with a specific pattern, like checking if a line starts with a timestamp.
+### Q2: What is the difference between greedy and lazy matching, and how do you toggle it?
+**Answer:**
+* **Greedy Matching:** By default, quantifiers (`*`, `+`, `{}`) will match the longest possible string that satisfies the pattern (they consume as much text as possible).
+* **Lazy (or Non-Greedy) Matching:** Matches the shortest possible string that satisfies the pattern. You toggle lazy behavior by appending a question mark `?` immediately after the quantifier (e.g., `.*?` or `+?`).
 
-### Q2: What does the `r` prefix in `r"\d+"` mean?
+### Q3: Why do we use raw strings (e.g., `r"\d+"`) when writing regular expressions in Python?
+**Answer:** In standard Python strings, the backslash `\` is an escape character used to define control characters like `\n` (newline) or `\t` (tab). 
+Regex uses backslashes for character classes (like `\d`, `\s`, `\w`). Without the raw string prefix `r`, Python would attempt to interpret the backslashes as string escape characters, resulting in syntax issues or forcing you to double-escape every backslash (`"\\d+"`). The `r` prefix tells Python to treat backslashes as literal raw characters and pass them directly to the regex engine.
 
-**Answer:** The `r` creates a "raw string" — backslashes are treated as literal characters, not escape sequences. Without it, `"\d"` would be interpreted as an escape sequence (Python would try to interpret `\d`). With `r"\d"`, the backslash reaches the regex engine as-is. Always use raw strings for regex patterns to avoid double-escaping headaches.
+### Q4: How do you extract subgroups from a matched pattern?
+**Answer:** Subgroups are defined in a regex pattern using parentheses `()`. 
+When a match is found using `re.search`, you can retrieve the captured content of these subgroups using the `.group(index)` method:
+* `group(0)` returns the entire matched string.
+* `group(1)` returns the content captured by the first set of parentheses.
+* `group(2)` returns the second set, and so on.
+Alternatively, you can name groups using `(?P<name>pattern)` and access them via the `groupdict()` method as a key-value dictionary.
 
-### Q3: How do you make a regex non-greedy?
+### Q5: How would you clean a text column in Python to keep only standard letters and numbers, removing punctuation and symbols?
+**Answer:** You can use `re.sub` to search for any character that is *not* alphanumeric or whitespace, replacing those characters with an empty string:
+```python
+import re
+dirty_text = "Transaction ID: #1045_Error!"
+# Match anything that is NOT a word character or whitespace
+clean_text = re.sub(r"[^\w\s]", "", dirty_text)
+print(clean_text) # "Transaction ID 1045_Error"
+```
+The pattern `[^\w\s]` uses the caret `^` inside brackets to denote negation (everything that is *not* `\w` or `\s`).
 
-**Answer:** Add `?` after the quantifier. `.*` is greedy (matches as much as possible), `.*?` is non-greedy (matches as little as possible). Example: for `"<b>bold</b> and <b>more</b>"`, the greedy `<b>.*</b>` matches the entire string, while `<b>.*?</b>` matches just `"<b>bold</b>"`. Non-greedy is essential when extracting content between delimiters.
-
-### Q4: When should you compile a regex pattern?
-
-**Answer:** Use `re.compile()` when the same pattern is used repeatedly — in loops, or across multiple function calls. Compiled patterns skip the parsing step on each use, giving a performance boost. For one-off matches, inline patterns like `re.search(r"\d+", text)` are fine. In data pipelines processing millions of rows, compiled patterns make a measurable difference.
-
-### Q5: How would you validate an email address with regex?
-
-**Answer:** A basic pattern is `r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"`. However, perfect email validation via regex is nearly impossible — the RFC spec is incredibly complex. In practice, use regex for a basic format check (has `@`, has domain), then verify by sending a confirmation email. For data cleaning, the basic pattern catches 99% of cases. Libraries like `email-validator` handle edge cases better.
+<div class="interview-tip">
+During syntax questions, remember that regex engine compilation can be optimized. If you run the same pattern inside a loop hundreds of times, call `compiled_pattern = re.compile(pattern)` beforehand to pre-compile the regex engine search tree and improve speed.
+</div>

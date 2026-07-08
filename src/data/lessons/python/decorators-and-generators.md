@@ -2,7 +2,7 @@
 title: "Decorators & Generators — Advanced Python Patterns"
 description: "Level up your Python with decorators and generators — write memory-efficient, reusable code for large datasets."
 category: "python"
-order: 110
+order: 111
 phase: 1
 tags: ["python", "decorators", "generators", "advanced"]
 publishedDate: 2025-02-10

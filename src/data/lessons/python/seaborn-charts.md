@@ -2,7 +2,7 @@
 title: "Seaborn — Statistical Data Visualization"
 description: "Create beautiful statistical charts with Seaborn — heatmaps, box plots, violin plots, and pair plots for EDA."
 category: "python"
-order: 107
+order: 108
 phase: 1
 tags: ["python", "seaborn", "visualization", "statistical-charts"]
 publishedDate: 2025-02-07

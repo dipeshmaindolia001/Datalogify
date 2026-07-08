@@ -2,7 +2,7 @@
 title: "APIs & Web Scraping — Get Data from the Web"
 description: "Pull data from REST APIs and scrape web pages — automate your data collection pipeline."
 category: "python"
-order: 108
+order: 109
 phase: 1
 tags: ["python", "api", "web-scraping", "requests", "beautifulsoup"]
 publishedDate: 2025-02-08

@@ -2,11 +2,11 @@
 title: "Pandas Data Cleaning — Handle Messy Real-World Data"
 description: "Drop nulls, fill missing values, fix data types, remove duplicates — the skills you'll use in every single analytics project."
 category: "python"
-order: 102
+order: 103
 phase: 1
 tags: ["python", "pandas", "data-cleaning", "missing-data"]
 publishedDate: 2025-02-02
-prevSlug: "numpy-essentials"
+prevSlug: "pandas-intro"
 nextSlug: "pandas-merging"
 seoTitle: "Pandas Data Cleaning Tutorial | Datalogify"
 seoDescription: "Master Pandas data cleaning — handle missing values, duplicates, data types, and outliers in real datasets."
