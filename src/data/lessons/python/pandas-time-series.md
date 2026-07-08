@@ -12,526 +12,503 @@ seoTitle: "Pandas Time Series Analysis Tutorial | Datalogify"
 seoDescription: "Master Pandas time series — pd.to_datetime, resample, rolling averages, and time-based data analysis."
 ---
 
-## Why This Matters
+## Introduction & The "Why"
 
-Most business data is time-based — daily sales, monthly revenue, hourly web traffic, quarterly earnings. Pandas has world-class time series tools built in. Resampling, rolling averages, year-over-year comparisons — all of it becomes one-liners once you know the API.
-
-## Parsing Dates with pd.to_datetime()
-
-```python
-import pandas as pd
-
-# Dates come in all formats — Pandas handles them all
-dates = pd.Series([
-    "2024-01-15",
-    "01/15/2024",
-    "January 15, 2024",
-    "15-Jan-2024",
-    "2024.01.15",
-])
-
-parsed = pd.to_datetime(dates)
-print(parsed)
-print(f"\nDtype: {parsed.dtype}")
-```
+Think of time series data like a **rolling film reel**. Each frame captures a single moment of a scene. 
+*   If you play the film reel frame-by-frame, you see every detailed micro-movement—this is your raw, high-frequency data (like stock prices changing every second or sensor telemetry recorded every millisecond).
+*   If you speed up the film, summarizing many frames into a single second, you are **downsampling** (like converting daily transactional sales into monthly revenue trends to see the bigger picture).
+*   If you need to slow down the film and fill in missing frames to make it look smooth, you are **upsampling** (interpolating missing hourly data points from daily summaries).
+*   If you place a sliding window over a section of frames to calculate average motion, you are performing a **rolling operation** (like calculating a 30-day moving average of sales to smooth out temporary weekend spikes).
 
 ```text
-# Output:
-0   2024-01-15
-1   2024-01-15
-2   2024-01-15
-3   2024-01-15
-4   2024-01-15
-dtype: datetime64[ns]
-
-Dtype: datetime64[ns]
+  Raw Data Reel:  [Jan 1: $10] -> [Jan 2: $12] -> [Jan 3: $11] -> [Jan 4: $15]
+                         \              /               \              /
+                          \            /                 \            /
+  Downsampling (2-day):     [Jan 2: $22]                     [Jan 4: $26]
+  
+  Rolling Average (2-day):  [Jan 1: N/A] -> [Jan 2: $11] -> [Jan 3: $11.5] -> [Jan 4: $13]
 ```
 
-### Specifying Format for Speed
+Almost every business dataset contains time. Sales transactions, web traffic logs, stock portfolios, and server metrics all flow chronologically. Pandas was originally developed in the financial sector specifically to solve time-series challenges. It provides a specialized index type—the `DateTimeIndex`—that enables time-travel-like querying, rapid aggregation, and seamless time-zone conversion out of the box.
 
-```python
-import pandas as pd
+---
 
-# When you know the format, specify it — 10x faster on large datasets
-df = pd.DataFrame({
-    "date_str": ["15/01/2024", "22/01/2024", "05/02/2024", "18/02/2024"],
-    "revenue": [45000, 52000, 48000, 61000],
-})
+## Step-by-Step Concept Breakdown
 
-df["date"] = pd.to_datetime(df["date_str"], format="%d/%m/%Y")
-print(df)
-```
+Before writing code, we need to understand the structural building blocks of time in Pandas:
 
-```text
-# Output:
-     date_str  revenue       date
-0  15/01/2024    45000 2024-01-15
-1  22/01/2024    52000 2024-01-22
-2  05/02/2024    48000 2024-02-05
-3  18/02/2024    61000 2024-02-18
-```
+### 1. Timestamps vs. Periods vs. Durations
+*   **Timestamp:** Represents a specific point in time (e.g., July 8, 2026, at 10:00 AM). In Pandas, this maps to `pd.Timestamp` and forms a `DatetimeIndex`.
+*   **Period:** Represents a span of time (e.g., the month of July 2026, or the fiscal quarter Q3). This maps to `pd.Period` and forms a `PeriodIndex`.
+*   **Duration:** Represents a relative time difference (e.g., 5 days, 3 hours, and 20 seconds). This maps to `pd.Timedelta` and forms a `TimedeltaIndex`.
 
-## The .dt Accessor
+### 2. DatetimeIndex
+When you make a datetime column the index of your DataFrame, you unlock specialized superpowers:
+*   **Partial-string slicing:** You can query entire years or months using simple strings like `df.loc["2024"]` or `df.loc["2024-03"]`.
+*   **Datetime-aware operations:** You can easily calculate day names, weeks, and quarters without running loops.
+*   **Chronological Sorting:** Slicing and resampling require that the index is sorted. Always call `.sort_index()` after establishing a `DatetimeIndex`.
 
-Extract every component of a datetime column without loops.
+### 3. Resampling (`.resample()`)
+Resampling is a time-specific version of `groupby()`. It changes the frequency of your data.
+*   **Downsampling:** Going from high frequency to low frequency (e.g., Daily -> Monthly). You must choose:
+    *   **An aggregation function:** (e.g., `.sum()` or `.mean()`).
+    *   **Closed boundary rule (`closed`):** Which side of the interval is closed (includes the edge values). For example, does a weekly interval run from Monday to Sunday (`closed='left'`) or Tuesday to Monday (`closed='right'`)?
+    *   **Label rule (`label`):** Which side of the interval is used to label the bin (e.g., does the average of Jan 1 - Jan 31 get labeled as "Jan 1" or "Jan 31"?).
+*   **Upsampling:** Going from low frequency to high frequency (e.g., Monthly -> Daily). This creates empty slots which you must fill using methods like forward-filling (`ffill`), backward-filling (`bfill`), or linear interpolation (`interpolate`).
 
-```python
-import pandas as pd
+### 4. Rolling vs. Expanding vs. Exponentially Weighted Windows
+*   **Rolling Window (`.rolling()`):** Slides a window of fixed size $N$ across chronological data. The calculation uses only the values inside the window. It is ideal for smoothing out seasonal fluctuations.
+*   **Expanding Window (`.expanding()`):** Grows dynamically starting from the beginning of the time series. It calculates a cumulative statistic (like year-to-date cumulative sales) using all data points seen up to the current row.
+*   **Exponentially Weighted Window (`.ewm()`):** Assigns weights to data points, giving more weight to recent observations and exponentially decaying weight to older points. This is standard for calculating Exponential Moving Averages (EMA) in financial markets.
 
-df = pd.DataFrame({
-    "order_date": pd.to_datetime([
-        "2024-01-15", "2024-03-22", "2024-06-10",
-        "2024-09-05", "2024-11-28", "2024-12-31",
-    ]),
-    "revenue": [45000, 52000, 38000, 61000, 55000, 72000],
-})
+---
 
-df["year"] = df["order_date"].dt.year
-df["month"] = df["order_date"].dt.month
-df["day"] = df["order_date"].dt.day
-df["day_name"] = df["order_date"].dt.day_name()
-df["quarter"] = df["order_date"].dt.quarter
-df["week"] = df["order_date"].dt.isocalendar().week.astype(int)
+## Code & Practical Walkthroughs
 
-print(df[["order_date", "year", "month", "day_name", "quarter", "week"]])
-```
-
-```text
-# Output:
-  order_date  year  month   day_name  quarter  week
-0 2024-01-15  2024      1     Monday        1     3
-1 2024-03-22  2024      3     Friday        1    12
-2 2024-06-10  2024      6     Monday        2    24
-3 2024-09-05  2024      9   Thursday        3    36
-4 2024-11-28  2024     11   Thursday        4    48
-5 2024-12-31  2024     12    Tuesday        4     1
-```
-
-## DatetimeIndex — Unlock Time Series Powers
-
-Setting your date column as the index unlocks slicing by date strings and resampling.
+Let's begin by generating a realistic time-series dataset: daily website traffic metrics for an e-commerce platform across two months.
 
 ```python
 import pandas as pd
 import numpy as np
 
-# Simulate daily revenue for 90 days
+# Set seed for reproducibility
 np.random.seed(42)
-dates = pd.date_range("2024-01-01", periods=90, freq="D")
-revenue = np.random.randint(8000, 25000, size=90)
 
-df = pd.DataFrame({"revenue": revenue}, index=dates)
-df.index.name = "date"
-
-print(df.head(10))
-
-# Slice by date string — this only works with DatetimeIndex
-print("\n=== January Only ===")
-print(df.loc["2024-01"].head())
-
-print("\n=== Feb 15 to Mar 5 ===")
-print(df.loc["2024-02-15":"2024-03-05"].head())
-```
-
-```text
-# Output:
-            revenue
-date
-2024-01-01    14925
-2024-01-02    11091
-2024-01-03    16156
-2024-01-04    23530
-2024-01-05    14476
-2024-01-06    14025
-2024-01-07    14352
-2024-01-08    18936
-2024-01-09    13675
-2024-01-10    21530
-
-=== January Only ===
-            revenue
-date
-2024-01-01    14925
-2024-01-02    11091
-2024-01-03    16156
-2024-01-04    23530
-2024-01-05    14476
-
-=== Feb 15 to Mar 5 ===
-            revenue
-date
-2024-02-15    17291
-2024-02-16    22766
-2024-02-17    22350
-2024-02-18    10607
-2024-02-19    11444
-```
-
-## Resampling — Change Time Frequency
-
-Resampling converts data from one frequency to another. Daily to monthly, hourly to daily — like a time-based GROUP BY.
-
-```python
-import pandas as pd
-import numpy as np
-
-np.random.seed(42)
-dates = pd.date_range("2024-01-01", periods=180, freq="D")
-daily = pd.DataFrame({
-    "revenue": np.random.randint(8000, 25000, size=180),
-    "orders": np.random.randint(20, 80, size=180),
-}, index=dates)
-
-# Daily → Monthly
-monthly = daily.resample("ME").agg({
-    "revenue": "sum",
-    "orders": "sum",
-})
-monthly["avg_order_value"] = (monthly["revenue"] / monthly["orders"]).round(2)
-
-print("=== Monthly Summary ===")
-print(monthly)
-```
-
-```text
-# Output:
-=== Monthly Summary ===
-            revenue  orders  avg_order_value
-2024-01-31   513143    1513           339.22
-2024-02-29   466036    1381           337.46
-2024-03-31   493843    1496           330.11
-2024-04-30   498694    1492           334.24
-2024-05-31   520125    1496           347.54
-2024-06-29   484179    1468           329.82
-```
-
-### Common Resample Frequencies
-
-```python
-import pandas as pd
-import numpy as np
-
-np.random.seed(42)
-dates = pd.date_range("2024-01-01", periods=90, freq="D")
-df = pd.DataFrame({"revenue": np.random.randint(8000, 25000, size=90)}, index=dates)
-
-# Weekly (sum)
-print("=== Weekly ===")
-print(df.resample("W").sum().head(5))
-
-# Bi-weekly
-print("\n=== Bi-Weekly ===")
-print(df.resample("2W").sum().head(3))
-
-# Quarterly
-print("\n=== Quarterly ===")
-print(df.resample("QE").sum())
-```
-
-```text
-# Output:
-=== Weekly ===
-            revenue
-2024-01-07   108555
-2024-01-14   113975
-2024-01-21   112024
-2024-01-28   107277
-2024-02-04   109095
-
-=== Bi-Weekly ===
-            revenue
-2024-01-14   222530
-2024-01-28   219301
-2024-02-11   228931
-
-=== Quarterly ===
-            revenue
-2024-03-31  1473022
-```
-
-## Rolling Windows — Moving Averages
-
-Rolling calculations smooth out noise and reveal trends. A 7-day moving average is one of the most common analytics techniques.
-
-```python
-import pandas as pd
-import numpy as np
-
-np.random.seed(42)
-dates = pd.date_range("2024-01-01", periods=30, freq="D")
-df = pd.DataFrame({
-    "daily_revenue": np.random.randint(8000, 25000, size=30)
-}, index=dates)
-
-# 7-day rolling average
-df["rolling_7d"] = df["daily_revenue"].rolling(window=7).mean().round(0)
-
-# 7-day rolling sum
-df["rolling_7d_sum"] = df["daily_revenue"].rolling(window=7).sum()
-
-print(df.head(10))
-```
-
-```text
-# Output:
-            daily_revenue  rolling_7d  rolling_7d_sum
-2024-01-01          14925         NaN             NaN
-2024-01-02          11091         NaN             NaN
-2024-01-03          16156         NaN             NaN
-2024-01-04          23530         NaN             NaN
-2024-01-05          14476         NaN             NaN
-2024-01-06          14025         NaN             NaN
-2024-01-07          14352       15508.0       108555.0
-2024-01-08          18936       16081.0       112567.0
-2024-01-09          13675       16450.0       115150.0
-2024-01-10          21530       17218.0       120524.0
-```
-
-<div class="interview-tip">
-
-**Interview Tip:** The first `window - 1` values of a rolling calculation are NaN because there aren't enough data points yet. You can use `min_periods=1` to start calculating with whatever data is available: `df["col"].rolling(7, min_periods=1).mean()`. This is a common follow-up question in interviews.
-
-</div>
-
-## Expanding Window — Cumulative Calculations
-
-```python
-import pandas as pd
-import numpy as np
-
-np.random.seed(42)
-dates = pd.date_range("2024-01-01", periods=10, freq="D")
-df = pd.DataFrame({
-    "revenue": np.random.randint(8000, 20000, size=10)
-}, index=dates)
-
-# Cumulative mean (expanding window)
-df["cumulative_avg"] = df["revenue"].expanding().mean().round(0)
-
-# Running total
-df["running_total"] = df["revenue"].cumsum()
-
-print(df)
-```
-
-```text
-# Output:
-            revenue  cumulative_avg  running_total
-2024-01-01    12925         12925.0          12925
-2024-01-02     9091         11008.0          22016
-2024-01-03    14156         12057.0          36172
-2024-01-04    19530         13926.0          55702
-2024-01-05    12476         13636.0          68178
-2024-01-06    12025         13367.0          80203
-2024-01-07    12352         13222.0          92555
-2024-01-08    16936         13686.0         109491
-2024-01-09    11675         13463.0         121166
-2024-01-10    17530         13870.0         138696
-```
-
-## Shift, Diff, and Pct_change
-
-Essential for comparing current values to previous periods.
-
-```python
-import pandas as pd
-
-monthly = pd.DataFrame({
-    "month": pd.date_range("2024-01-01", periods=6, freq="MS"),
-    "revenue": [150000, 165000, 158000, 172000, 180000, 195000],
-})
-monthly = monthly.set_index("month")
-
-# Previous month's value
-monthly["prev_month"] = monthly["revenue"].shift(1)
-
-# Month-over-month change
-monthly["mom_change"] = monthly["revenue"].diff()
-
-# Month-over-month % change
-monthly["mom_pct"] = (monthly["revenue"].pct_change() * 100).round(1)
-
-print(monthly)
-```
-
-```text
-# Output:
-            revenue  prev_month  mom_change  mom_pct
-month
-2024-01-01   150000         NaN         NaN      NaN
-2024-02-01   165000    150000.0     15000.0     10.0
-2024-03-01   158000    165000.0     -7000.0     -4.2
-2024-04-01   172000    158000.0     14000.0      8.9
-2024-05-01   180000    172000.0      8000.0      4.7
-2024-06-01   195000    180000.0     15000.0      8.3
-```
-
-## date_range — Generate Date Sequences
-
-```python
-import pandas as pd
-
-# Business days only
-biz_days = pd.date_range("2024-01-01", "2024-01-15", freq="B")
-print("Business days:", biz_days.tolist()[:5])
-
-# Month starts
-month_starts = pd.date_range("2024-01-01", periods=6, freq="MS")
-print("\nMonth starts:", month_starts.tolist())
-
-# Hourly data
-hours = pd.date_range("2024-01-01", periods=8, freq="h")
-print("\nHourly:", hours.tolist()[:4])
-```
-
-```text
-# Output:
-Business days: [Timestamp('2024-01-01'), Timestamp('2024-01-02'), Timestamp('2024-01-03'), Timestamp('2024-01-04'), Timestamp('2024-01-05')]
-
-Month starts: [Timestamp('2024-01-01'), Timestamp('2024-02-01'), Timestamp('2024-03-01'), Timestamp('2024-04-01'), Timestamp('2024-05-01'), Timestamp('2024-06-01')]
-
-Hourly: [Timestamp('2024-01-01 00:00:00'), Timestamp('2024-01-01 01:00:00'), Timestamp('2024-01-01 02:00:00'), Timestamp('2024-01-01 03:00:00')]
-```
-
-## Real-World Example: Sales Trend Analysis
-
-```python
-import pandas as pd
-import numpy as np
-
-# Simulate 365 days of e-commerce sales
-np.random.seed(42)
-dates = pd.date_range("2024-01-01", periods=365, freq="D")
-
-# Add seasonality: higher in Q4, lower in Q1
-base = 50000
-seasonal = np.where(
-    dates.month.isin([11, 12]), base * 1.4,
-    np.where(dates.month.isin([1, 2]), base * 0.8, base)
-)
-noise = np.random.normal(0, 5000, 365)
-revenue = (seasonal + noise).round(0)
-
-df = pd.DataFrame({"revenue": revenue}, index=dates)
-
-print("=== Daily Sales (first 5 days) ===")
+# Generate a continuous date range of 60 days
+dates = pd.date_range(start="2026-05-01", end="2026-06-29", freq="D")
+
+# Generate synthetic metrics
+traffic = {
+    "Date_String": dates.strftime("%Y/%m/%d %H:%M:%S"), # dates as strings
+    "Pageviews": np.random.randint(1000, 5000, size=len(dates)),
+    "Conversions": np.random.randint(50, 250, size=len(dates))
+}
+
+df = pd.DataFrame(traffic)
+print("=== Raw Time-Series DataFrame ===")
 print(df.head())
-
-# Monthly summary
-monthly = df.resample("ME").agg(
-    total=("revenue", "sum"),
-    avg_daily=("revenue", "mean"),
-    best_day=("revenue", "max"),
-    worst_day=("revenue", "min"),
-).round(0)
-
-print("\n=== Monthly Summary ===")
-print(monthly)
-
-# Quarter-over-quarter comparison
-quarterly = df.resample("QE")["revenue"].sum()
-quarterly_pct = quarterly.pct_change() * 100
-print("\n=== Quarterly Revenue & Growth ===")
-for date, rev, growth in zip(quarterly.index, quarterly.values, quarterly_pct.values):
-    q = f"Q{date.quarter}"
-    g = f"{growth:+.1f}%" if not pd.isna(growth) else "—"
-    print(f"  {q} 2024: ${rev:>12,.0f}  ({g})")
-
-# 30-day rolling average
-df["rolling_30d"] = df["revenue"].rolling(30).mean().round(0)
-
-# Find trend: is the rolling average increasing or decreasing?
-df["trend"] = np.where(df["rolling_30d"] > df["rolling_30d"].shift(7), "↑ Up", "↓ Down")
-print(f"\nLatest 30-day avg: ${df['rolling_30d'].iloc[-1]:,.0f}")
-print(f"Current trend: {df['trend'].iloc[-1]}")
+print("\nDataFrame Info:")
+print(df.dtypes)
 ```
 
 ```text
 # Output:
-=== Daily Sales (first 5 days) ===
-            revenue
-2024-01-01  42483.0
-2024-01-02  39307.0
-2024-01-03  42633.0
-2024-01-04  47647.0
-2024-01-05  38831.0
+=== Raw Time-Series DataFrame ===
+           Date_String  Pageviews  Conversions
+0  2026/05/01 00:00:00       1860          238
+1  2026/05/02 00:00:00       4770          111
+2  2026/05/03 00:00:00       1861          166
+3  2026/05/04 00:00:00       2294          136
+4  2026/05/05 00:00:00       4448          108
 
-=== Monthly Summary ===
-                total  avg_daily  best_day  worst_day
-2024-01-31  1241007.0    40033.0   50553.0    28866.0
-2024-02-29  1164775.0    40165.0   52297.0    28006.0
-2024-03-31  1540379.0    49689.0   63427.0    35478.0
-2024-04-30  1492804.0    49760.0   63483.0    36667.0
-2024-05-31  1558925.0    50288.0   62476.0    38073.0
-2024-06-30  1499453.0    49982.0   61709.0    36773.0
-2024-07-31  1567696.0    50571.0   63523.0    36399.0
-2024-08-31  1558558.0    50276.0   62076.0    38262.0
-2024-09-30  1504968.0    50166.0   62197.0    38168.0
-2024-10-31  1556296.0    50203.0   59908.0    38558.0
-2024-11-30  2123879.0    70796.0   82024.0    56143.0
-2024-12-31  2148534.0    69307.0   82085.0    53883.0
-
-=== Quarterly Revenue & Growth ===
-  Q1 2024: $  3,946,161  (—)
-  Q2 2024: $  4,551,182  (+15.3%)
-  Q3 2024: $  4,631,222  (+1.8%)
-  Q4 2024: $  5,828,709  (+25.9%)
-
-Latest 30-day avg: $69,307
-Current trend: ↓ Down
+DataFrame Info:
+Date_String    object
+Pageviews       int32
+Conversions     int32
+dtype: object
 ```
 
-## Where This Is Used on the Job
+---
 
-- **Revenue reporting** — monthly, quarterly, year-over-year comparisons
-- **Marketing analytics** — campaign performance over time, seasonal trends
-- **Operations** — monitoring daily KPIs, detecting anomalies
-- **Financial analysis** — stock price trends, moving averages, volatility
-- **Product analytics** — user engagement trends, retention over time
+### Example 1: Creating and Manipulating DateTimeIndex
+
+Before we perform any advanced time calculations, we must convert our string dates into true Pandas Datetime objects and set them as our Index. We will also look at how to handle Unix epoch times.
+
+```python
+# Convert strings to datetime. Explicitly providing the format increases speed by up to 10x!
+df["Date"] = pd.to_datetime(df["Date_String"], format="%Y/%m/%d %H:%M:%S")
+
+# Set the Date column as our DataFrame Index
+df.set_index("Date", inplace=True)
+# Drop the original string column
+df.drop(columns=["Date_String"], inplace=True)
+
+# Sort index is critical for reliable time-based slicing
+df.sort_index(inplace=True)
+
+print("=== DataFrame with DateTimeIndex ===")
+print(df.head())
+```
+
+```text
+# Output:
+=== DataFrame with DateTimeIndex ===
+            Pageviews  Conversions
+Date                              
+2026-05-01       1860          238
+2026-05-02       4770          111
+2026-05-03       1861          166
+2026-05-04       2294          136
+2026-05-05       4448          108
+```
+
+#### Converting Unix Epoch Timestamps
+Many databases store dates as integers representing the number of seconds since January 1, 1970 (Unix Epoch). Here is how to convert them:
+
+```python
+epochs = pd.Series([1719830400, 1719916800, 1720003200]) # July 1st, 2nd, 3rd of 2024
+converted_epochs = pd.to_datetime(epochs, unit="s")
+print("=== Unix Epoch Conversion ===")
+print(converted_epochs)
+```
+
+```text
+# Output:
+=== Unix Epoch Conversion ===
+0   2024-07-01
+1   2024-07-02
+2   2024-07-03
+dtype: datetime64[ns]
+```
+
+#### Time-based Slicing & Extraction
+Now that we have a `DatetimeIndex`, we can query the data using natural time syntax and extract date components:
+
+```python
+# Slice all dates in June 2026
+june_data = df.loc["2026-06"]
+print("=== June 2026 Data Slice ===")
+print(june_data.head(3))
+
+# Extract day name, quarter, and day of year directly from the DatetimeIndex
+df["Day_Name"] = df.index.day_name()
+df["Quarter"] = df.index.quarter
+df["Day_of_Year"] = df.index.dayofyear
+print("\n=== Date Component Engineering ===")
+print(df.head(3))
+```
+
+```text
+# Output:
+=== June 2026 Data Slice ===
+            Pageviews  Conversions
+Date                              
+2026-06-01       2214           83
+2026-06-02       4441          192
+2026-06-03       4159          221
+
+=== Date Component Engineering ===
+            Pageviews  Conversions Day_Name  Quarter  Day_of_Year
+Date                                                             
+2026-05-01       1860          238   Friday        2          122
+2026-05-02       4770          111 Saturday        2          123
+2026-05-03       1861          166   Sunday        2          124
+```
+
+---
+
+### Example 2: Resampling — Downsampling vs. Upsampling
+
+#### Offset Aliases (Frequencies)
+In Pandas 2.0+, several offsets were updated to prevent ambiguity:
+*   `D` = Calendar day
+*   `B` = Business day
+*   `W` = Weekly (Sunday-based end)
+*   `ME` = Month End (replaced deprecated `M`)
+*   `MS` = Month Start (replaced deprecated `MS`)
+*   `QE` = Quarter End (replaced deprecated `Q`)
+*   `YE` = Year End (replaced deprecated `A` / `Y`)
+
+#### Downsampling: Daily to Weekly (Aggregating)
+
+Let's collapse daily records into weekly bins. We will use `closed` and `label` settings to control boundaries.
+
+```python
+# Select only numeric columns
+clean_df = df[["Pageviews", "Conversions"]]
+
+# Downsample to Weekly frequency (W), closed on right (Mon-Sun), labeled with right boundary
+weekly_summary = clean_df.resample("W", closed="right", label="right").sum()
+print("=== Weekly Sales Totals (Downsampled) ===")
+print(weekly_summary.head(4))
+```
+
+```text
+# Output:
+=== Weekly Sales Totals (Downsampled) ===
+            Pageviews  Conversions
+Date                              
+2026-05-03       8491          515
+2026-05-10      22879         1111
+2026-05-17      21867         1058
+2026-05-24      21953         1011
+```
+
+#### Upsampling: Weekly to Daily (Expanding & Filling)
+
+If we resample the weekly dataset back to a daily scale, we create gaps. Let's look at different strategies to fill these gaps:
+
+```python
+# Re-index to Daily frequency
+upsampled_empty = weekly_summary.resample("D").asfreq()
+print("=== Upsampled (Empty Slots created as NaN) ===")
+print(upsampled_empty.head(4))
+
+# Fill techniques
+upsampled_ffill = weekly_summary.resample("D").ffill()
+upsampled_interp = weekly_summary.resample("D").interpolate(method="linear")
+
+print("\n=== Forward Filled (ffill) ===")
+print(upsampled_ffill.head(4))
+
+print("\n=== Linearly Interpolated ===")
+print(upsampled_interp.head(4))
+```
+
+```text
+# Output:
+=== Upsampled (Empty Slots created as NaN) ===
+            Pageviews  Conversions
+Date                              
+2026-05-03     8491.0        515.0
+2026-05-04        NaN          NaN
+2026-05-05        NaN          NaN
+2026-05-06        NaN          NaN
+
+=== Forward Filled (ffill) ===
+            Pageviews  Conversions
+Date                              
+2026-05-03       8491          515
+2026-05-04       8491          515
+2026-05-05       8491          515
+2026-05-06       8491          515
+
+=== Linearly Interpolated ===
+            Pageviews  Conversions
+Date                              
+2026-05-03   8491.000   515.000000
+2026-05-04  10546.429   600.142857
+2026-05-05  12601.857   685.285714
+2026-05-06  14657.286   770.428571
+```
+
+---
+
+### Example 3: Rolling, Expanding, and Exponentially Weighted Windows
+
+Let's calculate different window trends on our daily pageviews:
+*   **7-day Rolling Average:** Focuses on the current week's average.
+*   **Cumulative (Expanding) Maximum:** The highest daily pageview value recorded up to that date.
+*   **Exponentially Weighted Moving Average (EWMA):** Gives more weight to recent days.
+
+```python
+window_df = clean_df.copy()
+
+# 1. 7-day Rolling Average
+window_df["Pageviews_7DMA"] = window_df["Pageviews"].rolling(window=7, min_periods=7).mean()
+
+# 2. Expanding Maximum (Cumulative Max)
+window_df["Pageviews_CumMax"] = window_df["Pageviews"].expanding(min_periods=1).max()
+
+# 3. Exponentially Weighted Moving Average (using a decay span of 7 days)
+window_df["Pageviews_EWMA"] = window_df["Pageviews"].ewm(span=7, adjust=False).mean()
+
+print("=== Window Comparison Output ===")
+print(window_df[["Pageviews", "Pageviews_7DMA", "Pageviews_CumMax", "Pageviews_EWMA"]].head(10))
+```
+
+```text
+# Output:
+=== Window Comparison Output ===
+            Pageviews  Pageviews_7DMA  Pageviews_CumMax  Pageviews_EWMA
+Date                                                                   
+2026-05-01       1860             NaN            1860.0     1860.000000
+2026-05-02       4770             NaN            4770.0     2587.500000
+2026-05-03       1861             NaN            4770.0     2405.875000
+2026-05-04       2294             NaN            4770.0     2377.906250
+2026-05-05       4448             NaN            4770.0     2895.429688
+2026-05-06       2130             NaN            4770.0     2704.072266
+2026-05-07       2095     2779.714286            4770.0     2551.804200
+2026-05-08       2638     2890.857143            4770.0     2573.353150
+2026-05-09       4185     2807.285714            4770.0     2976.264862
+2026-05-10       2095     2840.714286            4770.0     2755.948647
+```
+
+---
+
+### Example 4: Shifting Data (Growth Rates & Differences)
+
+Calculating Period-over-Period growth rates requires shifting the alignment of our data rows.
+
+```python
+# Let's use our weekly summary
+weekly_perf = weekly_summary[["Conversions"]].copy()
+
+# Shift value forward by 1 period (corresponds to prior week)
+weekly_perf["Conversions_Prev_Week"] = weekly_perf["Conversions"].shift(1)
+
+# Shift index forward by 1 week instead of shifting data values (leaves data in place but moves date indexes)
+shifted_index = weekly_perf["Conversions"].shift(1, freq="W")
+
+# Calculate Absolute Difference using .diff()
+weekly_perf["Weekly_Diff"] = weekly_perf["Conversions"].diff(periods=1)
+
+# Calculate Percent Change using .pct_change()
+weekly_perf["Weekly_Pct_Growth"] = (weekly_perf["Conversions"].pct_change(periods=1) * 100).round(2)
+
+print("=== Shifting and Percent Change ===")
+print(weekly_perf)
+```
+
+```text
+# Output:
+=== Shifting and Percent Change ===
+            Conversions  Conversions_Prev_Week  Weekly_Diff  Weekly_Pct_Growth
+Date                                                                          
+2026-05-03          515                    NaN          NaN                NaN
+2026-05-10         1111                  515.0        596.0             115.73
+2026-05-17         1058                 1111.0        -53.0              -4.77
+2026-05-24         1011                 1058.0        -47.0              -4.44
+2026-05-31         1011                 1011.0          0.0               0.00
+2026-06-07         1016                 1011.0          5.0               0.49
+2026-06-14         1250                 1016.0        234.0              23.03
+2026-06-21         1096                 1250.0       -154.0             -12.32
+2026-06-28         1187                 1096.0         91.0               8.30
+2026-06-29          156                 1187.0      -1031.0             -86.86
+```
+
+---
+
+### Example 5: Timezone Localization and Conversion
+
+Datetime objects generated in Python are by default "naive" (timezone-agnostic). If you are building reports for an international audience, you must localize and convert your indices.
+
+```python
+# 1. Create a naive DatetimeIndex
+naive_index = pd.date_range(start="2026-07-08 09:00:00", periods=3, freq="H")
+naive_series = pd.Series([100, 200, 300], index=naive_index)
+print("=== Naive Series (No Timezone) ===")
+print(naive_series)
+
+# 2. Localize to UTC (adds '+00:00' suffix)
+utc_series = naive_series.tz_localize("UTC")
+print("\n=== Localized to UTC ===")
+print(utc_series)
+
+# 3. Convert to US Eastern Time (respects daylight savings automatically!)
+est_series = utc_series.tz_convert("America/New_York")
+print("\n=== Converted to US Eastern Time ===")
+print(est_series)
+```
+
+```text
+# Output:
+=== Naive Series (No Timezone) ===
+2026-07-08 09:00:00    100
+2026-07-08 10:00:00    200
+2026-07-08 11:00:00    300
+Freq: H, dtype: int64
+
+=== Localized to UTC ===
+2026-07-08 09:00:00+00:00    100
+2026-07-08 10:00:00+00:00    200
+2026-07-08 11:00:00+00:00    300
+Freq: H, dtype: int64
+
+=== Converted to US Eastern Time ===
+2026-07-08 05:00:00-04:00    100
+2026-07-08 06:00:00-04:00    200
+2026-07-08 07:00:00-04:00    300
+Freq: H, dtype: int64
+```
+
+---
+
+## Edge Cases & Common Mistakes
+
+### 1. The Sort Index Gotcha
+*   **Gotcha:** Slicing or resampling a DatetimeIndex that isn't chronologically sorted. This will return a `ValueError` or silent indexing errors.
+*   **Best Practice:** Always call `.sort_index()` right after creating or altering a time index:
+    ```python
+    df = df.set_index("Date")
+    df = df.sort_index() # Critical for reliable date logic!
+    ```
+
+### 2. Timezone Ambiguity in Daylight Savings Time Transitions
+*   **Gotcha:** Trying to localize a series containing timestamps that occur during the "clock fallback" hour in Autumn (when the 1:00 AM hour repeats). This yields an `AmbiguousTimeError`.
+*   **Best Practice:** Tell Pandas how to handle the repeating hour using the `ambiguous` parameter:
+    ```python
+    # 'infer' tells Pandas to determine sequence logically, 'NaT' sets ambiguous rows to null
+    df.index = df.index.tz_localize("America/New_York", ambiguous="infer")
+    ```
+
+### 3. Date Offsets in Modern Pandas versions
+*   **Gotcha:** Passing deprecated offsets (like `'M'` or `'Q'`) in Pandas 2.0+ which raises future-proofing warnings or errors.
+*   **Best Practice:** Use `'ME'` for Month End, `'QE'` for Quarter End, and `'YE'` for Year End.
+
+### 4. Overwriting Index with String Types
+*   **Gotcha:** Doing calculations that cast the index to strings, which strips the DatetimeIndex properties and breaks resampling:
+    ```python
+    # Breaks DateTimeIndex!
+    df.index = df.index.strftime("%Y-%m-%d") 
+    ```
+*   **Best Practice:** Keep the index as `datetime64[ns]` and only format strings when rendering or exporting values.
+
+---
+
+## Practice Exercises & Mini-Projects
 
 <div class="challenge">
-
-### Challenge: Website Traffic Analysis
-
-```python
-import pandas as pd
-import numpy as np
-
-np.random.seed(55)
-dates = pd.date_range("2024-01-01", periods=120, freq="D")
-df = pd.DataFrame({
-    "pageviews": np.random.randint(5000, 20000, 120),
-    "signups": np.random.randint(10, 100, 120),
-}, index=dates)
-```
-
-Tasks:
-1. Resample to weekly totals and find the week with highest pageviews
-2. Calculate a 14-day rolling average of signups
-3. Add week-over-week percentage change for pageviews (resample to weekly first)
-4. Find the conversion rate (signups / pageviews) per month
-5. Which day of the week has the highest average pageviews? (Hint: use `.dt.day_name()`)
-
+<strong>Exercise 1: Stock Volatility Moving Window</strong>
+<br>
+Generate a synthetic daily dataset representing stock prices over 90 days.
+1. Calculate a 20-day Simple Moving Average (SMA).
+2. Calculate the 20-day rolling standard deviation (volatility).
+3. Identify all days where the price is more than <strong>2 standard deviations</strong> away from the 20-day SMA.
 </div>
+
+<div class="challenge">
+<strong>Exercise 2: Downsampling Custom Rules</strong>
+<br>
+Using our e-commerce traffic DataFrame:
+1. Resample the daily data to a monthly end frequency (<code>'ME'</code>).
+2. Use <code>.agg()</code> to calculate the <strong>mean</strong> of Pageviews and the <strong>sum</strong> of Conversions for each month.
+3. Add a new calculated column in the aggregated output called <code>Conversion_Rate_Pct</code> (Conversions / Pageviews * 100).
+</div>
+
+---
+
+## Section Recaps
+
+*   **DatetimeIndex:** Convert dates using `pd.to_datetime()` and set as the index to enable partial-string slicing and fast index-based time evaluations.
+*   **Resampling:** `.resample()` allows downsampling (collapsing daily to monthly using aggregates) and upsampling (generating high-frequency records, requiring filling).
+*   **Moving Statistics:** `.rolling()` computes statistics over a trailing window of size $N$. `.expanding()` grows dynamically from index start, and `.ewm()` applies decay weights for EMAs.
+*   **Shifting:** Use `.shift(1)` to align records with prior rows to calculate differences (`.diff()`) and percentage rates (`.pct_change()`).
+*   **Timezones:** naives datetime indexes are localized using `.tz_localize()` and adjusted using `.tz_convert()`.
+
+---
 
 ## Common Interview Questions
 
-### Q1: How do you convert a string column to datetime in Pandas?
+### Q1: What is the difference between `df.resample()` and `df.groupby()`?
+**Answer:**
+*   **`resample()`** is a specialized, time-aware grouping function. It requires a DatetimeIndex (or using the `on` parameter) and understands time-based logic, frequencies (like 'W' for weeks, 'ME' for month ends), and how to close and label boundary intervals.
+*   **`groupby()`** is a generalized grouping function that groups by unique values of any data type (strings, integers, categoricals). It does not understand date intervals or chronological spans unless you manually write grouping keys.
 
-**Answer:** Use `pd.to_datetime(df["col"])` — it auto-detects most date formats. For speed on large datasets, specify the format: `pd.to_datetime(df["col"], format="%Y-%m-%d")`. Use `errors="coerce"` to convert unparseable dates to NaT (Not a Time) instead of raising an error. Always check for NaT values after conversion with `df["col"].isna().sum()`.
+### Q2: What are the `closed` and `label` arguments in `.resample()` and why do they matter?
+**Answer:**
+They define how boundary points are bucketed and displayed:
+*   **`closed`** determines which side of the resample interval is inclusive. For example, if you resample daily data into 7-day bins, `closed='right'` means the right boundary value is included in the bucket, whereas `closed='left'` includes the left boundary.
+*   **`label`** determines how the bucket itself is named. If you aggregate data from Jan 1st to Jan 7th, does the result carry the label '2026-01-01' (`label='left'`) or '2026-01-07' (`label='right'`)? Getting this wrong can shift data outputs by one unit.
 
-### Q2: What is resampling and when do you use it?
+### Q3: How do you handle missing dates in a time series dataset to ensure a continuous index?
+**Answer:**
+If your raw dataset skips weekends or holidays and you want a continuous chronological index, you can use `.reindex()` or `.resample()`:
+```python
+# Method 1: Reindex with a complete date range
+complete_dates = pd.date_range(start=df.index.min(), end=df.index.max(), freq="D")
+df_continuous = df.reindex(complete_dates)
 
-**Answer:** Resampling changes the frequency of time series data. **Downsampling** goes from higher to lower frequency (daily → monthly) and requires an aggregation function (sum, mean). **Upsampling** goes from lower to higher frequency (monthly → daily) and requires interpolation or forward fill. Common use: converting daily sales to monthly totals for reporting, or converting minute-level sensor data to hourly averages.
+# Method 2: Resample to daily scale
+df_continuous = df.resample("D").asfreq()
+```
+You can then use `.ffill()`, `.bfill()`, or `.interpolate()` to handle the empty `NaN` values generated for the missing dates.
 
-### Q3: What is the difference between `rolling()` and `expanding()`?
+### Q4: Why is it highly recommended to pass `format` inside `pd.to_datetime()`?
+**Answer:**
+If you call `pd.to_datetime()` without specifying a format, Pandas has to run parsing heuristics on every string row to guess the format (checking if it matches ISO 8601, US styles, European styles, etc.). On datasets with millions of rows, this is extremely slow. By passing a format string (e.g. `format='%Y-%m-%d'`), you bypass the guessing loop, speeding up the conversion by 5x to 10x and ensuring dates are interpreted correctly.
 
-**Answer:** `rolling(window=7)` uses a fixed-size sliding window — it always looks at the last 7 values. `expanding()` uses a growing window that starts from the first value — it's a cumulative calculation. Rolling gives you a moving average (trend detection), expanding gives you a cumulative average (running totals). Rolling windows have NaN for the first `window-1` values; expanding starts producing values immediately.
-
-### Q4: How do you calculate year-over-year growth in Pandas?
-
-**Answer:** Use `shift(12)` for monthly data: `df["yoy_growth"] = (df["revenue"] / df["revenue"].shift(12) - 1) * 100`. For daily data with DatetimeIndex, resample to monthly first, then shift. Alternatively, use `pct_change(periods=12)` for month-over-month with a 12-period lag. The key is ensuring your data has no gaps — missing months will misalign the shift.
-
-### Q5: What is the `.dt` accessor and what can you extract with it?
-
-**Answer:** The `.dt` accessor exposes datetime properties on a Pandas Series: `.dt.year`, `.dt.month`, `.dt.day`, `.dt.hour`, `.dt.day_name()`, `.dt.quarter`, `.dt.is_month_end`, `.dt.date`, `.dt.time`. It's vectorized, so `df["date"].dt.month` extracts the month from every row instantly. Use it for grouping by time components (e.g., `df.groupby(df["date"].dt.month)`) or creating features for analysis.
+### Q5: What is the difference between rolling and expanding window calculations?
+**Answer:**
+*   A **rolling window** has a fixed size (e.g. `window=7`). As it moves forward through time, it drops the oldest data point and adds the newest. The statistics generated are localized and show short-term fluctuations.
+*   An **expanding window** has a dynamic size that starts at 1 and increases by 1 with each step (e.g. `.expanding()`). It never drops historical records; it incorporates all data points seen since the start of the series. It is used to track cumulative or lifetime statistics (like year-to-date sales totals).

@@ -14,337 +14,551 @@ seoDescription: "Master Python decorators and generators — timing functions, c
 
 ## Why This Matters
 
-Decorators let you add behavior to functions without changing them — perfect for logging, timing, and caching in data pipelines. Generators let you process datasets too large for memory. Together, they're what separates "writes scripts" from "builds production systems."
+As you move from writing simple scripts to building production-grade data pipelines, you run into two major challenges:
+1.  **Code Duplication (The Cross-Cutting Concern Problem):** You want to time how long multiple functions take to run, or retry API requests if they fail. Copy-pasting timing or logging code into fifty different functions makes your codebase bloated and unmaintainable.
+2.  **Memory Constraints (The Big Data Problem):** If you try to load a 10-gigabyte CSV log file into a standard Python list, your system will run out of RAM and crash.
 
-## Decorators — Wrap Functions
+Python provides two elegant, built-in features to solve these exact problems: **Decorators** and **Generators**. Together, they allow you to write clean, reusable, and memory-efficient data processing code.
 
-A decorator is a function that takes a function and returns an enhanced version.
+### The Visual Analogies
+
+*   **Decorators are like Gift Wrapping:**
+    Imagine you bought a simple wooden box (the **Function**). It does its job perfectly: it stores items. Now, you wrap it in premium paper, tie a red ribbon around it, and stick a gift tag on top (the **Decorator**).
+    
+    The underlying wooden box has not changed at all; it still stores items. However, it now has extra visual features and metadata (ribbon, wrapping). You can wrap any other product (another function) in the exact same wrapping paper without altering the products themselves.
+    
+    ```text
+    [Raw Function] 
+         │
+         ▼
+    ┌──────────────────────┐
+    │  Decorator Wrapper   │
+    │  ┌────────────────┐  │
+    │  │  Raw Function  │  │
+    │  └────────────────┘  │
+    └──────────────────────┘
+    ```
+
+*   **Generators are like a Water Dispenser vs. a Giant Water Tank:**
+    Imagine you need to supply water to a construction site:
+    *   **The List Approach (Water Tank):** You order a giant 10,000-liter water tank (a **List**). The truck dumps all 10,000 liters of water onto your floor at once. You need massive physical space (system **RAM**) to hold all that water, even if you only drink one glass at a time.
+    *   **The Generator Approach (Water Dispenser):** You install a water dispenser. Every time you are thirsty, you press the lever (call `next()`), and exactly one cup of water pours out (**`yield`**). Once you finish that cup, you press the lever again for the next cup. The water dispenser only holds one cup of water at the nozzle at any given second. The memory footprint is virtually zero, regardless of whether you end up drinking 10 liters or 10,000 liters.
+
+    ```text
+    List (Whole Tank):
+    RAM: [====================================] (Loads all 1,000,000 items at once)
+    
+    Generator (Dispenser):
+    RAM: [=]                                     (Generates item 1 -> discards -> item 2 -> discards)
+    ```
+
+---
+
+## Step-by-Step Concept Breakdown
+
+Before building decorators and generators, we must examine the Python mechanics that make them possible.
+
+### Part A: Python Decorators
+
+#### 1. Functions as First-Class Citizens
+In Python, functions are objects. This means:
+*   You can assign a function to a variable.
+*   You can pass a function as an argument to another function.
+*   You can return a function from inside another function.
 
 ```python
-# Simple decorator
-def uppercase(func):
-    def wrapper(*args, **kwargs):
-        result = func(*args, **kwargs)
-        return result.upper()
+def shout(text):
+    return text.upper()
+
+# Assigning to a variable
+yell = shout 
+print(yell("hello")) # HELLO
+```
+
+#### 2. Inner Functions and Closures
+An **Inner Function** is a function defined inside another function. A **Closure** is an inner function that retains access to variables from its outer (enclosing) scope, even after the outer function has finished executing.
+
+```python
+def make_multiplier(factor):
+    def multiplier(number):
+        # Accesses 'factor' from the outer scope
+        return number * factor 
+    return multiplier
+
+double = make_multiplier(2)
+print(double(5)) # Output: 10
+```
+
+#### 3. Decorator Syntax Under the Hood
+A decorator is simply a function that takes another function as an argument, defines a wrapper function that adds some behavior, and returns the wrapper function.
+
+```python
+def my_decorator(func):
+    def wrapper():
+        print("Something before the function runs.")
+        func()
+        print("Something after the function runs.")
     return wrapper
-
-@uppercase
-def greet(name):
-    return f"hello, {name}"
-
-print(greet("analyst"))
 ```
 
-```text
-HELLO, ANALYST
+When you use the `@` syntactic sugar:
+```python
+@my_decorator
+def greet():
+    print("Hello World!")
+```
+Python is executing this behind the scenes:
+```python
+greet = my_decorator(greet)
 ```
 
-### Timing Decorator (Most Common in Analytics)
+#### 4. The Boilerplate: Handling Arguments and Metadata
+To make a decorator reusable for *any* function, the inner wrapper must accept `*args` (positional arguments) and `**kwargs` (keyword arguments) and pass them to the decorated function.
+
+Additionally, decorating a function replaces its metadata (like its name and docstring) with the wrapper's metadata. To prevent this, we use **`functools.wraps`**.
+
+```python
+from functools import wraps
+
+def professional_decorator(func):
+    @wraps(func) # Preserves name and docstring of the original function
+    def wrapper(*args, **kwargs):
+        # Do something before
+        result = func(*args, **kwargs)
+        # Do something after
+        return result
+    return wrapper
+```
+
+---
+
+### Part B: Python Generators
+
+#### 1. The `yield` Keyword
+A regular function runs until it hits a `return` statement or reaches the end. It then discards all its local variables.
+
+A **Generator Function** contains the `yield` keyword. When Python compiles a function containing `yield`, it marks it as a generator. When you call the function, it does not run the code; instead, it returns a **Generator Object**.
+
+```python
+def simple_generator():
+    print("Starting...")
+    yield 1
+    print("Resuming...")
+    yield 2
+```
+
+#### 2. The Execution Lifecycle
+When you call `next(gen_object)`:
+1.  The generator runs from its current position until it hits a `yield` statement.
+2.  It pauses execution, saves all its local variables and state, and returns the yielded value.
+3.  The next time you call `next(gen_object)`, the generator resumes *exactly* where it was paused.
+4.  If the generator reaches the end without hitting another `yield`, it raises a `StopIteration` exception, which signals loops to stop.
+
+#### 3. Generator Expressions
+Just like List Comprehensions build lists, **Generator Expressions** build generators. They use parentheses `()` instead of brackets `[]`:
+
+```python
+# List Comprehension (Loads everything into RAM)
+list_comp = [x ** 2 for x in range(1000000)]
+
+# Generator Expression (Calculates numbers on-the-fly)
+gen_expr = (x ** 2 for x in range(1000000))
+```
+
+---
+
+## Code / Practical Walkthroughs
+
+Let's implement these patterns in practical analytics and data pipeline scenarios.
+
+### Example 1: Execution Timer and Logging Decorator
+In data pipelines, we must monitor performance. We will build a decorator that measures and logs the execution time of any function.
 
 ```python
 import time
 from functools import wraps
 
-def timer(func):
-    """Measure how long a function takes to run."""
+def time_and_log(func):
+    """Decorator that measures execution time and prints arguments."""
     @wraps(func)
     def wrapper(*args, **kwargs):
-        start = time.time()
+        start_time = time.time()
+        
+        print(f"[LOG] Executing '{func.__name__}' with args={args} kwargs={kwargs}")
+        
+        # Execute the actual function
         result = func(*args, **kwargs)
-        elapsed = time.time() - start
-        print(f"⏱ {func.__name__} took {elapsed:.3f}s")
+        
+        duration = time.time() - start_time
+        print(f"[LOG] Finished '{func.__name__}' in {duration:.4f} seconds")
+        
         return result
     return wrapper
 
-@timer
-def process_sales_data(n_records):
-    """Simulate processing sales records."""
-    total = sum(i * 1.08 for i in range(n_records))
+@time_and_log
+def run_heavy_calculation(elements):
+    """Simulates an expensive statistical operation."""
+    total = 0
+    for i in range(elements):
+        total += i ** 0.5
     return total
 
-result = process_sales_data(1_000_000)
-print(f"Total: ${result:,.2f}")
+# Run the decorated function
+val = run_heavy_calculation(5000000)
+print(f"Result: {val:,.2f}")
 ```
 
 ```text
-⏱ process_sales_data took 0.127s
-Total: $540,000,432,000.00
+# Output:
+[LOG] Executing 'run_heavy_calculation' with args=(5000000,) kwargs={}
+[LOG] Finished 'run_heavy_calculation' in 0.3120 seconds
+Result: 7,453,559,365.17
 ```
 
-### Logging Decorator
+---
 
-```python
-import logging
-from functools import wraps
-
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
-
-def log_call(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        logging.info(f"Calling {func.__name__}({args}, {kwargs})")
-        result = func(*args, **kwargs)
-        logging.info(f"{func.__name__} returned {result}")
-        return result
-    return wrapper
-
-@log_call
-def calculate_growth(current, previous):
-    if previous == 0:
-        return 0
-    return round((current - previous) / previous * 100, 2)
-
-growth = calculate_growth(150000, 120000)
-print(f"Growth: {growth}%")
-```
-
-```text
-2025-02-10 10:30:00 Calling calculate_growth((150000, 120000), {})
-2025-02-10 10:30:00 calculate_growth returned 25.0
-Growth: 25.0%
-```
-
-### Retry Decorator (For API Calls)
+### Example 2: API Retry Decorator with Exponential Backoff
+When calling web APIs, connections occasionally fail due to brief network hiccups. We will write a decorator that automatically retries a function if it raises an exception, increasing the delay between retries.
 
 ```python
 import time
+import random
 from functools import wraps
 
-def retry(max_attempts=3, delay=1):
-    """Retry a function if it raises an exception."""
+def retry_request(max_attempts=3, initial_delay=1):
+    """Decorator factory that retries a function upon failure using backoff."""
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
+            delay = initial_delay
             for attempt in range(1, max_attempts + 1):
                 try:
                     return func(*args, **kwargs)
-                except Exception as e:
+                except Exception as err:
                     if attempt == max_attempts:
-                        raise
-                    print(f"Attempt {attempt} failed: {e}. Retrying in {delay}s...")
-                    time.sleep(delay)
+                        print(f"[RETRY] Attempt {attempt} failed permanently.")
+                        raise err # Re-raise exception if all attempts fail
+                    
+                    # Randomize delay slightly to prevent simultaneous retry thundering herd
+                    sleep_time = delay + random.uniform(0, 0.5)
+                    print(f"[RETRY] Attempt {attempt} failed: '{err}'. Retrying in {sleep_time:.2f}s...")
+                    time.sleep(sleep_time)
+                    delay *= 2 # Double the delay for exponential backoff
         return wrapper
     return decorator
 
-@retry(max_attempts=3, delay=0.5)
-def fetch_data(url):
-    """Simulate an API call that sometimes fails."""
-    import random
-    if random.random() < 0.6:
-        raise ConnectionError("Server timeout")
-    return {"status": "success", "records": 1500}
+# Simulate an unstable API fetch
+attempt_counter = 0
 
-# This will retry up to 3 times
-# result = fetch_data("https://api.example.com/sales")
+@retry_request(max_attempts=3, initial_delay=1.0)
+def fetch_api_data():
+    global attempt_counter
+    attempt_counter += 1
+    if attempt_counter < 3:
+        raise ConnectionError("Server timed out")
+    return {"status": "success", "data": [10, 20, 30]}
+
+result = fetch_api_data()
+print(f"API Result: {result}")
 ```
 
-### Caching with @lru_cache
+```text
+# Output:
+[RETRY] Attempt 1 failed: 'Server timed out'. Retrying in 1.25s...
+[RETRY] Attempt 2 failed: 'Server timed out'. Retrying in 2.12s...
+API Result: {'status': 'success', 'data': [10, 20, 30]}
+```
+
+---
+
+### Example 3: Memory Caching Decorator
+If you query a database or API for the same parameter repeatedly, you waste bandwidth and database resources. We can cache the results using `functools.lru_cache` (Least Recently Used cache).
 
 ```python
 from functools import lru_cache
 import time
 
-@lru_cache(maxsize=128)
-def expensive_query(customer_id):
-    """Simulate a slow database query."""
-    time.sleep(0.1)  # Simulates DB latency
-    return {"id": customer_id, "name": f"Customer {customer_id}", "revenue": customer_id * 1000}
+@lru_cache(maxsize=4)
+def query_db_customer_sales(customer_id):
+    """Simulates a heavy SQL query checking customer sales totals."""
+    print(f"[DB Query] Executing SELECT SUM(sales) FOR customer {customer_id}...")
+    time.sleep(1.5) # Simulate database network latency
+    
+    # Mock data lookup
+    sales_db = {101: 45000.00, 102: 12500.00, 103: 98000.00}
+    return sales_db.get(customer_id, 0.0)
 
-# First call — slow (hits "database")
+# First lookup - Slow (forces execution)
 start = time.time()
-result1 = expensive_query(42)
-print(f"First call: {time.time() - start:.3f}s — {result1}")
+print(f"Sales: ${query_db_customer_sales(101):,.2f} | Time: {time.time() - start:.4f}s")
 
-# Second call — instant (cached)
+# Second lookup (same ID) - Instant (reads from memory cache)
 start = time.time()
-result2 = expensive_query(42)
-print(f"Cached call: {time.time() - start:.6f}s — {result2}")
+print(f"Sales: ${query_db_customer_sales(101):,.2f} | Time: {time.time() - start:.4f}s")
 
-print(f"\nCache info: {expensive_query.cache_info()}")
+# Third lookup (different ID) - Slow
+start = time.time()
+print(f"Sales: ${query_db_customer_sales(102):,.2f} | Time: {time.time() - start:.4f}s")
+
+# Check cache diagnostics
+print(query_db_customer_sales.cache_info())
 ```
 
 ```text
-First call: 0.101s — {'id': 42, 'name': 'Customer 42', 'revenue': 42000}
-Cached call: 0.000002s — {'id': 42, 'name': 'Customer 42', 'revenue': 42000}
-
-Cache info: CacheInfo(hits=1, misses=1, maxsize=128, currsize=1)
+# Output:
+[DB Query] Executing SELECT SUM(sales) FOR customer 101...
+Sales: $45,000.00 | Time: 1.5020s
+Sales: $45,000.00 | Time: 0.0001s
+[DB Query] Executing SELECT SUM(sales) FOR customer 102...
+Sales: $12,500.00 | Time: 1.5030s
+CacheInfo(hits=1, misses=2, maxsize=4, currsize=2)
 ```
 
-## Generators — Lazy Evaluation
+---
 
-Generators produce values one at a time using `yield`. They don't store everything in memory.
+### Example 4: Processing Large Log Files with Generators
+Suppose you have a production server log containing millions of lines. You want to extract lines that contain "ERROR". Instead of loading the whole file into memory, you stream it line-by-line.
 
 ```python
-# Regular function — stores ALL values
-def get_squares_list(n):
-    result = []
-    for i in range(n):
-        result.append(i ** 2)
-    return result
+import io
 
-# Generator — yields one value at a time
-def get_squares_gen(n):
-    for i in range(n):
-        yield i ** 2
+# We will simulate a large log file using io.StringIO
+mock_log_file = io.StringIO("""2026-07-08 10:00:00 INFO User login success
+2026-07-08 10:01:05 WARNING CPU Usage exceeded 80%
+2026-07-08 10:02:10 ERROR Database connection pool exhausted
+2026-07-08 10:03:00 INFO Cron job started
+2026-07-08 10:04:15 ERROR API Gateway timeout
+""")
 
-# Compare memory
-import sys
-list_result = get_squares_list(10000)
-gen_result = get_squares_gen(10000)
+def stream_logs(file_obj):
+    """Generator that yields lines from a log file object one at a time."""
+    for line in file_obj:
+        yield line.strip()
 
-print(f"List memory: {sys.getsizeof(list_result):,} bytes")
-print(f"Generator memory: {sys.getsizeof(gen_result)} bytes")
+def filter_errors(log_lines):
+    """Generator that filters out non-error lines."""
+    for line in log_lines:
+        if "ERROR" in line:
+            yield line
+
+# Set up the pipeline: Raw Stream -> Error Filter
+raw_stream = stream_logs(mock_log_file)
+error_stream = filter_errors(raw_stream)
+
+# Consume the final generator
+print("Streaming error logs:")
+for error in error_stream:
+    print(f"  Alert: {error}")
 ```
 
 ```text
-List memory: 87,624 bytes
-Generator memory: 200 bytes
+# Output:
+Streaming error logs:
+  Alert: 2026-07-08 10:02:10 ERROR Database connection pool exhausted
+  Alert: 2026-07-08 10:04:15 ERROR API Gateway timeout
 ```
 
-### Processing Large Files
+---
+
+### Example 5: Generator Pipelines (ETL Pipeline)
+Generator functions can be chained together to form highly efficient ETL (Extract, Transform, Load) pipelines. The data flows through the pipeline element-by-element without creating intermediate lists.
 
 ```python
-def read_sales_csv(filepath):
-    """Generator that yields one clean row at a time from a large CSV."""
-    with open(filepath) as f:
-        header = f.readline().strip().split(",")
-        for line in f:
-            values = line.strip().split(",")
-            row = dict(zip(header, values))
-            try:
-                row["revenue"] = float(row["revenue"])
-                yield row
-            except (ValueError, KeyError):
-                continue  # Skip bad rows
-
-# Process a 10GB file using only a few KB of memory
-# total_revenue = sum(row["revenue"] for row in read_sales_csv("huge_file.csv"))
-# print(f"Total: ${total_revenue:,.2f}")
-```
-
-### Generator Pipelines
-
-```python
-def read_numbers(data):
-    """Stage 1: Parse raw data."""
-    for item in data:
-        try:
-            yield float(item)
-        except ValueError:
-            continue
-
-def filter_positive(numbers):
-    """Stage 2: Keep only positive values."""
-    for n in numbers:
-        if n > 0:
-            yield n
-
-def calculate_tax(amounts, rate=0.08):
-    """Stage 3: Add tax."""
-    for amount in amounts:
-        yield round(amount * (1 + rate), 2)
-
-# Pipeline — data flows through stages without storing intermediate results
-raw = ["100", "abc", "-50", "200", "N/A", "350", "0", "175"]
-
-pipeline = calculate_tax(filter_positive(read_numbers(raw)))
-
-for taxed in pipeline:
-    print(f"${taxed}")
-
-print(f"\nTotal: ${sum(calculate_tax(filter_positive(read_numbers(raw)))):,.2f}")
-```
-
-```text
-$108.0
-$216.0
-$378.0
-$189.0
-
-Total: $891.00
-```
-
-### itertools — Generator Power Tools
-
-```python
-from itertools import chain, islice, groupby
-
-# chain — combine multiple iterables
-q1 = [50000, 52000, 48000]
-q2 = [55000, 58000, 60000]
-q3 = [45000, 47000, 51000]
-
-all_months = list(chain(q1, q2, q3))
-print(f"All months: {all_months}")
-print(f"Total: ${sum(chain(q1, q2, q3)):,}")
-
-# islice — take first N from generator
-def infinite_ids():
-    n = 1
-    while True:
-        yield f"TXN-{n:06d}"
-        n += 1
-
-first_5 = list(islice(infinite_ids(), 5))
-print(f"First 5 IDs: {first_5}")
-
-# groupby — group sorted data
-sales = [
-    ("East", 50000), ("East", 45000),
-    ("West", 60000), ("West", 55000), ("West", 58000),
-    ("North", 30000),
+# Raw stream of dirty transaction strings
+raw_transactions = [
+    "tx_id:1001,amount:150.00,status:completed",
+    "tx_id:1002,amount:abc,status:failed",
+    "tx_id:1003,amount:320.50,status:completed",
+    "tx_id:1004,amount:-50.00,status:completed",
+    "tx_id:1005,amount:12.99,status:completed"
 ]
 
-for region, group in groupby(sales, key=lambda x: x[0]):
-    amounts = [g[1] for g in group]
-    print(f"{region}: ${sum(amounts):,} ({len(amounts)} sales)")
+def extract(records):
+    """Extract fields from raw transaction strings."""
+    for record in records:
+        parts = record.split(",")
+        data = {}
+        for part in parts:
+            key, val = part.split(":")
+            data[key] = val
+        yield data
+
+def transform(transactions):
+    """Clean data types and filter anomalies."""
+    for tx in transactions:
+        try:
+            amount = float(tx["amount"])
+            # Remove negative amounts and failed transactions
+            if amount > 0 and tx["status"] == "completed":
+                tx["amount"] = amount
+                yield tx
+        except ValueError:
+            continue # Skip records with bad numeric amounts
+
+def load(transactions):
+    """Yield a formatted report row."""
+    for tx in transactions:
+        yield f"TXN {tx['tx_id']} is VALID for ${tx['amount']:.2f}"
+
+# Build the pipeline
+extracted = extract(raw_transactions)
+transformed = transform(extracted)
+pipeline = load(transformed)
+
+# Execute pipeline
+for report_row in pipeline:
+    print(report_row)
 ```
 
 ```text
-All months: [50000, 52000, 48000, 55000, 58000, 60000, 45000, 47000, 51000]
-Total: $466,000
-First 5 IDs: ['TXN-000001', 'TXN-000002', 'TXN-000003', 'TXN-000004', 'TXN-000005']
-East: $95,000 (2 sales)
-West: $173,000 (3 sales)
-North: $30,000 (1 sales)
+# Output:
+TXN 1001 is VALID for $150.00
+TXN 1003 is VALID for $320.50
+TXN 1005 is VALID for $12.99
 ```
 
-<div class="interview-tip">
+---
 
-**Where This Shows Up in Real Jobs:**
-- **Decorators:** Timing ETL steps, retrying API calls, caching expensive queries, logging data pipeline stages
-- **Generators:** Processing multi-GB log files, streaming data from APIs, building ETL pipelines that don't run out of memory
-- **itertools:** Combining data from multiple sources, batching API calls, deduplicating sorted streams
+## Edge Cases & Common Mistakes
 
-</div>
+### 1. Forgetting to Use `@wraps`
+**The Mistake:** If you forget to add `@wraps(func)` to your decorator's wrapper function, the original function's name and documentation will be overwritten by the wrapper's details. This makes debugging difficult and breaks inspection libraries.
+```python
+def bad_decorator(func):
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    return wrapper
 
-<div class="challenge">
+@bad_decorator
+def calculate_average(nums):
+    """Calculates mean value."""
+    return sum(nums) / len(nums)
 
-**Mini-Challenge:**
-1. Write a `@validate_positive` decorator that raises `ValueError` if any numeric argument is negative
-2. Write a generator `batch(iterable, size)` that yields lists of `size` items from any iterable
-3. Use your batch generator to process a list of 1000 items in groups of 100
+# The name is ruined!
+print(calculate_average.__name__) # Prints: 'wrapper' instead of 'calculate_average'
+print(calculate_average.__doc__)  # Prints: None
+```
 
-</div>
+### 2. Generator Exhaustion
+**The Mistake:** Trying to loop through a generator a second time. Once a generator has yielded all its values, it is **exhausted** (empty). Calling `next()` on it will only raise `StopIteration`.
+```python
+my_gen = (x for x in range(3))
+list_a = list(my_gen) # list_a = [0, 1, 2]
+list_b = list(my_gen) # list_b = [] (empty! The generator is spent)
+```
+**The Fix:** If you need to process the data multiple times, you must either:
+*   Cast the generator to a list immediately (which loads it all into memory).
+*   Create a fresh generator by calling the generator function again.
+
+### 3. Generators Do Not Support Indexing or `len()`
+**The Mistake:** Attempting to run `len(generator)` or access `generator[0]`. Because generators do not store their elements, Python has no way of knowing how many elements they contain, or what element is at an index, without running them to exhaustion.
+**The Fix:** If you need indexing or sizing, convert the elements to a list: `list(generator)`. If you only need to look at the first item without exhausting the generator, use `next(generator)`.
+
+---
+
+## Practice Exercises & Mini-Projects
+
+### Exercise 1: Build a Type-Checking Decorator
+**Objective:** Enforce type safety on functions.
+Write a decorator named `@require_ints` that:
+1.  Inspects all arguments passed to the decorated function.
+2.  If any argument is not an instance of `int`, raises a `TypeError` with an informative message.
+3.  If all arguments are integers, executes the function normally.
+
+```python
+# Expected Behavior:
+@require_ints
+def sum_two(a, b):
+    return a + b
+
+sum_two(5, 10)     # Returns 15
+sum_two(5, "ten")  # Raises TypeError: 'All arguments must be integers.'
+```
+
+### Exercise 2: Build a Batch Streaming Generator
+**Objective:** Group streamed data for bulk loading operations (e.g. database inserts).
+In production data engineering, you do not write records to a database one-by-one (too slow), nor do you write millions at once (too much memory). Instead, you write in batches.
+Write a generator function `batch_stream(iterable, batch_size)` that:
+1.  Takes an input iterable (like a list or another generator) and a `batch_size`.
+2.  Yields a list containing at most `batch_size` items.
+3.  Ensures that the final batch is yielded, even if it contains fewer than `batch_size` items.
+
+```python
+# Expected Behavior:
+data = range(1, 8)
+for chunk in batch_stream(data, batch_size=3):
+    print(chunk)
+
+# Output:
+# [1, 2, 3]
+# [4, 5, 6]
+# [7]
+```
+
+---
+
+## Section Recaps
+
+*   **Decorator Basics:** A decorator wraps a function to modify its behavior without altering its source code. Implement it using an inner function closure, and always use `@wraps` to preserve function metadata.
+*   **Decorator Boilerplate:** Use `*args` and `**kwargs` in your wrappers to make them compatible with functions of any parameter signature.
+*   **Generator Basics:** Generators use `yield` instead of `return`. They produce values lazily on-demand, which reduces memory consumption when handling large datasets.
+*   **State Suspension:** A generator remembers its place in code between invocations, restoring local variables whenever `next()` is called.
+*   **Generator Pipelines:** By passing one generator as input to another, you construct memory-safe data engineering pipelines that process large datasets element-by-element.
+
+---
 
 ## Common Interview Questions
 
-### Q1: What is a decorator and when would you use one?
+### Q1: What is a closure, and how does it relate to decorators?
+**Answer:** A closure is an inner function that retains access to variables from its outer (enclosing) lexical scope, even after the outer function has finished executing. 
 
-**Answer:** A decorator is a function that takes another function as input and returns a modified version. It's syntactic sugar for `func = decorator(func)`. Common uses: logging, timing, authentication, caching, input validation, and retry logic. In data analytics, timing decorators and caching are the most common.
+Decorators rely entirely on closures. The decorator function acts as the outer function, accepting the target function as a parameter. The nested `wrapper` function acts as the closure, retaining a reference to the target function and executing it when the wrapper itself is called.
 
-### Q2: What's the difference between a generator and a list?
+### Q2: What's the difference between `yield` and `return`?
+**Answer:** 
+*   **`return`** terminates the function execution completely and returns a value to the caller. The function's stack frame and local variables are immediately destroyed.
+*   **`yield`** pauses function execution and sends a value back to the caller. It keeps the function's stack frame in memory, saving the state of all local variables. The next time the generator is queried, it resumes execution immediately after the `yield` statement.
 
-**Answer:** A list stores all values in memory at once. A generator produces values on-demand using `yield`, keeping only one value in memory at a time. Generators can't be indexed or sliced, and can only be iterated once. Use generators when the dataset is larger than available memory or when you only need each value once.
+### Q3: When would you use a generator instead of a list comprehension in a data pipeline?
+**Answer:** You should use a generator when:
+1.  **Memory is limited:** The dataset is extremely large (e.g., millions of log rows, database records, or image files) and loading it into memory would cause a memory crash.
+2.  **Infinite Streams:** You are processing data that has no defined end, like live social media feeds, sensor streams, or continuous transaction feeds.
+3.  **Intermediate Processing:** You want to chain multiple processing steps (filtering, cleaning, parsing) without generating intermediate lists in memory.
 
-### Q3: What does `@wraps(func)` do and why is it important?
+You should prefer a list comprehension only when you need to index, slice, or access elements repeatedly, or if the dataset is small and you need to perform actions that require looking at all elements simultaneously (like sorting).
 
-**Answer:** `@wraps(func)` from `functools` preserves the original function's `__name__`, `__doc__`, and other metadata. Without it, the decorated function looks like `wrapper` in error messages and documentation. It's essential for debugging and introspection in production code.
+<div class="interview-tip">
+<strong>Interview Tip:</strong> Emphasize that a generator is a <em>one-pass</em> data structure. If you need to loop through the data multiple times, a list is required (or you must recreate the generator).
+</div>
 
-### Q4: Can a generator be restarted?
+### Q4: How do you write a decorator that accepts its own configuration arguments (e.g. `@retry(max_attempts=5)`)?
+**Answer:** To make a decorator accept arguments, you must write a **Decorator Factory**. This is a three-level nested function:
+1.  The outermost function accepts the configuration arguments (e.g., `max_attempts`) and returns the actual decorator.
+2.  The middle function accepts the target function (`func`) and returns the wrapper.
+3.  The innermost function (`wrapper`) handles the execution logic and arguments (`*args`, `**kwargs`).
 
-**Answer:** No. Once a generator is exhausted (all values yielded), it cannot be restarted. You must create a new generator instance. This is why generator functions are preferred over generator objects — you can call the function again to get a fresh generator.
+```python
+def repeat(times):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            for _ in range(times):
+                result = func(*args, **kwargs)
+            return result
+        return wrapper
+    return decorator
+```
 
-### Q5: What's the difference between `yield` and `return`?
+### Q5: What is generator delegation, and how do you implement it?
+**Answer:** Generator delegation is the process of yielding values from another generator or iterable from inside a generator function. It is implemented using the **`yield from`** statement. 
 
-**Answer:** `return` exits the function permanently and sends back one value. `yield` pauses the function, sends back a value, and remembers where it left off. The next call to `next()` resumes from after the `yield`. A function with `yield` becomes a generator function. `return` in a generator raises `StopIteration`.
+Instead of writing a loop to yield items one-by-one, `yield from` handles it natively and more efficiently:
+
+```python
+# Instead of:
+for item in sub_generator():
+    yield item
+
+# You write:
+yield from sub_generator()
+```
+This is highly useful for nesting generators or clean-up patterns.

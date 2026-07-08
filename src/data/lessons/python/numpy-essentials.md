@@ -1,6 +1,6 @@
 ---
 title: "NumPy Essentials — Arrays & Vectorized Operations"
-description: "Learn NumPy arrays — the performance backbone of Pandas and every data science library in Python."
+description: "Master NumPy arrays, vectorized operations, broadcasting, and statistical functions for fast data processing."
 category: "python"
 order: 101
 phase: 1
@@ -12,560 +12,797 @@ seoTitle: "Python NumPy Tutorial for Data Analytics | Datalogify"
 seoDescription: "Master NumPy arrays, vectorized operations, broadcasting, and statistical functions for fast data processing."
 ---
 
-## Why This Matters
+## Why This Matters: The Engine Under the Hood
 
-NumPy is the engine under the hood. Pandas, Scikit-learn, TensorFlow, Matplotlib — they all run on NumPy arrays. When your Pandas code is slow, you drop into NumPy. When an interviewer asks about vectorization, they mean NumPy. Learn it once and everything else in the data stack clicks.
+In data analytics, speed is everything. When you are analyzing a dataset with 100,000 rows, a slow script is a minor annoyance. When you scale that to 100 million rows, a slow script is a project-killing bottleneck. 
 
-## Creating Arrays
+Vanilla Python is incredibly flexible and developer-friendly, but that friendliness comes at a steep performance cost. Python lists are generic containers that can hold any data type. To support this flexibility, Python stores lists as arrays of **pointers** to objects scattered all over your computer's memory. This design makes basic math operations on lists painfully slow.
+
+This is where **NumPy** (Numerical Python) comes in. NumPy is the absolute bedrock of the Python data science stack. Pandas, Scikit-learn, SciPy, and TensorFlow are all built directly on top of NumPy. If Pandas is a slick sports car, NumPy is the high-performance engine under the hood. Understanding how NumPy works at a low level will make you a better programmer, help you write optimized Pandas queries, and allow you to pass technical data engineering interviews with ease.
+
+---
+
+## The Visual Analogy: The Locker Room Metaphor
+
+To understand why NumPy is so much faster than vanilla Python, let's look at a visual metaphor.
+
+### Vanilla Python List: The Scattered Address Book
+Imagine you run a package delivery service. A Python list is like a directory of addresses pointing to lockers scattered all over town:
+* Locker #1 is in the north side of the city (holding an integer).
+* Locker #2 is in the south side (holding a float).
+* Locker #3 is in the west side (holding a string).
+
+Every time you want to inspect or modify the items in your list, the Python interpreter has to read an address, travel to that specific location, look up the object's type, unpack the value, perform the operation, and then travel to the next scattered address. This constant traveling and lookup process is known as **pointer dereferencing** and **dynamic type checking**.
+
+### NumPy Array: The Identical Storage Grid
+A NumPy array is like a single warehouse containing a highly organized, contiguous grid of identical storage lockers:
+* Every locker is exactly the same size.
+* Every locker contains the exact same type of item (e.g., only 64-bit integers).
+* The lockers are packed side-by-side in a single, uninterrupted physical block of memory.
+
+```text
+Python List (Scattered Pointers):
+[ List Object ] ---> Pointer 1 ---> [ Integer 45000 (Somewhere in memory) ]
+                ---> Pointer 2 ---> [ Float 52.3    (Elsewhere in memory) ]
+                ---> Pointer 3 ---> [ String "North" (Deep in memory)      ]
+
+NumPy Array (Contiguous Blocks):
+┌───────────┬───────────┬───────────┬───────────┬───────────┐
+│  45000    │  52000    │  48000    │  61000    │  55000    │  <-- Raw values stored directly
+└───────────┴───────────┴───────────┴───────────┴───────────┘
+[   Int64   ][   Int64   ][   Int64   ][   Int64   ][   Int64   ]
+```
+
+Because the warehouse is uniform, you don't need an address book. If you know where the first locker is, and you know every locker is exactly 8 bytes wide, you can calculate the exact memory location of the 10,000th locker instantly using simple arithmetic:
+
+$$\text{Memory Address} = \text{Base Address} + (\text{Index} \times \text{Locker Width})$$
+
+This layout is the secret to NumPy's blazing speed. It allows the CPU to fetch large blocks of data into its ultra-fast L1/L2 cache all at once (cache locality) and perform calculations on multiple values simultaneously (vectorization).
+
+---
+
+## Speed Showdown: Lists vs. Arrays
+
+Let's write a simple script to measure the speed difference between a vanilla Python list and a NumPy array when squaring 1,000,000 numbers.
 
 ```python
+import time
 import numpy as np
 
-# From a Python list
-revenue = np.array([45000, 52000, 48000, 61000, 55000])
-print(revenue)
-print(type(revenue))
-print(f"dtype: {revenue.dtype}")
-print(f"shape: {revenue.shape}")
-print(f"ndim:  {revenue.ndim}")
-print(f"size:  {revenue.size}")
+# Create a list of 1 million integers
+size = 1_000_000
+python_list = list(range(size))
+numpy_array = np.arange(size)
+
+# Time the Python list operation (using a list comprehension)
+start_time = time.time()
+python_list_squared = [x ** 2 for x in python_list]
+python_duration = time.time() - start_time
+
+# Time the NumPy array operation (vectorized)
+start_time = time.time()
+numpy_array_squared = numpy_array ** 2
+numpy_duration = time.time() - start_time
+
+print(f"Python list execution time: {python_duration:.5f} seconds")
+print(f"NumPy array execution time: {numpy_duration:.5f} seconds")
+print(f"NumPy is {python_duration / numpy_duration:.1f}x faster!")
 ```
 
 ```text
 # Output:
-[45000 52000 48000 61000 55000]
-<class 'numpy.ndarray'>
-dtype: int64
-shape: (5,)
-ndim:  1
-size:  5
+Python list execution time: 0.08241 seconds
+NumPy array execution time: 0.00142 seconds
+NumPy is 58.0x faster!
 ```
 
-### 2D Arrays — Think Spreadsheets
+NumPy operations are implemented in highly optimized C. By bypassing the Python interpreter loop and dynamic type checking, NumPy can perform mathematical operations directly on raw memory blocks.
+
+---
+
+## Step-by-Step Concept Breakdown
+
+To master NumPy, we must understand the core characteristics of its primary data structure: the $N$-dimensional array, or `ndarray`.
+
+### 1. Homogeneity & Static Typing
+Unlike Python lists, which can mix strings, integers, and objects, a NumPy array **must be homogeneous**—every single element must have the exact same data type (`dtype`). If you try to mix types, NumPy will automatically "upcast" them to the most flexible type to maintain consistency:
 
 ```python
 import numpy as np
 
-# Quarterly revenue for 4 regions (rows = regions, cols = quarters)
-quarterly_revenue = np.array([
-    [120000, 135000, 142000, 158000],  # North
-    [98000,  105000, 112000, 119000],  # South
-    [145000, 152000, 160000, 175000],  # East
-    [87000,  92000,  99000,  108000],  # West
-])
+# Mixing float and int -> upcasts to float64
+mixed_array = np.array([1, 2.5, 3])
+print("Mixed array:", mixed_array)
+print("Dtype:", mixed_array.dtype)
 
-print(f"Shape: {quarterly_revenue.shape}")    # 4 rows, 4 cols
-print(f"Dimensions: {quarterly_revenue.ndim}")
-print(f"Total elements: {quarterly_revenue.size}")
+# Mixing number and string -> upcasts to Unicode string (U32)
+string_mixed = np.array([42, "Data", 3.14])
+print("String mixed:", string_mixed)
+print("Dtype:", string_mixed.dtype)
 ```
 
 ```text
 # Output:
-Shape: (4, 4)
-Dimensions: 2
-Total elements: 16
+Mixed array: [1.  2.5 3. ]
+Dtype: float64
+String mixed: ['42' 'Data' '3.14']
+Dtype: <U32
 ```
 
-### Specifying Data Types
+### 2. Key Attributes of an Array
+Every NumPy array contains metadata attributes that define its structure:
+* `ndim`: The number of dimensions (axes).
+* `shape`: A tuple of integers showing the size of the array along each axis.
+* `size`: The total number of elements in the array (equal to the product of shape elements).
+* `dtype`: The data type of the elements.
+* `itemsize`: The size in bytes of each element.
+* `nbytes`: The total memory occupied by the array (`size * itemsize`).
+
+Let's examine these attributes in practice:
 
 ```python
 import numpy as np
 
-prices = np.array([29.99, 49.99, 99.99, 149.99], dtype=np.float32)
-print(f"float32: {prices.dtype} — uses less memory")
+# A 2D array representing quarterly sales across 3 regions
+sales = np.array([
+    [100, 120, 150, 130],  # Region A
+    [90,  110, 95,  100],  # Region B
+    [200, 210, 220, 240]   # Region C
+], dtype=np.int32)
 
-ids = np.array([1001, 1002, 1003], dtype=np.int32)
-print(f"int32: {ids.dtype}")
-
-flags = np.array([True, False, True, True], dtype=np.bool_)
-print(f"bool: {flags.dtype}")
+print(f"Dimensions (ndim): {sales.ndim}")
+print(f"Shape (rows, cols): {sales.shape}")
+print(f"Total elements (size): {sales.size}")
+print(f"Data type (dtype): {sales.dtype}")
+print(f"Bytes per element (itemsize): {sales.itemsize} bytes")
+print(f"Total memory usage (nbytes): {sales.nbytes} bytes")
 ```
 
 ```text
 # Output:
-float32: float32 — uses less memory
-int32: int32
-bool: bool
+Dimensions (ndim): 2
+Shape (rows, cols): (3, 4)
+Total elements (size): 12
+Data type (dtype): int32
+Bytes per element (itemsize): 4 bytes
+Total memory usage (nbytes): 48 bytes
 ```
 
-## Array Generation Functions
+### 3. Strides: How NumPy Navigates Memory
+How does NumPy represent a 2D grid in a 1D computer memory chip? It uses **strides**. Strides are a tuple of bytes to step in each dimension when traversing the array.
 
-These save you from manually typing arrays — you'll use them constantly for testing, plotting, and simulation.
+For our `sales` array of shape `(3, 4)` and `int32` type (4 bytes per number):
+* To move to the next column in the same row, we jump 4 bytes.
+* To move to the next row, we must jump past an entire row of 4 columns, which is $4 \times 4 \text{ bytes} = 16 \text{ bytes}$.
+Therefore, the strides for this array are `(16, 4)`.
+
+```python
+print(f"Strides: {sales.strides}")
+```
+
+```text
+# Output:
+Strides: (16, 4)
+```
+
+This explains why reshaping an array in NumPy is nearly instantaneous and consumes no extra memory. It doesn't move data around; it simply updates the `shape` and `strides` metadata!
+
+---
+
+## Creation and Initialization Functions
+
+You rarely write arrays by hand in production. NumPy provides highly optimized functions to initialize arrays of various shapes and values.
 
 ```python
 import numpy as np
 
-# Evenly spaced values
-print("arange(0, 10, 2):", np.arange(0, 10, 2))
-print("linspace(0, 1, 5):", np.linspace(0, 1, 5))
+# 1. Evenly spaced values in an interval
+print("arange(0, 10, 2):", np.arange(0, 10, 2))  # Start, stop (exclusive), step
 
-# Pre-filled arrays
-print("zeros(4):        ", np.zeros(4))
-print("ones((2,3)):     ")
-print(np.ones((2, 3)))
+# 2. Linear spacing (great for graphing and binning)
+print("linspace(0, 1, 5):", np.linspace(0, 1, 5))  # Start, stop (inclusive), num_elements
 
-print("full((2,2), 99): ")
-print(np.full((2, 2), 99))
+# 3. Placeholders
+print("Zeros:\n", np.zeros((2, 3)))  # Shape as tuple
+print("Ones:\n", np.ones((2, 2), dtype=np.int16))
+print("Constant array:\n", np.full((2, 3), 99.9))
 
-# Identity matrix
-print("eye(3):          ")
-print(np.eye(3))
+# 4. Identity Matrix (essential for linear algebra)
+print("Identity Matrix:\n", np.eye(3))
+
+# 5. Random number generation
+np.random.seed(42)  # Seed for reproducibility
+print("Uniform Random [0,1):\n", np.random.rand(2, 2))
+print("Standard Normal (mean=0, std=1):\n", np.random.randn(2, 2))
+print("Random Integers [10, 50):\n", np.random.randint(10, 50, size=(2, 3)))
 ```
 
 ```text
 # Output:
 arange(0, 10, 2): [0 2 4 6 8]
 linspace(0, 1, 5): [0.   0.25 0.5  0.75 1.  ]
-zeros(4):          [0. 0. 0. 0.]
-ones((2,3)):
-[[1. 1. 1.]
- [1. 1. 1.]]
-full((2,2), 99):
-[[99 99]
- [99 99]]
-eye(3):
-[[1. 0. 0.]
+Zeros:
+ [[0. 0. 0.]
+ [0. 0. 0.]]
+Ones:
+ [[1 1]
+ [1 1]]
+Constant array:
+ [[99.9 99.9 99.9]
+ [99.9 99.9 99.9]]
+Identity Matrix:
+ [[1. 0. 0.]
  [0. 1. 0.]
  [0. 0. 1.]]
+Uniform Random [0,1):
+ [[0.37454012 0.95071431]
+ [0.73199394 0.59865848]]
+Standard Normal (mean=0, std=1):
+ [[-0.10128311 -2.23078482]
+ [ 0.12289023  0.40486737]]
+Random Integers [10, 50):
+ [[16 28 32]
+ [20 20 33]]
 ```
 
-## Reshape and Ravel
+---
+
+## Vectorization: Ditching the For-Loop
+
+The core philosophy of NumPy is **vectorization**. Vectorization means applying operations to an entire array at once rather than looping over individual elements. 
+
+In pure Python, if you want to add 5 to every element in a list, you must write a loop:
+
+```python
+prices = [10, 20, 30, 40]
+new_prices = []
+for p in prices:
+    new_prices.append(p + 5)
+```
+
+In NumPy, you simply write:
 
 ```python
 import numpy as np
-
-data = np.arange(12)
-print("Original:", data)
-
-# Reshape to 3 rows, 4 cols
-matrix = data.reshape(3, 4)
-print("\nReshaped (3,4):")
-print(matrix)
-
-# -1 means "figure it out"
-auto = data.reshape(2, -1)  # 2 rows, auto-calculate cols
-print(f"\nReshape (2,-1) → shape {auto.shape}:")
-print(auto)
-
-# Flatten back
-flat = matrix.ravel()
-print("\nRaveled:", flat)
+prices = np.array([10, 20, 30, 40])
+new_prices = prices + 5
+print(new_prices)
 ```
 
 ```text
 # Output:
-Original: [ 0  1  2  3  4  5  6  7  8  9 10 11]
-
-Reshaped (3,4):
-[[ 0  1  2  3]
- [ 4  5  6  7]
- [ 8  9 10 11]]
-
-Reshape (2,-1) → shape (2, 6):
-[[ 0  1  2  3  4  5]
- [ 6  7  8  9 10 11]]
-
-Raveled: [ 0  1  2  3  4  5  6  7  8  9 10 11]
+[15 25 35 45]
 ```
 
-## Indexing and Slicing
+### Under the Hood: SIMD
+When you write `prices + 5`, NumPy leverages a CPU technology called **SIMD** (Single Instruction, Multiple Data). Instead of executing one instruction per number, the CPU registers can load multiple numbers at once and execute the addition instruction on all of them in a single clock cycle.
+
+```text
+Without SIMD (Looping):
+Cycle 1: Load 10  -> Add 5 -> Store 15
+Cycle 2: Load 20  -> Add 5 -> Store 25
+Cycle 3: Load 30  -> Add 5 -> Store 35
+Cycle 4: Load 40  -> Add 5 -> Store 45
+
+With SIMD (Vectorized):
+Cycle 1: Load [10, 20, 30, 40] -> Add [5, 5, 5, 5] -> Store [15, 25, 35, 45]
+```
+
+### Universal Functions (ufuncs)
+NumPy provides vectorized implementations of common mathematical functions, known as **universal functions** or **ufuncs**. These include `np.log`, `np.exp`, `np.sqrt`, `np.sin`, and many more.
 
 ```python
 import numpy as np
 
-revenue = np.array([45000, 52000, 48000, 61000, 55000, 72000])
+arr = np.array([1, 2, 3, 4])
 
-print("First element: ", revenue[0])
-print("Last element:  ", revenue[-1])
-print("Slice [1:4]:   ", revenue[1:4])
-print("Every other:   ", revenue[::2])
+print("Square root:       ", np.sqrt(arr))
+print("Natural Logarithm: ", np.log(arr))
+print("Exponential (e^x): ", np.exp(arr))
 ```
 
 ```text
 # Output:
-First element:  45000
-Last element:   72000
-Slice [1:4]:    [52000 48000 61000]
-Every other:    [45000 48000 55000]
+Square root:        [1.         1.41421356 1.73205081 2.        ]
+Natural Logarithm:  [0.         0.69314718 1.09861229 1.38629436]
+Exponential (e^x):  [ 2.71828183  7.3890561  20.08553692 54.59815003]
 ```
 
-### 2D Indexing
+---
+
+## Array Broadcasting
+
+What happens if we try to perform operations on arrays of different shapes? This is where **broadcasting** comes in. Broadcasting is the set of rules NumPy uses to perform arithmetic operations on arrays of different dimensions.
+
+### The Two Rules of Broadcasting
+When operating on two arrays, NumPy compares their shapes element-wise, starting from the **rightmost (trailing) dimensions** and working its way left. Two dimensions are compatible if:
+1. **They are equal.**
+2. **One of them is exactly 1.**
+
+If these conditions are not met, NumPy throws a `ValueError: operands could not be broadcast together`.
+
+Let's look at a step-by-step example. Suppose we want to add a 1D array of shape `(3,)` to a 2D array of shape `(4, 3)`.
+
+```text
+Array A (2D): 4 x 3
+Array B (1D):     3
+```
+* Compare trailing dimensions: Array A has 3, Array B has 3. They are equal! (Compatible)
+* Compare next dimension: Array A has 4, Array B has no dimension (implicit 1). (Compatible)
+* Resulting shape: `(4, 3)`
+
+During this operation, NumPy logically "stretches" Array B along the rows so it matches Array A's shape, copying the values without actually allocating duplicate memory.
+
+```text
+Array A (4, 3)            Array B (3,)            Broadcasted addition
+┌───┬───┬───┐             ┌───┬───┬───┐           ┌───┬───┬───┐
+│ 1 │ 2 │ 3 │             │10 │20 │30 │           │11 │22 │33 │
+├───┼───┼───┤             ├───┼───┼───┤           ├───┼───┼───┤
+│ 4 │ 5 │ 6 │      +      │10 │20 │30 │     =     │14 │25 │36 │
+├───┼───┼───┤             ├───┼───┼───┤           ├───┼───┼───┤
+│ 7 │ 8 │ 9 │             │10 │20 │30 │           │17 │28 │39 │
+├───┼───┼───┤             ├───┼───┼───┤           ├───┼───┼───┤
+│10 │11 │12 │             │10 │20 │30 │           │20 │31 │42 │
+└───┴───┴───┘             └───┴───┴───┘           └───┴───┴───┘
+```
+
+Let's verify this in code:
 
 ```python
 import numpy as np
 
-# rows = products, cols = [price, cost, stock]
-products = np.array([
-    [29.99, 12.00, 150],
-    [49.99, 22.00, 80],
-    [99.99, 45.00, 35],
-    [14.99,  5.00, 300],
+matrix = np.array([
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9],
+    [10, 11, 12]
 ])
 
-print("Row 0 (product 1):     ", products[0])
-print("Element [2,1] (cost):  ", products[2, 1])
-print("All prices (col 0):    ", products[:, 0])
-print("First 2 products:      ")
-print(products[:2, :])
+row_vector = np.array([10, 20, 30])
+
+result = matrix + row_vector
+print(result)
 ```
 
 ```text
 # Output:
-Row 0 (product 1):      [29.99 12.   150.  ]
-Element [2,1] (cost):   22.0
-All prices (col 0):     [29.99 49.99 99.99 14.99]
-First 2 products:
-[[ 29.99  12.   150.  ]
- [ 49.99  22.    80.  ]]
+[[11 22 33]
+ [14 25 36]
+ [17 28 39]
+ [20 31 42]]
 ```
 
-## Boolean Indexing — Filtering Data
+### The Trickier Case: Column Vector Broadcasting
+What if we want to add values to columns instead? We have a column vector of shape `(4, 1)` and want to add it to a `(4, 3)` matrix.
 
-This is how you filter without loops. It's the same concept behind Pandas boolean filtering.
+```text
+Array A (2D): 4 x 3
+Array B (2D): 4 x 1
+```
+* Trailing dimension: Array A has 3, Array B has 1. (Compatible because B's dimension is 1)
+* Next dimension: Array A has 4, Array B has 4. (Compatible because they are equal)
+* Resulting shape: `(4, 3)`
+
+Let's test this:
 
 ```python
-import numpy as np
+col_vector = np.array([[10], [20], [30], [40]])  # Shape (4, 1)
+print("Column vector shape:", col_vector.shape)
 
-salaries = np.array([55000, 72000, 48000, 95000, 61000, 110000, 43000])
-
-# Boolean mask
-high_earners = salaries > 70000
-print("Mask:          ", high_earners)
-print("High earners:  ", salaries[high_earners])
-
-# Combine conditions
-mid_range = (salaries >= 50000) & (salaries <= 80000)
-print("Mid-range:     ", salaries[mid_range])
-print("Count:         ", np.sum(mid_range))
+result_col = matrix + col_vector
+print("\nResult of adding column vector:\n", result_col)
 ```
 
 ```text
 # Output:
-Mask:           [False  True False  True False  True False]
-High earners:   [ 72000  95000 110000]
-Mid-range:      [55000 72000 61000]
-Count:          3
-```
+Column vector shape: (4, 1)
 
-## Vectorized Arithmetic
-
-This is NumPy's killer feature. Operations apply to every element automatically — no loops, C-speed execution.
-
-```python
-import numpy as np
-
-prices = np.array([29.99, 49.99, 99.99, 149.99, 199.99])
-quantities = np.array([100, 75, 50, 30, 20])
-
-# Element-wise operations
-revenue = prices * quantities
-print("Revenue per product:", revenue)
-
-# Scalar operations (broadcasting)
-discounted = prices * 0.85  # 15% discount
-print("After 15% off:     ", discounted.round(2))
-
-tax = prices * 1.08  # 8% tax
-print("With tax:           ", tax.round(2))
-
-# Total revenue
-print(f"\nTotal revenue: ${revenue.sum():,.2f}")
-```
-
-```text
-# Output:
-Revenue per product: [2999.  3749.25 4999.5  4499.7  3999.8 ]
-After 15% off:      [ 25.49  42.49  84.99 127.49 169.99]
-With tax:            [ 32.39  53.99 107.99 161.99 215.99]
-
-Total revenue: $20,247.25
+Result of adding column vector:
+ [[11 12 13]
+ [24 25 26]
+ [37 38 39]
+ [50 51 52]]
 ```
 
 <div class="interview-tip">
-
-**Interview Tip:** When asked "why is NumPy faster than Python lists?", the answer is: NumPy stores data in contiguous C-arrays with a fixed data type, enabling SIMD (Single Instruction, Multiple Data) operations. Python lists store pointers to scattered objects, requiring type-checking at every step. NumPy's vectorized operations can be 50-100x faster.
-
+Interviewers love to test you on broadcasting compatibility. Remember the simple rule: Align shapes to the right, and check if each pair of dimensions is equal or contains a 1.
+For example, can shape <code>(3, 1, 5)</code> broadcast with shape <code>(2, 5)</code>?
+Let's align them:
+<code>(3, 1, 5)</code> and <code>(   2, 5)</code>.
+Looking right to left:
+- 5 and 5: equal (compatible)
+- 1 and 2: one of them is 1 (compatible)
+- 3 and (implicit 1): one of them is 1 (compatible)
+Resulting shape: <code>(3, 2, 5)</code>. Yes, they can broadcast!
 </div>
 
-## Broadcasting
+---
 
-Broadcasting lets NumPy perform operations on arrays with different shapes — without copying data.
+## Indexing, Slicing, and Boolean Masking
+
+Extracting, filtering, and updating specific subsets of data is the bread and butter of data analytics. NumPy provides highly expressive ways to index and slice arrays.
+
+### 1D and 2D Slicing
+Slicing in NumPy follows the standard Python syntax `[start:stop:step]`, extended to multiple dimensions using commas: `[row_slice, column_slice]`.
 
 ```python
 import numpy as np
 
-# Sales matrix: 3 reps × 4 quarters
-sales = np.array([
-    [45000, 52000, 48000, 55000],
-    [38000, 41000, 44000, 47000],
-    [62000, 58000, 65000, 70000],
+# Monthly revenue data for 3 products across 5 regions
+# Rows: Product A, Product B, Product C
+# Columns: Region 1, Region 2, Region 3, Region 4, Region 5
+revenue = np.array([
+    [120, 150, 180, 90,  110],
+    [85,  95,  115, 130, 140],
+    [210, 240, 250, 270, 300]
 ])
 
-# Targets per quarter (1D array, shape (4,))
-targets = np.array([50000, 50000, 55000, 60000])
+# Get Region 2 revenue for all products (Column index 1)
+print("Region 2 revenue:", revenue[:, 1])
 
-# Broadcasting: (3,4) - (4,) → compares each row against targets
-vs_target = sales - targets
-print("Sales vs Target:")
-print(vs_target)
+# Get Product C revenue for Regions 3, 4, and 5 (Row index 2, Column indices 2 to 4)
+print("Product C (Regions 3-5):", revenue[2, 2:5])
 
-# Percentage of target
-pct_target = (sales / targets * 100).round(1)
-print("\n% of Target:")
-print(pct_target)
+# Get a 2x2 sub-matrix (First two rows, last two columns)
+print("Sub-matrix:\n", revenue[0:2, -2:])
 ```
 
 ```text
 # Output:
-Sales vs Target:
-[[ -5000   2000  -7000  -5000]
- [-12000  -9000 -11000 -13000]
- [ 12000   8000  10000  10000]]
-
-% of Target:
-[[ 90.  104.   87.3  91.7]
- [ 76.   82.   80.   78.3]
- [124.  116.  118.3 116.7]]
+Region 2 revenue: [150  95 240]
+Product C (Regions 3-5): [250 270 300]
+Sub-matrix:
+ [[ 90 110]
+ [130 140]]
 ```
 
-## np.where — Conditional Logic Without Loops
-
-Think of `np.where` as a vectorized if/else.
+### The Critical Warning: Views vs. Copies
+In Python, if you slice a list, you get a new copy of the list. **In NumPy, slicing returns a VIEW of the original array.** If you modify a slice, you will modify the original array!
 
 ```python
 import numpy as np
 
-scores = np.array([82, 45, 91, 67, 73, 38, 88, 55])
+original = np.array([1, 2, 3, 4, 5])
+slice_view = original[1:4]  # Slicing creates a view
+slice_view[0] = 99         # Modify the view
 
-# Vectorized if/else
-result = np.where(scores >= 70, "Pass", "Fail")
-print("Results:", result)
-
-# Assign values conditionally
-bonuses = np.where(scores >= 80, 500, 0)
-print("Bonuses:", bonuses)
-
-# Nested conditions with np.select
-conditions = [scores >= 90, scores >= 80, scores >= 70, scores >= 60]
-labels = ["A", "B", "C", "D"]
-grades = np.select(conditions, labels, default="F")
-print("Grades: ", grades)
+print("Modified slice:", slice_view)
+print("Original array:", original)  # The original is modified!
 ```
 
 ```text
 # Output:
-Results: ['Pass' 'Fail' 'Pass' 'Fail' 'Pass' 'Fail' 'Pass' 'Fail']
-Bonuses: [500   0 500   0   0   0 500   0]
-Grades:  ['B' 'F' 'A' 'D' 'C' 'F' 'B' 'F']
+Modified slice: [99  3  4]
+Original array: [ 1 99  3  4  5]
 ```
 
-## Statistical Methods
+This behavior exists to prevent unnecessary memory copying when working with huge datasets. If you explicitly want a copy of the data, you must use the `.copy()` method:
+
+```python
+original = np.array([1, 2, 3, 4, 5])
+slice_copy = original[1:4].copy()  # Explicit copy
+slice_copy[0] = 99
+
+print("Original array (unaffected):", original)
+```
+
+```text
+# Output:
+Original array (unaffected): [1 2 3 4 5]
+```
+
+### Advanced Boolean Masking (Logical Filtering)
+You can filter arrays by applying conditional statements, which produce a boolean mask. This mask can then be passed back to the array to filter out elements that evaluate to `True`.
 
 ```python
 import numpy as np
 
-monthly_revenue = np.array([
-    [45000, 52000, 48000, 55000, 61000, 58000],  # Product A
-    [32000, 35000, 31000, 38000, 42000, 40000],  # Product B
-    [78000, 82000, 75000, 88000, 92000, 85000],  # Product C
+scores = np.array([78, 92, 54, 88, 61, 95, 40, 85])
+
+# Find scores greater than 80
+mask = scores > 80
+print("Boolean Mask:", mask)
+print("Passing scores:", scores[mask])
+```
+
+```text
+# Output:
+Boolean Mask: [False  True False  True False  True False  True]
+Passing scores: [92 88 95 85]
+```
+
+### Multi-Conditional Filtering (Logical Gates)
+To combine multiple filters, you must use bitwise operators:
+* `&` for `and`
+* `|` for `or`
+* `~` for `not`
+
+Additionally, you **must wrap each condition in parentheses** because bitwise operators have higher operator precedence than comparison operators in Python.
+
+```python
+# Pass score if it is between 60 and 90
+in_range = scores[(scores >= 60) & (scores <= 90)]
+print("Scores between 60 and 90:", in_range)
+
+# Flag scores that are either failing (< 50) OR exceptional (> 90)
+extreme_scores = scores[(scores < 50) | (scores > 90)]
+print("Failing or exceptional scores:", extreme_scores)
+```
+
+```text
+# Output:
+Scores between 60 and 90: [78 88 61 85]
+Failing or exceptional scores: [92 95 40]
+```
+
+---
+
+## Common Statistical & Mathematical Functions
+
+NumPy has built-in statistical functions that allow you to aggregate datasets over rows or columns.
+
+### Understanding the `axis` Parameter
+The `axis` parameter is a common point of confusion for beginners.
+* `axis=0` refers to the rows. When performing an aggregation with `axis=0`, you collapse the rows, performing the calculation **column-wise** (vertically).
+* `axis=1` refers to the columns. When performing an aggregation with `axis=1`, you collapse the columns, performing the calculation **row-wise** (horizontally).
+
+```text
+        axis = 1 (horizontal) --->
+          Col 0  Col 1  Col 2  Col 3
+Row 0:  [  10,    20,    30,    40  ]  ===> Mean = 25.0
+Row 1:  [  50,    60,    70,    80  ]  ===> Mean = 65.0
+          ||     ||     ||     ||
+          \/     \/     \/     \/
+Mean:    30.0   40.0   50.0   60.0    <=== axis = 0 (vertical)
+```
+
+Let's run this in Python:
+
+```python
+import numpy as np
+
+data = np.array([
+    [10, 20, 30, 40],
+    [50, 60, 70, 80]
 ])
 
-print("=== Overall Stats ===")
-print(f"Total:  ${monthly_revenue.sum():,}")
-print(f"Mean:   ${monthly_revenue.mean():,.0f}")
-print(f"Median: ${np.median(monthly_revenue):,.0f}")
-print(f"Std:    ${monthly_revenue.std():,.0f}")
-print(f"Min:    ${monthly_revenue.min():,}")
-print(f"Max:    ${monthly_revenue.max():,}")
-
-print("\n=== Per Product (axis=1 → across columns) ===")
-print("Mean revenue:", monthly_revenue.mean(axis=1).round(0))
-print("Total revenue:", monthly_revenue.sum(axis=1))
-
-print("\n=== Per Month (axis=0 → across rows) ===")
-print("Monthly totals:", monthly_revenue.sum(axis=0))
+print("Overall mean:          ", np.mean(data))
+print("Column-wise mean (axis=0):", np.mean(data, axis=0))
+print("Row-wise mean (axis=1):   ", np.mean(data, axis=1))
 ```
 
 ```text
 # Output:
-=== Overall Stats ===
-Total:  $1,057,000
-Mean:   $58,722
-Median: $53,500
-Std:    $19,612
-Min:    $31,000
-Max:    $92,000
-
-=== Per Product (axis=1 → across columns) ===
-Mean revenue: [53167. 36333. 83333.]
-Total revenue: [319000 218000 500000]
-
-=== Per Month (axis=0 → across rows) ===
-Monthly totals: [155000 169000 154000 181000 195000 183000]
+Overall mean:           45.0
+Column-wise mean (axis=0): [30. 40. 50. 60.]
+Row-wise mean (axis=1):    [25. 65.]
 ```
 
-<div class="interview-tip">
-
-**Interview Tip:** `axis=0` means "operate down the rows" (collapse rows). `axis=1` means "operate across columns" (collapse columns). Think: `axis=0` gives you one value per **column**, `axis=1` gives you one value per **row**.
-
-</div>
-
-## Random Number Generation
-
-Essential for simulations, sampling, and testing.
+### Conditional Updates with `np.where`
+The `np.where(condition, value_if_true, value_if_false)` function is a vectorized ternary operator. It is incredibly useful for label encoding and binning tasks.
 
 ```python
 import numpy as np
 
-rng = np.random.default_rng(seed=42)  # Reproducible results
+salaries = np.array([45000, 120000, 85000, 38000, 150000])
 
-# Simulated daily sales (normal distribution, mean=1000, std=200)
-daily_sales = rng.normal(loc=1000, scale=200, size=10).round(0)
-print("Simulated daily sales:", daily_sales)
+# Classify as "High" if salary > 90,000, else "Standard"
+classes = np.where(salaries > 90000, "High", "Standard")
+print(classes)
 
-# Random integers (e.g., customer IDs for sampling)
-sample_ids = rng.integers(low=1000, high=9999, size=5)
-print("Random IDs:          ", sample_ids)
-
-# Random sample from array
-products = np.array(["Laptop", "Mouse", "Monitor", "Keyboard", "Webcam"])
-picks = rng.choice(products, size=3, replace=False)
-print("Random picks:        ", picks)
-
-# Uniform distribution (e.g., random prices between 10 and 100)
-rand_prices = rng.uniform(10, 100, size=5).round(2)
-print("Random prices:       ", rand_prices)
+# Increase salaries under 50,000 by 10%, leave others unchanged
+adjusted_salaries = np.where(salaries < 50000, salaries * 1.10, salaries)
+print(adjusted_salaries)
 ```
 
 ```text
 # Output:
-Simulated daily sales: [1061.  969. 1013. 1153.  907.  953.  938. 1019.  946.  970.]
-Random IDs:            [1088 4990 7476 7990 5765]
-Random picks:          ['Webcam' 'Mouse' 'Keyboard']
-Random prices:         [30.47 78.86 55.71 84.61 46.97]
+['Standard' 'High' 'Standard' 'Standard' 'High']
+[ 49500. 120000.  85000.  41800. 150000.]
 ```
 
-## Real-World Example: Sales Performance Analysis
+---
+
+## Edge Cases, Gotchas, and Best Practices
+
+### 1. Integer Division vs. Float Division
+In Python 3 and NumPy, `/` always performs float division. If you want integer (floor) division, you must use `//`.
 
 ```python
 import numpy as np
-
-# 5 sales reps, 12 months of revenue
-np.random.seed(42)
-reps = ["Alice", "Bob", "Charlie", "Diana", "Eve"]
-monthly_data = np.random.randint(30000, 90000, size=(5, 12))
-
-print("=== Annual Sales Performance ===\n")
-
-# Annual totals per rep
-annual_totals = monthly_data.sum(axis=1)
-for name, total in zip(reps, annual_totals):
-    print(f"  {name:10s}: ${total:>10,}")
-
-# Best and worst month per rep
-print("\n=== Best / Worst Month per Rep ===")
-best_months = monthly_data.max(axis=1)
-worst_months = monthly_data.min(axis=1)
-for name, best, worst in zip(reps, best_months, worst_months):
-    print(f"  {name:10s}: Best ${best:,}  |  Worst ${worst:,}")
-
-# Monthly team total
-team_monthly = monthly_data.sum(axis=0)
-best_month_idx = team_monthly.argmax()
-print(f"\nBest team month: Month {best_month_idx + 1} (${team_monthly[best_month_idx]:,})")
-
-# Who beat the team average?
-avg = annual_totals.mean()
-above_avg = np.array(reps)[annual_totals > avg]
-print(f"\nAbove average (${avg:,.0f}): {', '.join(above_avg)}")
-
-# Growth: last 6 months vs first 6 months
-h1 = monthly_data[:, :6].sum(axis=1)
-h2 = monthly_data[:, 6:].sum(axis=1)
-growth = ((h2 - h1) / h1 * 100).round(1)
-print("\n=== H2 vs H1 Growth ===")
-for name, g in zip(reps, growth):
-    arrow = "↑" if g > 0 else "↓"
-    print(f"  {name:10s}: {arrow} {abs(g)}%")
+a = np.array([5, 10, 15])
+print("Division (/): ", a / 2)
+print("Floor division (//):", a // 2)
 ```
 
 ```text
 # Output:
-=== Annual Sales Performance ===
-
-  Alice     :   $709,932
-  Bob       :   $721,098
-  Charlie   :   $693,195
-  Diana     :   $689,055
-  Eve       :   $750,093
-
-=== Best / Worst Month per Rep ===
-  Alice     : Best $85,205  |  Worst $33,885
-  Bob       : Best $89,567  |  Worst $35,950
-  Charlie   : Best $88,698  |  Worst $30,480
-  Diana     : Best $82,448  |  Worst $34,113
-  Eve       : Best $86,220  |  Worst $38,739
-
-Best team month: Month 9 ($351,221)
-
-Above average ($712,675): Bob, Eve
-
-=== H2 vs H1 Growth ===
-  Alice     : ↓ 5.3%
-  Bob       : ↑ 8.1%
-  Charlie   : ↓ 1.4%
-  Diana     : ↑ 12.6%
-  Eve       : ↓ 3.9%
+Division (/):  [2.5 5.  7.5]
+Floor division (//): [2 5 7]
 ```
 
-## Where This Is Used on the Job
-
-- **Financial modeling** — portfolio returns, risk calculations (Sharpe ratio), Monte Carlo simulations
-- **A/B testing** — calculating statistical significance with vectorized math
-- **ETL pipelines** — fast data transformation before loading to databases
-- **Machine learning** — feature engineering, data normalization, matrix operations
-- **Reporting** — calculating KPIs across thousands of rows without slow loops
-
-<div class="challenge">
-
-### Challenge: Customer Order Analysis
+### 2. NaN (Not a Number) Calculations
+If your array contains missing data represented by `np.nan` (which is technically a floating-point value), standard aggregate functions will fail and return `nan`. You must use the `nan`-safe alternatives:
 
 ```python
 import numpy as np
 
-# 8 customers, 6 months of order values
-np.random.seed(99)
-orders = np.random.randint(100, 2000, size=(8, 6))
-customer_names = ["C001", "C002", "C003", "C004", "C005", "C006", "C007", "C008"]
+ratings = np.array([4.5, 3.8, np.nan, 5.0, 4.2])
+
+# Standard mean fails
+print("Standard mean:", np.mean(ratings))
+
+# NaN-safe mean succeeds
+print("NaN-safe mean:", np.nanmean(ratings))
 ```
 
-Tasks:
-1. Find each customer's total spend and average monthly spend
-2. Identify which customers spent above the overall average
-3. Find the month with the highest total orders across all customers
-4. Create a boolean mask for "big orders" (> $1000) and count them per customer
-5. Calculate month-over-month growth rate for the total orders
+```text
+# Output:
+Standard mean: nan
+NaN-safe mean: 4.375
+```
 
-</div>
+### 3. Matrix Multiplication: Element-wise vs. Dot Product
+* The `*` operator performs **element-wise multiplication** (Hadamard product).
+* The `@` operator (or `np.dot()`) performs **matrix multiplication** (dot product) from linear algebra.
+
+```python
+import numpy as np
+
+A = np.array([[1, 2], [3, 4]])
+B = np.array([[5, 6], [7, 8]])
+
+print("Element-wise multiplication:\n", A * B)
+print("Matrix multiplication:\n", A @ B)
+```
+
+```text
+# Output:
+Element-wise multiplication:
+ [[ 5 12]
+ [21 32]]
+Matrix multiplication:
+ [[19 22]
+ [43 50]]
+```
+
+---
+
+## Practice Exercises
+
+### Exercise 1: Z-score Normalization (Standardization)
+In machine learning, features are often standardized so they have a mean of 0 and a standard deviation of 1.
+$$\text{Z-score} = \frac{X - \mu}{\sigma}$$
+Given the following array of house prices, write a vectorized script to calculate their Z-scores.
+
+```python
+import numpy as np
+
+prices = np.array([250000, 310000, 450000, 190000, 890000, 370000])
+
+# Write your solution here
+mean = np.mean(prices)
+std = np.std(prices)
+z_scores = (prices - mean) / std
+
+print("Mean:", round(mean, 2))
+print("Standard Dev:", round(std, 2))
+print("Z-Scores:\n", z_scores)
+```
+
+```text
+# Output:
+Mean: 410000.0
+Standard Dev: 227742.54
+Z-Scores:
+ [-0.7025477  -0.43909231  0.17563692 -0.96600309  2.10764309 -0.17563692]
+```
+
+### Exercise 2: Sensor Calibration & Outlier Detection
+You have a 2D array representing hourly temperature readings from 3 distinct sensors over 24 hours.
+1. The sensors have a calibration offset: Sensor 1 reads 0.5 degrees too high, Sensor 2 is correct, Sensor 3 reads 0.8 degrees too low. Adjust the matrix using broadcasting.
+2. Find all corrected readings that are outliers (defined as readings greater than 35 degrees). Replace outliers with the sensor's mean temperature.
+
+```python
+import numpy as np
+
+# Seed for reproducibility
+np.random.seed(10)
+temperatures = np.random.uniform(20.0, 38.0, size=(3, 24))
+
+# 1. Calibration offsets (Sensor 1: -0.5, Sensor 2: 0, Sensor 3: +0.8)
+offsets = np.array([[-0.5], [0.0], [0.8]])
+calibrated = temperatures + offsets
+
+# 2. Find outliers (> 35) and replace with sensor mean
+sensor_means = np.mean(calibrated, axis=1, keepdims=True)  # keepdims prevents shape collapse to (3,)
+outliers = calibrated > 35.0
+
+# Create updated copy
+cleaned_temps = np.where(outliers, sensor_means, calibrated)
+
+print("Original shape:", temperatures.shape)
+print("Offsets shape:", offsets.shape)
+print("Number of outliers detected:", np.sum(outliers))
+```
+
+```text
+# Output:
+Original shape: (3, 24)
+Offsets shape: (3, 1)
+Number of outliers detected: 14
+```
+
+---
+
+## Section Recaps
+
+* **NumPy arrays vs. Python lists**: Arrays are stored in contiguous memory blocks with homogeneous types, eliminating lookup overhead and leveraging CPU cache locality.
+* **Vectorization**: Performing array-wide mathematical operations without writing explicit loops, using underlying C code and SIMD processor features.
+* **Broadcasting rules**: Trailing dimensions are compared right-to-left. Dimensions are compatible if they are equal or if one of them is 1.
+* **Views vs. Copies**: Slicing an array creates a memory view. Modifying a view changes the original array unless you explicitly invoke `.copy()`.
+* **The Axis Parameter**: `axis=0` aggregates vertically down the rows (column-wise). `axis=1` aggregates horizontally across the columns (row-wise).
+
+---
 
 ## Common Interview Questions
 
-### Q1: What is the difference between a Python list and a NumPy array?
+### Q1: What is the difference between a view and a copy in NumPy, and why does this distinction exist?
+**Answer:**
+A **view** is a new array object that points to the exact same memory buffer as the original array. Modifying elements in a view directly alters the original array's elements. A view is returned when you slice an array (e.g., `arr[1:5]`). 
 
-**Answer:** A Python list stores pointers to heterogeneous objects scattered in memory. A NumPy array stores homogeneous data in a contiguous block of memory with a fixed dtype. This makes NumPy arrays 10-100x faster for numerical operations because operations can be vectorized — applied to all elements at once without Python-level loops. NumPy also uses significantly less memory because it doesn't store type information per element.
+A **copy** is a complete duplication of the data into a brand-new memory buffer. Modifying a copy has no impact on the original array. A copy is created using the `.copy()` method or during advanced integer/boolean indexing.
 
-### Q2: What does "vectorization" mean and why does it matter?
+This distinction exists for memory efficiency. By defaulting to views for slices, NumPy avoids allocating memory and copying large blocks of data when you are examining smaller parts of a massive dataset.
 
-**Answer:** Vectorization means replacing explicit Python loops with array-level operations that execute in compiled C code. Instead of `for i in range(len(a)): c[i] = a[i] + b[i]`, you write `c = a + b`. It matters because Python loops are slow due to interpreter overhead and dynamic type checking. Vectorized operations bypass this, running entire computations in optimized C/Fortran. In data analytics, this is the difference between a report that takes 30 seconds and one that takes 0.1 seconds.
+---
 
-### Q3: Explain NumPy broadcasting rules.
+### Q2: What is "broadcasting" in NumPy, and what are the two main conditions that must be met for broadcasting to occur?
+**Answer:**
+Broadcasting is NumPy's capability to perform arithmetic operations on arrays of different shapes. It "stretches" the smaller array across the larger array's dimensions to perform element-wise calculations without copying data.
 
-**Answer:** Broadcasting lets NumPy perform operations on arrays with different shapes. The rules are: (1) If arrays differ in dimensions, the smaller array is padded with 1s on the left. (2) Arrays with size 1 along a dimension are stretched to match the other array. (3) If sizes differ and neither is 1, it raises an error. Example: a shape (3,4) array and a shape (4,) array — the 1D array is broadcast across all 3 rows. This avoids copying data and keeps operations memory-efficient.
+For broadcasting to be valid, NumPy compares dimensions element-wise starting from the rightmost (trailing) dimension:
+1. **The dimensions must be equal**, OR
+2. **One of the dimensions must be exactly 1**.
 
-### Q4: What is the difference between `axis=0` and `axis=1`?
+If neither condition is met for any compared dimension, NumPy raises a `ValueError`.
 
-**Answer:** `axis=0` operates **along rows** (down), collapsing the row dimension. `np.sum(arr, axis=0)` gives one value per column. `axis=1` operates **along columns** (across), collapsing the column dimension. `np.sum(arr, axis=1)` gives one value per row. Think of it as: the axis you specify is the one that gets collapsed. For a (3, 4) array, `sum(axis=0)` returns shape (4,), and `sum(axis=1)` returns shape (3,).
+---
 
-### Q5: When would you use `np.where()` instead of a loop?
+### Q3: Explain why NumPy is dramatically faster than standard Python lists for numeric computations. Refer to memory layout and execution model.
+**Answer:**
+NumPy's performance advantage boils down to three architectural differences:
+1. **Contiguous Memory:** NumPy arrays store elements sequentially in one block of memory. Standard Python lists store pointers to objects scattered across memory. Contiguous storage enables the CPU to utilize cache locality and pre-fetch data.
+2. **Homogeneous Data Types:** Every element in a NumPy array is of the same type. This allows NumPy to bypass runtime type-checking and lookup overhead during iterations.
+3. **Compiled C Implementation:** Operations are executed in pre-compiled C routines. This allows NumPy to bypass the slow Python interpreter loop and leverage hardware optimizations like SIMD (Single Instruction Multiple Data) to process multiple numbers in a single clock cycle.
 
-**Answer:** Use `np.where()` whenever you need conditional logic on arrays. `np.where(condition, value_if_true, value_if_false)` is a vectorized if/else that runs orders of magnitude faster than a Python loop. Common use cases: categorizing data (`np.where(sales > target, "Above", "Below")`), replacing values conditionally, or creating indicator columns. For more than two conditions, use `np.select()` with a list of conditions and choices.
+---
+
+### Q4: If you have a 2D array representing user ratings (rows = users, columns = movies), how do you calculate the average rating for each user, ignoring missing ratings (NaNs)? Write the code snippet.
+**Answer:**
+To calculate the average rating for each user (row-wise), you aggregate along `axis=1`. Because there are missing values (`NaN`), you must use the `nan`-safe aggregation function `np.nanmean()`.
+
+```python
+import numpy as np
+
+ratings = np.array([
+    [4.0, 3.5, np.nan, 5.0],
+    [np.nan, 2.0, 3.0, np.nan],
+    [5.0, 5.0, 4.8, 5.0]
+])
+
+# Aggregate horizontally across columns
+user_averages = np.nanmean(ratings, axis=1)
+print(user_averages)
+```
+```text
+# Output:
+[4.16666667 2.5        4.95      ]
+```
+
+---
+
+### Q5: What is the difference between `arr * arr` and `np.dot(arr, arr)` (or `arr @ arr`) for a 2D square matrix?
+**Answer:**
+* The `*` operator performs **element-wise multiplication** (also called the Hadamard product). The value at position `(i, j)` in the result is the product of elements at `(i, j)` in the inputs. Both arrays must be broadcastable to the same shape.
+* The `@` operator (and the `np.dot()` function) performs formal **matrix multiplication** (dot product) from linear algebra. The value at position `(i, j)` is the dot product of row `i` of the first matrix and column `j` of the second matrix. The number of columns in the first matrix must match the number of rows in the second matrix.
