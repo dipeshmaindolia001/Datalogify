@@ -1,0 +1,436 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const baseUrl = Astro.site?.toString() || 'https://datalogify.com/';
+
+const courseJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Course',
+  name: 'Data Analyst & Business Analyst Interview Prep',
+  description: 'Get interview-ready with categorized technical questions, behavioral frameworks, case study practice, and take-home assignment walkthroughs.',
+  provider: {
+    '@type': 'Organization',
+    name: 'Datalogify'
+  }
+};
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  'itemListElement': [
+    {
+      '@type': 'ListItem',
+      'position': 1,
+      'name': 'Home',
+      'item': baseUrl
+    },
+    {
+      '@type': 'ListItem',
+      'position': 2,
+      'name': 'Interview Prep',
+      'item': `${baseUrl}interview-prep/`
+    }
+  ]
+};
+---
+
+<BaseLayout 
+  title="Data Analyst & Business Analyst Interview Prep" 
+  description="Get interview-ready with categorized technical questions, behavioral frameworks, case study practice, and take-home assignment walkthroughs."
+>
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(courseJsonLd)} />
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
+
+  <!-- Hero Section -->
+  <section class="py-20 sm:py-28 relative overflow-hidden bg-slate-50/70 border-b border-slate-100">
+    <div class="absolute inset-0 -z-10">
+      <div class="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-100/50 rounded-full blur-[120px] opacity-40"></div>
+      <div class="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-pink-100/50 rounded-full blur-[100px] opacity-30"></div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div class="animate-slide-up">
+        <!-- Badge -->
+        <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold bg-pink-50 text-pink-700 uppercase tracking-wider mb-6 border border-pink-100/50 shadow-sm animate-pulse">
+          <span class="w-2 h-2 rounded-full bg-pink-500"></span>
+          Phase 7 · Coming Soon
+        </span>
+        
+        <!-- Icon -->
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-white border border-slate-100 shadow-md flex items-center justify-center text-3xl mb-6">
+          🎯
+        </div>
+
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-none">
+          Interview Prep
+        </h1>
+        <p class="mt-6 text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto font-medium leading-relaxed">
+          Get interview-ready with categorized technical questions, behavioral frameworks, case study practice, and take-home assignment walkthroughs.
+        </p>
+        <p class="mt-4 text-sm sm:text-base text-slate-500 max-w-3xl mx-auto leading-relaxed">
+          Landing a Data Analyst or Business Analyst role isn't just about knowing SQL or Excel — it's about proving you can think like an analyst under pressure, in real time, in front of a hiring panel. This section is being built to bridge that exact gap: the space between "I know the concepts" and "I can perform them live in an interview." Every category below will be built as a structured, practice-first module — not a wall of theory, but a bank of real questions, worked solutions, and the reasoning frameworks that get you from question to confident answer.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Detailed Sections -->
+  <section class="py-16 sm:py-24 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="space-y-12 sm:space-y-16">
+      
+      <!-- Section 1 -->
+      <div class="bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-10 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-lg shrink-0">
+            1
+          </div>
+          <div class="space-y-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Python Technical Questions</h2>
+              <p class="text-sm font-semibold text-purple-600 mt-1">Common Python coding challenges in interviews</p>
+            </div>
+            <p class="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
+              This module will cover the Python questions that actually show up in Data Analyst and Business Analyst interviews — not competitive-programming trick questions, but the practical coding checks companies use to verify you can manipulate and analyze data with Python day-to-day. Expect a structured progression from fundamentals to applied data problems:
+            </p>
+            <ul class="grid sm:grid-cols-2 gap-3 text-sm text-slate-600">
+              <li class="flex items-start gap-2">
+                <span class="text-purple-500 font-bold">•</span>
+                <span><strong>Core Python fundamentals:</strong> data types, loops, conditionals, functions, list/dict comprehensions, string manipulation — the baseline checks almost every interview opens with</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-purple-500 font-bold">•</span>
+                <span><strong>Pandas & NumPy in interviews:</strong> filtering and grouping DataFrames, handling missing values, merging/joining datasets, pivot tables, vectorized operations vs. loops, and why interviewers care about efficient code</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-purple-500 font-bold">•</span>
+                <span><strong>Data cleaning challenges:</strong> messy CSV scenarios, duplicate handling, type conversions, outlier detection — the kind of "here's a dirty dataset, clean it" prompts that show up in live coding rounds</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-purple-500 font-bold">•</span>
+                <span><strong>Logic & problem-solving questions:</strong> frequency counts, string parsing, basic algorithmic thinking framed around real analyst tasks (e.g., "find the top 3 selling products from this list")</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-purple-500 font-bold">•</span>
+                <span><strong>Time and space complexity basics:</strong> just enough Big-O understanding to explain <em>why</em> your solution is efficient, since many analyst interviews ask you to justify your approach rather than optimize aggressively</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-purple-500 font-bold">•</span>
+                <span><strong>Debugging live code:</strong> practice reading broken snippets and explaining what's wrong out loud — a skill that's tested far more often than people expect</span>
+              </li>
+            </ul>
+            <p class="text-xs text-slate-400 italic mt-2">
+              Each question set will include the prompt, a worked solution with commentary on <em>why</em> that approach was chosen, common mistakes candidates make, and a harder follow-up variant so you can practice the "what if the data changes" curveballs interviewers love to throw in.
+            </p>
+            <div class="pt-4 border-t border-slate-100/50 flex justify-between items-center">
+              <a href="/interview-prep/python/" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold transition-all shadow-sm cursor-pointer">
+                Practice Python Questions &rarr;
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2 -->
+      <div class="bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-10 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg shrink-0">
+            2
+          </div>
+          <div class="space-y-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900">SQL Technical Questions</h2>
+              <p class="text-sm font-semibold text-indigo-600 mt-1">Live query writing and optimization questions</p>
+            </div>
+            <p class="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
+              SQL is the single most-tested skill in analyst interviews, and this module is being designed to mirror exactly how it's tested — live, on a shared screen, with an interviewer watching you think. It will move beyond "write a SELECT statement" into the query patterns that separate a junior candidate from someone who clearly works with data daily:
+            </p>
+            <ul class="grid sm:grid-cols-2 gap-3 text-sm text-slate-600">
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-500 font-bold">•</span>
+                <span><strong>Joins under pressure:</strong> INNER vs LEFT vs FULL, self-joins, and the classic "why did my row count double" debugging scenario</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-500 font-bold">•</span>
+                <span><strong>Aggregations & grouping:</strong> GROUP BY with HAVING, multi-level aggregations, and common pitfalls like aggregating before filtering correctly</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-500 font-bold">•</span>
+                <span><strong>Window functions:</strong> RANK, DENSE_RANK, ROW_NUMBER, LAG/LEAD, running totals, and moving averages — heavily favored in 2025-2026 interviews because they test whether you think in sets, not loops</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-500 font-bold">•</span>
+                <span><strong>Subqueries vs CTEs:</strong> when to use each, readability tradeoffs, and how to explain your choice to an interviewer</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-500 font-bold">•</span>
+                <span><strong>Business-scenario query writing:</strong> prompts framed as real problems ("find customers who churned in the last quarter but were active the quarter before") rather than abstract syntax drills</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-500 font-bold">•</span>
+                <span><strong>Query optimization talk-tracks:</strong> indexing basics, why a query is slow, and how to <em>talk through</em> performance thinking even if you're not expected to write production-grade optimized SQL</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-500 font-bold">•</span>
+                <span><strong>Common "gotcha" questions:</strong> NULL handling, duplicate rows from joins, date/time edge cases — the small details that trip up otherwise strong candidates</span>
+              </li>
+            </ul>
+            <p class="text-xs text-slate-400 italic mt-2">
+              Each question will be presented dataset-first (a small sample schema you can visualize), followed by the question, a step-by-step query build-up (not just the final answer), and a note on what the interviewer is actually listening for as you talk through it.
+            </p>
+            <div class="pt-4 border-t border-slate-100/50 flex justify-between items-center">
+              <a href="/interview-prep/sql/" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-all shadow-sm cursor-pointer">
+                Practice SQL Questions &rarr;
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3 -->
+      <div class="bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-10 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center font-bold text-lg shrink-0">
+            3
+          </div>
+          <div class="space-y-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Statistics Questions</h2>
+              <p class="text-sm font-semibold text-violet-600 mt-1">Probability, A/B testing, hypothesis testing Qs</p>
+            </div>
+            <p class="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
+              Statistics questions are where a lot of otherwise-strong analyst candidates lose points — not because the math is hard, but because they can't <em>explain</em> it in plain business language. This module is being built around that exact skill: translating statistical concepts into decisions a stakeholder would actually understand. Planned coverage includes:
+            </p>
+            <ul class="grid sm:grid-cols-2 gap-3 text-sm text-slate-600">
+              <li class="flex items-start gap-2">
+                <span class="text-violet-500 font-bold">•</span>
+                <span><strong>Probability fundamentals:</strong> conditional probability, Bayes' theorem walk-throughs, and the classic interview probability puzzles (dice, cards, coin-flip scenarios) explained step by step</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-violet-500 font-bold">•</span>
+                <span><strong>Descriptive statistics in practice:</strong> mean vs. median vs. mode judgment calls, standard deviation intuition, when a metric is misleading</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-violet-500 font-bold">•</span>
+                <span><strong>Hypothesis testing:</strong> null vs. alternative hypotheses, p-values explained without jargon, Type I vs. Type II errors, and how to answer "explain a p-value to a non-technical stakeholder" — one of the most commonly asked interview questions in this category</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-violet-500 font-bold">•</span>
+                <span><strong>A/B testing deep checks:</strong> designing a test, choosing a sample size, statistical significance vs. practical significance, and how to handle "the test wasn't significant, what do you do next" follow-ups</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-violet-500 font-bold">•</span>
+                <span><strong>Distributions & relevance:</strong> normal distribution, when data isn't normal, and why it matters for the metrics you'd report on</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-violet-500 font-bold">•</span>
+                <span><strong>Correlation vs. causation:</strong> the interview favorite — spotting confounding variables in a scenario and explaining why correlation doesn't imply causation, with real business examples</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-violet-500 font-bold">•</span>
+                <span><strong>Sampling & bias:</strong> sampling methods, selection bias, survivorship bias — framed as "here's a flawed study design, what's wrong with it"</span>
+              </li>
+            </ul>
+            <p class="text-xs text-slate-400 italic mt-2">
+              Every question will pair the technical concept with a business-communication version of the same answer, since interviewers are usually testing both at once.
+            </p>
+            <div class="pt-4 border-t border-slate-100/50 flex justify-between items-center">
+              <a href="/interview-prep/statistics/" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-bold transition-all shadow-sm cursor-pointer">
+                Practice Statistics Questions &rarr;
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4 -->
+      <div class="bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-10 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center font-bold text-lg shrink-0">
+            4
+          </div>
+          <div class="space-y-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Case Study Practice</h2>
+              <p class="text-sm font-semibold text-pink-600 mt-1">Walk through real analytics case interviews</p>
+            </div>
+            <p class="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
+              Case interviews are where companies test whether you can think like an analyst end-to-end — framing an ambiguous business problem, structuring an approach, and landing on a recommendation, all in real time with an interviewer probing your logic. This module is being built to simulate that experience directly, continuing in the same sequential interviewer/candidate walkthrough format used across the Burnout Batch case studies:
+            </p>
+            <ul class="grid sm:grid-cols-2 gap-3 text-sm text-slate-600">
+              <li class="flex items-start gap-2">
+                <span class="text-pink-500 font-bold">•</span>
+                <span><strong>Business problem framing:</strong> how to take a vague prompt ("our revenue dropped last quarter, why?") and structure it into a clear, testable set of hypotheses before touching any numbers</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-pink-500 font-bold">•</span>
+                <span><strong>Metrics & diagnosis cases:</strong> "a key metric moved, investigate why" scenarios — the most common case format in analyst interviews, practiced across different industries (e-commerce, subscription, marketplace, fintech)</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-pink-500 font-bold">•</span>
+                <span><strong>Guesstimate / market-sizing:</strong> structured estimation practice for the "how many X are there" style questions that test logical decomposition, not memorized facts</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-pink-500 font-bold">•</span>
+                <span><strong>Product & growth cases:</strong> should we launch this feature, why did engagement drop, how would you prioritize this roadmap — cases that blend data thinking with product judgment</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-pink-500 font-bold">•</span>
+                <span><strong>Data-to-recommendation:</strong> given a small dataset or chart, extract the insight, then defend a business recommendation built on it</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-pink-500 font-bold">•</span>
+                <span><strong>Structuring frameworks:</strong> reusable mental models (e.g., funnel breakdowns, segmentation, before/after comparisons) that you can apply to a case you've never seen before, rather than memorized answers</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-pink-500 font-bold">•</span>
+                <span><strong>Interviewer follow-up simulation:</strong> each case will include the kind of pushback interviewers give ("what if that's not the real cause," "how would you validate that") so you practice defending your logic, not just stating it</span>
+              </li>
+            </ul>
+            <p class="text-xs text-slate-400 italic mt-2">
+              Cases will be presented in the same slide-deck-style interviewer/candidate dialogue format as the existing case study content, so you can practice reading them as a mock interview rather than a static article.
+            </p>
+            <div class="pt-4 border-t border-slate-100/50 flex justify-between items-center">
+              <a href="/interview-prep/case-study/" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-bold transition-all shadow-sm cursor-pointer">
+                Practice Case Studies &rarr;
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 5 -->
+      <div class="bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-10 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg shrink-0">
+            5
+          </div>
+          <div class="space-y-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Behavioral Questions</h2>
+              <p class="text-sm font-semibold text-blue-600 mt-1">STAR method responses for analytics roles</p>
+            </div>
+            <p class="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
+              Technical skill gets you shortlisted; behavioral answers often decide who actually gets the offer. This module is being built specifically around the behavioral questions analytics interviewers ask — and how to answer them using the STAR method (Situation, Task, Action, Result) in a way that sounds natural, not scripted. Planned content:
+            </p>
+            <ul class="grid sm:grid-cols-2 gap-3 text-sm text-slate-600">
+              <li class="flex items-start gap-2">
+                <span class="text-blue-500 font-bold">•</span>
+                <span><strong>STAR method breakdown:</strong> a clear walkthrough of each component with before/after examples showing a weak, rambling answer turned into a tight, structured one</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-blue-500 font-bold">•</span>
+                <span><strong>Analytics behavioral prompts:</strong> "tell me about a time your analysis was wrong," "describe a time you had to explain a technical finding to a non-technical stakeholder," "tell me about a project with messy or incomplete data"</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-blue-500 font-bold">•</span>
+                <span><strong>Handling "no experience" scenarios:</strong> how freshers and career-switchers can reframe academic projects, fellowships, internships, and personal projects (like a Power BI dashboard or a fellowship case study) into STAR answers</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-blue-500 font-bold">•</span>
+                <span><strong>Conflict & collaboration:</strong> disagreeing with a manager's data interpretation, working with a difficult stakeholder, handling conflicting priorities</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-blue-500 font-bold">•</span>
+                <span><strong>Failure & learning questions:</strong> how to talk about a mistake honestly without undermining your candidacy — a category most candidates handle poorly</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-blue-500 font-bold">•</span>
+                <span><strong>"Why this company" answers:</strong> how to research and personalize these instead of giving a generic response</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-blue-500 font-bold">•</span>
+                <span><strong>Weak-answer rewrite exercises:</strong> real example answers that are too vague or too long, rewritten step by step into a tight 60–90 second STAR response</span>
+              </li>
+            </ul>
+            <p class="text-xs text-slate-400 italic mt-2">
+              Each prompt will come with a sample answer structure (not a script to memorize) plus a checklist of what makes an answer land vs. fall flat.
+            </p>
+            <div class="pt-4 border-t border-slate-100/50 flex justify-between items-center">
+              <a href="/interview-prep/behavioral/" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition-all shadow-sm cursor-pointer">
+                Practice Behavioral Questions &rarr;
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 6 -->
+      <div class="bg-white border border-slate-200/60 rounded-3xl p-6 sm:p-10 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg shrink-0">
+            6
+          </div>
+          <div class="space-y-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Take-Home Assignments</h2>
+              <p class="text-sm font-semibold text-emerald-600 mt-1">Practice with real take-home datasets</p>
+            </div>
+            <p class="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
+              Take-home assignments have become one of the most common — and most misunderstood — parts of the analyst hiring process. This module is being built around realistic, full-scope take-home simulations, similar in structure to real assignments companies actually send (including BizOps-style exercises involving CAC, payback analysis, and stakeholder-ready deliverables). It will cover both the analytical work and the presentation layer that hiring teams actually grade on:
+            </p>
+            <ul class="grid sm:grid-cols-2 gap-3 text-sm text-slate-600">
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-500 font-bold">•</span>
+                <span><strong>Realistic take-home datasets:</strong> sample raw datasets (sales, marketing, product usage, operations) with the kind of messiness real take-homes include — missing values, inconsistent formatting, ambiguous column names</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-500 font-bold">•</span>
+                <span><strong>Structuring your approach:</strong> how to read a vague take-home prompt and scope it down into a clear plan before opening Excel or a notebook, instead of diving straight into analysis</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-500 font-bold">•</span>
+                <span><strong>Excel/SQL/Python walkthroughs:</strong> side-by-side approaches to the same assignment so you can see how the same problem gets solved depending on the tool the company expects</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-500 font-bold">•</span>
+                <span><strong>Building the deliverable:</strong> how to turn raw findings into a clean summary — slide deck, one-pager, or memo — since take-homes are graded as much on communication as on correctness</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-500 font-bold">•</span>
+                <span><strong>Common evaluation criteria:</strong> what companies are actually scoring (structure, business framing, clarity of recommendation, attention to edge cases) versus what candidates mistakenly over-invest in</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-500 font-bold">•</span>
+                <span><strong>Time-boxing practice:</strong> realistic time limits for each exercise, since most take-homes are meant to take 2–4 hours, not a full weekend — and interviewers notice when a submission looks over-engineered</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-500 font-bold">•</span>
+                <span><strong>Full worked examples:</strong> at least one complete end-to-end take-home walkthrough per dataset type, from raw file to final polished deliverable, so you can see the entire process modeled start to finish</span>
+              </li>
+            </ul>
+            <p class="text-xs text-slate-400 italic mt-2">
+              This module will be the most "portfolio-ready" section of Interview Prep — each completed exercise can double as a project you can talk about (or even show) in future interviews.
+            </p>
+            <div class="pt-4 border-t border-slate-100/50 flex justify-between items-center">
+              <a href="/interview-prep/take-home/" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition-all shadow-sm cursor-pointer">
+                Practice Take-Home Assignments &rarr;
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CTA / Footer Coming Soon -->
+  <section class="bg-slate-50 border-t border-slate-200/50 py-16 sm:py-20">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+      <h3 class="text-xl sm:text-2xl font-bold text-slate-900">
+        Ready to start prep?
+      </h3>
+      <p class="text-slate-500 max-w-lg mx-auto text-sm sm:text-base leading-relaxed">
+        This phase is currently in development. Want early access or have a specific interview question you're stuck on?
+      </p>
+      <div>
+        <a 
+          href="/contact/" 
+          class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md transition-colors hover:-translate-y-0.5"
+        >
+          <span>📩</span>
+          Get Early Access &amp; Contact Us
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

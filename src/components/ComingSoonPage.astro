@@ -1,0 +1,133 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+interface Props {
+  title: string;
+  subtitle: string;
+  phase: number;
+  icon: string;
+  gradientFrom: string;
+  gradientTo: string;
+  accentColor: string;
+  topics: { name: string; desc: string }[];
+  prevPhase: { name: string; link: string };
+  nextPhase?: { name: string; link: string };
+}
+
+const {
+  title,
+  subtitle,
+  phase,
+  icon,
+  gradientFrom,
+  gradientTo,
+  accentColor,
+  topics,
+  prevPhase,
+  nextPhase,
+} = Astro.props;
+
+const baseUrl = Astro.site?.toString() || 'https://datalogify.com/';
+const path = Astro.url.pathname;
+
+const courseJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Course',
+  name: title,
+  description: subtitle,
+  provider: {
+    '@type': 'Organization',
+    name: 'Datalogify'
+  }
+};
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  'itemListElement': [
+    {
+      '@type': 'ListItem',
+      'position': 1,
+      'name': 'Home',
+      'item': baseUrl
+    },
+    {
+      '@type': 'ListItem',
+      'position': 2,
+      'name': title,
+      'item': `${baseUrl}${path.replace(/^\//, '')}`
+    }
+  ]
+};
+---
+
+<BaseLayout title={title} description={subtitle}>
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(courseJsonLd)} />
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+    <div class="text-center animate-slide-up">
+      <!-- Phase badge -->
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 text-slate-600 text-sm font-medium mb-8">
+        <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+        Phase {phase} · Coming Soon
+      </div>
+
+      <!-- Icon -->
+      <div class={`inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white text-4xl shadow-xl mb-8`}>
+        {icon}
+      </div>
+
+      <h1 class="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
+        {title}
+      </h1>
+      <p class="mt-4 text-lg text-slate-500 max-w-xl mx-auto leading-relaxed">
+        {subtitle}
+      </p>
+
+      <!-- Topics preview -->
+      <div class="mt-12 grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto text-left">
+        {topics.map((topic) => (
+          <div class="flex items-start gap-3 p-4 bg-white rounded-xl border border-slate-100">
+            <div class={`shrink-0 w-8 h-8 rounded-lg ${accentColor} flex items-center justify-center mt-0.5`}>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-800">{topic.name}</h3>
+              <p class="text-xs text-slate-500 mt-0.5">{topic.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <!-- Notify box -->
+      <div class="mt-14 p-8 bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-2xl border border-slate-200 max-w-lg mx-auto">
+        <h3 class="text-lg font-bold text-slate-800 mb-2">🔔 Get notified when this section launches</h3>
+        <p class="text-sm text-slate-500 mb-5">We're writing these lessons right now. Drop your email and we'll ping you when they're live.</p>
+        <form class="flex gap-2" onsubmit="event.preventDefault(); this.querySelector('button').textContent = 'You\\'re in! ✓'; this.querySelector('input').disabled = true;">
+          <input
+            type="email"
+            placeholder="your@email.com"
+            class="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 bg-white"
+          />
+          <button type="submit" class="px-5 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shrink-0 cursor-pointer">
+            Notify Me
+          </button>
+        </form>
+      </div>
+
+      <!-- Navigation -->
+      <div class="mt-12 flex items-center justify-center gap-4">
+        <a href={prevPhase.link} class="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-indigo-600 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          {prevPhase.name}
+        </a>
+        {nextPhase && (
+          <a href={nextPhase.link} class="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-indigo-600 transition-colors">
+            {nextPhase.name}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </a>
+        )}
+      </div>
+    </div>
+  </div>
+</BaseLayout>

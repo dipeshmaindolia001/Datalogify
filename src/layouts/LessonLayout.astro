@@ -1,0 +1,317 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import TopicSidebar from '../components/TopicSidebar.astro';
+import LessonNav from '../components/LessonNav.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  category: string;
+  phase: number;
+  prevSlug?: string;
+  prevTitle?: string;
+  nextSlug?: string;
+  nextTitle?: string;
+  publishedDate?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  tags?: string[];
+  lessonNumber?: number;
+  totalLessons?: number;
+}
+
+const {
+  title,
+  description,
+  category,
+  phase,
+  prevSlug = '',
+  prevTitle = '',
+  nextSlug = '',
+  nextTitle = '',
+  publishedDate,
+  seoTitle,
+  seoDescription,
+  tags = [],
+  lessonNumber = 1,
+  totalLessons = 1,
+} = Astro.props;
+
+// Get current slug from URL
+const pathParts = Astro.url.pathname.split('/').filter(Boolean);
+const currentSlug = pathParts[pathParts.length - 1] || '';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: title,
+  description: seoDescription || description,
+  author: { '@type': 'Organization', name: 'Datalogify' },
+  publisher: { '@type': 'Organization', name: 'Datalogify', logo: { '@type': 'ImageObject', url: '/logo.svg' } },
+  datePublished: publishedDate,
+  dateModified: publishedDate,
+  keywords: tags.join(', '),
+  mainEntityOfPage: { '@type': 'WebPage', '@id': Astro.url.href },
+  isPartOf: {
+    '@type': 'Course',
+    name: `${category.charAt(0).toUpperCase() + category.slice(1)} for Data Analytics`,
+    provider: { '@type': 'Organization', name: 'Datalogify' },
+  },
+};
+
+// BreadcrumbList schema for SEO
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: Astro.site?.toString() || '/' },
+    { '@type': 'ListItem', position: 2, name: category.charAt(0).toUpperCase() + category.slice(1), item: `${Astro.site || '/'}${category}/` },
+    { '@type': 'ListItem', position: 3, name: title },
+  ],
+};
+
+// FAQPage schema if lesson has interview questions
+const faqJsonLd = tags.includes('interview') ? {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [],
+} : null;
+
+const categoryNames: Record<string, string> = {
+  python: 'Python',
+  sql: 'SQL',
+  excel: 'Excel',
+  eda: 'EDA',
+  statistics: 'Statistics',
+  projects: 'Projects',
+  'interview-prep': 'Interview Prep',
+};
+
+const categoryName = categoryNames[category] || category;
+const progressPercent = Math.round((lessonNumber / totalLessons) * 100);
+---
+
+<BaseLayout
+  title={seoTitle || `${title} | ${categoryName} Tutorial | Datalogify`}
+  description={seoDescription || description}
+  articleDate={publishedDate}
+  jsonLd={jsonLd}
+>
+  <!-- Extra structured data -->
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
+    {faqJsonLd && <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />}
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <link rel="canonical" href={Astro.url.href} />
+  </Fragment>
+
+  <!-- Reading Progress Bar -->
+  <div class="sticky top-16 z-30 bg-white/90 backdrop-blur-sm border-b border-slate-100">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6">
+      <div class="flex items-center justify-between h-10">
+        <!-- Breadcrumbs -->
+        <nav aria-label="Breadcrumb">
+          <ol class="flex items-center gap-1.5 text-xs text-slate-500" itemscope itemtype="https://schema.org/BreadcrumbList">
+            <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+              <a href="/" itemprop="item" class="hover:text-indigo-600 transition-colors"><span itemprop="name">Home</span></a>
+              <meta itemprop="position" content="1" />
+            </li>
+            <li class="flex items-center gap-1.5" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+              <svg class="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              <a href={`/${category}/`} itemprop="item" class="hover:text-indigo-600 transition-colors"><span itemprop="name">{categoryName}</span></a>
+              <meta itemprop="position" content="2" />
+            </li>
+            <li class="flex items-center gap-1.5" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+              <svg class="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              <span class="text-slate-700 font-medium truncate max-w-[180px] sm:max-w-none" itemprop="name">{title}</span>
+              <meta itemprop="position" content="3" />
+            </li>
+          </ol>
+        </nav>
+
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-slate-400 hidden sm:inline">{lessonNumber} / {totalLessons}</span>
+          <div class="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-500" style={`width: ${progressPercent}%`}></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="h-0.5 bg-slate-50">
+      <div id="reading-progress" class="h-full bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 transition-all duration-100 ease-out" style="width: 0%"></div>
+    </div>
+  </div>
+
+  <div class="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 lg:py-10">
+    <div class="flex gap-8">
+      <!-- Left Sidebar: Topic List (W3Schools style) -->
+      <aside class="hidden lg:block w-64 shrink-0">
+        <div class="sticky top-32">
+          <TopicSidebar category={category} currentSlug={currentSlug} />
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <article class="flex-1 min-w-0" itemscope itemtype="https://schema.org/Article">
+        <meta itemprop="headline" content={title} />
+        <meta itemprop="author" content="Datalogify" />
+        {publishedDate && <meta itemprop="datePublished" content={publishedDate} />}
+
+        <!-- Lesson Header -->
+        <header class="mb-8 pb-6 border-b border-slate-100 animate-fade-in">
+          {tags.length > 0 && (
+            <div class="flex flex-wrap gap-1.5 mb-4">
+              {tags.slice(0, 5).map((tag) => (
+                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-indigo-50 text-indigo-600 border border-indigo-100">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight" itemprop="name">
+            {title}
+          </h1>
+
+          <p class="mt-3 text-base sm:text-lg text-slate-500 leading-relaxed" itemprop="description">{description}</p>
+
+          <div class="flex items-center gap-4 mt-4 text-sm text-slate-400">
+            <span class="flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              Lesson {lessonNumber} of {totalLessons}
+            </span>
+            <span class="flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><polyline points="12 6 12 12 16 14" stroke-width="2"/></svg>
+              <span id="reading-time">—</span> min read
+            </span>
+          </div>
+        </header>
+
+        <!-- Lesson Content -->
+        <div class="prose animate-fade-in" id="lesson-content" itemprop="articleBody">
+          <slot />
+        </div>
+
+        <!-- Author Bio Card (E-E-A-T) -->
+        <div class="mt-12 p-6 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col sm:flex-row gap-5 items-start sm:items-center">
+          <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white flex items-center justify-center font-bold text-xl shrink-0 shadow-sm">
+            DM
+          </div>
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-800 text-base sm:text-lg">Dipesh Maindolia</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">Author</span>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-500 leading-relaxed">
+              Data Analyst &amp; Educator. Dipesh is a CrackNonTech fellowship recipient and former analyst intern at Interviewkit.ai. He specializes in SQL query optimization, Python automation, and building interactive Power BI business intelligence dashboards.
+            </p>
+          </div>
+        </div>
+
+        <!-- Lesson Navigation -->
+        <div class="mt-12 pt-8 border-t border-slate-200">
+          <LessonNav
+            prevSlug={prevSlug}
+            prevTitle={prevTitle}
+            nextSlug={nextSlug}
+            nextTitle={nextTitle}
+            category={category}
+          />
+        </div>
+
+        <!-- Back to top + section link -->
+        <div class="mt-6 flex items-center justify-between">
+          <a href={`/${category}/`} class="text-sm text-slate-400 hover:text-indigo-600 transition-colors">
+            ← All {categoryName} Lessons
+          </a>
+          <button
+            id="scroll-top"
+            class="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+            Top
+          </button>
+        </div>
+      </article>
+
+      <!-- Right Sidebar: Table of Contents -->
+      <aside class="hidden xl:block w-56 shrink-0">
+        <div class="sticky top-32">
+          <div class="border border-slate-100 rounded-xl overflow-hidden bg-white">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+              <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">On This Page</h4>
+            </div>
+            <nav id="toc" class="p-3 space-y-0.5 text-[13px] max-h-[60vh] overflow-y-auto sidebar-scroll" aria-label="Table of contents">
+              <!-- Populated by JS -->
+            </nav>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <style>
+    .sidebar-scroll::-webkit-scrollbar { width: 3px; }
+    .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 9999px; }
+  </style>
+
+  <script>
+    function initLessonPage() {
+      // Reading time
+      const content = document.getElementById('lesson-content');
+      const readingTimeEl = document.getElementById('reading-time');
+      if (content && readingTimeEl) {
+        const words = (content.textContent || '').split(/\s+/).length;
+        readingTimeEl.textContent = String(Math.max(1, Math.ceil(words / 200)));
+      }
+
+      // Reading progress bar
+      const progressBar = document.getElementById('reading-progress');
+      if (progressBar) {
+        const update = () => {
+          const pct = document.documentElement.scrollHeight - window.innerHeight;
+          progressBar.style.width = pct > 0 ? Math.min(100, (window.scrollY / pct) * 100) + '%' : '0%';
+        };
+        window.addEventListener('scroll', update, { passive: true });
+        update();
+      }
+
+      // Table of Contents
+      const toc = document.getElementById('toc');
+      if (toc && content) {
+        const headings = content.querySelectorAll('h2, h3');
+        toc.innerHTML = '';
+        headings.forEach((h) => {
+          if (!h.id) h.id = (h.textContent || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+          const a = document.createElement('a');
+          a.href = `#${h.id}`;
+          a.textContent = h.textContent || '';
+          a.className = h.tagName === 'H3'
+            ? 'block pl-3 py-1 text-slate-400 hover:text-indigo-600 transition-colors border-l-2 border-transparent hover:border-indigo-200'
+            : 'block py-1 text-slate-600 hover:text-indigo-600 transition-colors font-medium';
+          toc.appendChild(a);
+        });
+
+        // Active heading tracking
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              toc.querySelectorAll('a').forEach(a => a.classList.remove('!text-indigo-600', '!border-indigo-400'));
+              const link = toc.querySelector(`a[href="#${entry.target.id}"]`);
+              if (link) link.classList.add('!text-indigo-600', '!border-indigo-400');
+            }
+          });
+        }, { rootMargin: '0px 0px -80% 0px' });
+
+        headings.forEach(h => observer.observe(h));
+      }
+
+      // Scroll to top
+      document.getElementById('scroll-top')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    }
+
+    initLessonPage();
+    document.addEventListener('astro:page-load', initLessonPage);
+  </script>
+</BaseLayout>

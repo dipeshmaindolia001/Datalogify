@@ -1,0 +1,453 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { marked } from 'marked';
+
+export async function getStaticPaths() {
+  const topics = ['python', 'sql', 'statistics', 'case-study', 'behavioral', 'take-home'];
+  return topics.map((topic) => ({
+    params: { topic },
+  }));
+}
+
+const { topic } = Astro.params;
+
+// Fetch all questions for this topic
+const allQuestions = await getCollection('interviewQuestions', ({ data }) => {
+  return data.topic === topic;
+});
+
+// Sort by order asc
+allQuestions.sort((a, b) => a.data.order - b.data.order);
+
+// Compile unique tags for the secondary filter
+const allTags = Array.from(
+  new Set(allQuestions.flatMap((q) => q.data.tags || []))
+).sort();
+
+const topicMetadata = {
+  'python': {
+    title: 'Python Technical Questions',
+    description: 'Common Python coding challenges in interviews',
+    detailedDescription: 'This module covers the Python questions that actually show up in Data Analyst and Business Analyst interviews — not competitive-programming trick questions, but the practical coding checks companies use to verify you can manipulate and analyze data with Python day-to-day. Expect a structured progression from fundamentals to applied data problems.',
+    icon: '🐍',
+    accentColor: 'bg-purple-50 text-purple-700 border-purple-100/50',
+    badgeColor: 'bg-purple-50 text-purple-700 border-purple-100',
+    bannerGradient: 'from-purple-50 to-indigo-50/50'
+  },
+  'sql': {
+    title: 'SQL Technical Questions',
+    description: 'Live query writing and optimization questions',
+    detailedDescription: 'SQL is the single most-tested skill in analyst interviews, and this module is designed to mirror exactly how it\'s tested — live, on a shared screen, with an interviewer watching you think. It moves beyond basic statements into query patterns that separate a junior candidate from someone who works with data daily.',
+    icon: '🗃️',
+    accentColor: 'bg-indigo-50 text-indigo-700 border-indigo-100/50',
+    badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+    bannerGradient: 'from-indigo-50 to-blue-50/50'
+  },
+  'statistics': {
+    title: 'Statistics Questions',
+    description: 'Probability, A/B testing, hypothesis testing Qs',
+    detailedDescription: 'Statistics questions are where a lot of otherwise-strong analyst candidates lose points — not because the math is hard, but because they can\'t explain it in plain business language. This module focuses on translating statistical concepts into decisions a stakeholder would actually understand.',
+    icon: '📊',
+    accentColor: 'bg-violet-50 text-violet-700 border-violet-100/50',
+    badgeColor: 'bg-violet-50 text-violet-700 border-violet-100',
+    bannerGradient: 'from-violet-50 to-pink-50/50'
+  },
+  'case-study': {
+    title: 'Case Study Practice',
+    description: 'Walk through real analytics case interviews',
+    detailedDescription: 'Case interviews test whether you can think like an analyst end-to-end — framing an ambiguous business problem, structuring an approach, and landing on a recommendation, all in real time with an interviewer probing your logic.',
+    icon: '💼',
+    accentColor: 'bg-pink-50 text-pink-700 border-pink-100/50',
+    badgeColor: 'bg-pink-50 text-pink-700 border-pink-100',
+    bannerGradient: 'from-pink-50 to-rose-50/50'
+  },
+  'behavioral': {
+    title: 'Behavioral Questions',
+    description: 'STAR method responses for analytics roles',
+    detailedDescription: 'Technical skill gets you shortlisted; behavioral answers decide who gets the offer. This module is built specifically around the behavioral questions analytics interviewers ask — and how to answer them using the STAR method in a natural, structured way.',
+    icon: '🗣️',
+    accentColor: 'bg-blue-50 text-blue-700 border-blue-100/50',
+    badgeColor: 'bg-blue-50 text-blue-700 border-blue-100',
+    bannerGradient: 'from-blue-50 to-indigo-50/50'
+  },
+  'take-home': {
+    title: 'Take-Home Assignments',
+    description: 'Practice with real take-home datasets',
+    detailedDescription: 'Take-home assignments are a very common part of the analyst hiring process. This module is built around realistic, full-scope take-home simulations, covering both the technical analytical work and the final presentation layer.',
+    icon: '📝',
+    accentColor: 'bg-emerald-50 text-emerald-700 border-emerald-100/50',
+    badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    bannerGradient: 'from-emerald-50 to-teal-50/50'
+  }
+};
+
+const meta = topicMetadata[topic] || {
+  title: 'Interview Questions',
+  description: 'Practice real analyst interview questions.',
+  detailedDescription: '',
+  icon: '🎯',
+  accentColor: 'bg-slate-50 text-slate-700 border-slate-100/50',
+  badgeColor: 'bg-slate-50 text-slate-700 border-slate-100',
+  bannerGradient: 'from-slate-50 to-slate-100/50'
+};
+
+const baseUrl = Astro.site?.toString() || 'https://datalogify.com/';
+
+// Setup FAQ/QA JSON-LD Schema
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: allQuestions.map((q) => ({
+    '@type': 'Question',
+    name: q.data.title,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: q.data.question + '\n\n**Solution:**\n' + q.data.answer + '\n\n**Explanation:**\n' + q.data.explanation,
+    },
+  })),
+};
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  'itemListElement': [
+    { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': baseUrl },
+    { '@type': 'ListItem', 'position': 2, 'name': 'Interview Prep', 'item': `${baseUrl}interview-prep/` },
+    { '@type': 'ListItem', 'position': 3, 'name': meta.title, 'item': `${baseUrl}interview-prep/${topic}/` }
+  ]
+};
+
+const pageTitle = `${allQuestions.length}+ ${meta.title} for Data Analysts`;
+---
+
+<BaseLayout 
+  title={pageTitle} 
+  description={meta.description}
+>
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
+
+  <!-- Topic Header Banner -->
+  <section class={`py-16 sm:py-20 relative overflow-hidden border-b border-slate-200/60 bg-gradient-to-b ${meta.bannerGradient}`}>
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <a 
+        href="/interview-prep/" 
+        class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-indigo-600 transition-colors mb-6"
+      >
+        <span>←</span> Back to Interview Prep Hub
+      </a>
+      <div class="animate-slide-up space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-white border border-slate-200/50 shadow-sm flex items-center justify-center text-2xl">
+            {meta.icon}
+          </div>
+          <span class={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${meta.badgeColor} shadow-sm`}>
+            Phase 7 · Core Topic
+          </span>
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-none">
+          {meta.title}
+        </h1>
+        <p class="text-sm sm:text-base text-slate-600 leading-relaxed max-w-3xl">
+          {meta.detailedDescription}
+        </p>
+        <div class="pt-2 flex flex-wrap items-center gap-4 text-xs font-medium text-slate-500">
+          <span class="flex items-center gap-1">
+            📂 <strong id="dynamic-count">{allQuestions.length}</strong> Total Questions
+          </span>
+          <span class="text-slate-300">|</span>
+          <span class="flex items-center gap-1">
+            ✅ <span id="practiced-count-indicator">0</span> Completed
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filter & Interactive Section -->
+  <section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Filters Container -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6 mb-8">
+      <!-- Level Tabs -->
+      <div class="flex gap-1.5 p-1 bg-slate-100 rounded-xl self-start">
+        {['all', 'beginner', 'intermediate', 'advanced'].map((lvl) => (
+          <button
+            class="filter-tab px-4 py-1.5 rounded-lg text-xs font-bold capitalize transition-all cursor-pointer"
+            data-level-filter={lvl}
+          >
+            {lvl}
+          </button>
+        ))}
+      </div>
+
+      <!-- Tag Secondary Filter Selector -->
+      {allTags.length > 0 && (
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+          <label for="tag-select" class="text-xs font-semibold text-slate-500 whitespace-nowrap">Filter by tag:</label>
+          <select 
+            id="tag-select" 
+            class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-100 bg-white text-slate-700"
+          >
+            <option value="all">All Sub-topics</option>
+            {allTags.map((tag) => (
+              <option value={tag}>{tag}</option>
+            ))}
+          </select>
+        </div>
+      )}
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-16 space-y-3 bg-slate-50/50 rounded-2xl border border-slate-100">
+      <span class="text-4xl">🔍</span>
+      <h3 class="text-base font-bold text-slate-800">No questions found matching your filter</h3>
+      <p class="text-xs text-slate-500 max-w-xs mx-auto">Try clearing your tags or select another level. New questions are updated regularly!</p>
+    </div>
+
+    <!-- Accordion Question List -->
+    <div class="space-y-4" id="questions-list">
+      {allQuestions.map((q, index) => (
+        <div 
+          class="question-card bg-white border border-slate-200/60 rounded-xl shadow-sm hover:border-slate-300 transition-all duration-200"
+          data-level={q.data.level}
+          data-tags={q.data.tags.join(',')}
+          id={`question-container-${q.data.id}`}
+        >
+          <details class="group [&_summary::-webkit-details-marker]:hidden">
+            <!-- Question Summary header -->
+            <summary class="flex items-start justify-between gap-4 p-5 cursor-pointer select-none list-none">
+              <div class="space-y-2 flex-1">
+                <!-- Badges -->
+                <div class="flex flex-wrap gap-2 items-center">
+                  <span class={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border
+                    ${q.data.level === 'beginner' ? 'bg-emerald-50 text-emerald-700 border-emerald-100/50' : ''}
+                    ${q.data.level === 'intermediate' ? 'bg-amber-50 text-amber-700 border-amber-100/50' : ''}
+                    ${q.data.level === 'advanced' ? 'bg-rose-50 text-rose-700 border-rose-100/50' : ''}
+                  `}>
+                    {q.data.level}
+                  </span>
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-semibold border border-slate-200/30 capitalize">
+                    {q.data.type}
+                  </span>
+                  {q.data.tags.map((t) => (
+                    <span class="text-[10px] text-slate-400 font-medium">#{t}</span>
+                  ))}
+                </div>
+                <!-- Title -->
+                <h3 class="text-base sm:text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors flex items-center gap-2">
+                  <span class="question-number text-slate-300 font-mono text-sm">Q{index + 1}.</span>
+                  <span class="question-title-text">{q.data.title}</span>
+                  <span class="completed-checkmark hidden text-emerald-600 text-xs">✓ Practiced</span>
+                </h3>
+              </div>
+
+              <!-- Chevron indicator -->
+              <div class="w-8 h-8 rounded-lg bg-slate-50 group-hover:bg-indigo-50 group-open:bg-indigo-600 group-open:text-white flex items-center justify-center shrink-0 transition-all">
+                <svg 
+                  class="w-4 h-4 text-slate-500 group-hover:text-indigo-600 group-open:text-white group-open:rotate-180 transition-all duration-300" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </summary>
+
+            <!-- Collapsible Body Content -->
+            <div class="p-5 border-t border-slate-100 space-y-6 bg-slate-50/30">
+              <!-- Question Prompt -->
+              <div class="space-y-2">
+                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Question Prompt</h4>
+                <div class="prose prose-slate text-sm max-w-none text-slate-700" set:html={marked.parse(q.data.question)} />
+              </div>
+
+              <!-- Sample Data (Optional) -->
+              {q.data.sampleData && (
+                <div class="space-y-2 border-t border-slate-100 pt-4">
+                  <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sample Data / Schema</h4>
+                  <div class="prose prose-slate text-sm max-w-none text-slate-700" set:html={marked.parse(q.data.sampleData)} />
+                </div>
+              )}
+
+              <!-- STAR Example (Optional, Behavioral) -->
+              {q.data.starExample && (
+                <div class="space-y-2 border-t border-slate-100 pt-4">
+                  <h4 class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">STAR Framework Response Example</h4>
+                  <div class="prose prose-indigo text-sm max-w-none text-slate-700" set:html={marked.parse(q.data.starExample)} />
+                </div>
+              )}
+
+              <!-- Framework (Optional, Case Study) -->
+              {q.data.framework && (
+                <div class="space-y-2 border-t border-slate-100 pt-4">
+                  <h4 class="text-xs font-semibold text-purple-600 uppercase tracking-wider">Analytical Framework</h4>
+                  <div class="prose prose-purple text-sm max-w-none text-slate-700" set:html={marked.parse(q.data.framework)} />
+                </div>
+              )}
+
+              <!-- Worked Solution / Answer -->
+              <div class="space-y-2 border-t border-slate-100 pt-4">
+                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Worked Solution</h4>
+                <div class="prose prose-slate text-sm max-w-none text-slate-700" set:html={marked.parse(q.data.answer)} />
+              </div>
+
+              <!-- Explanation -->
+              <div class="space-y-2 border-t border-slate-100 pt-4">
+                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Interviewer Logic & Explanation</h4>
+                <div class="prose prose-slate text-sm max-w-none text-slate-700" set:html={marked.parse(q.data.explanation)} />
+              </div>
+
+              <!-- Follow Up (Optional) -->
+              {q.data.followUp && (
+                <div class="space-y-2 border-t border-slate-100 pt-4 bg-indigo-50/20 p-3 rounded-lg border border-indigo-100/20">
+                  <h4 class="text-xs font-semibold text-indigo-700 uppercase tracking-wider">Follow-up / Curveball Variant</h4>
+                  <div class="prose prose-indigo text-sm max-w-none text-slate-700" set:html={marked.parse(q.data.followUp)} />
+                </div>
+              )}
+
+              <!-- Practiced Action checkbox -->
+              <div class="flex items-center justify-between border-t border-slate-100 pt-4 mt-4">
+                <label class="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-500 hover:text-indigo-600 select-none">
+                  <input 
+                    type="checkbox" 
+                    class="practice-checkbox rounded text-indigo-600 focus:ring-indigo-400 border-slate-300 w-4 h-4 cursor-pointer"
+                    data-question-id={q.data.id}
+                  />
+                  <span>Mark as Practiced</span>
+                </label>
+              </div>
+            </div>
+          </details>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <script>
+    function initFilters() {
+      const tabs = document.querySelectorAll('.filter-tab');
+      const tagSelect = document.getElementById('tag-select') as HTMLSelectElement | null;
+      const cards = document.querySelectorAll('.question-card') as NodeListOf<HTMLElement>;
+      const emptyState = document.getElementById('empty-state');
+      const dynamicCount = document.getElementById('dynamic-count');
+
+      let currentLevel = 'all';
+      let currentTag = 'all';
+
+      // Set active tab styling helper
+      function updateTabUI() {
+        tabs.forEach((tab) => {
+          const lvl = tab.getAttribute('data-level-filter');
+          if (lvl === currentLevel) {
+            tab.className = 'filter-tab px-4 py-1.5 rounded-lg text-xs font-bold capitalize bg-white text-slate-800 shadow-sm transition-all cursor-pointer';
+          } else {
+            tab.className = 'filter-tab px-4 py-1.5 rounded-lg text-xs font-bold capitalize text-slate-500 hover:text-slate-800 transition-all cursor-pointer';
+          }
+        });
+      }
+
+      function filterQuestions() {
+        let visibleCount = 0;
+
+        cards.forEach((card) => {
+          const cardLevel = card.getAttribute('data-level') || '';
+          const cardTags = (card.getAttribute('data-tags') || '').split(',');
+
+          const matchesLevel = currentLevel === 'all' || cardLevel === currentLevel;
+          const matchesTag = currentTag === 'all' || cardTags.includes(currentTag);
+
+          if (matchesLevel && matchesTag) {
+            card.classList.remove('hidden');
+            visibleCount++;
+          } else {
+            card.classList.add('hidden');
+          }
+        });
+
+        // Toggle empty state
+        if (visibleCount === 0) {
+          emptyState?.classList.remove('hidden');
+        } else {
+          emptyState?.classList.add('hidden');
+        }
+
+        // Update counts
+        if (dynamicCount) {
+          dynamicCount.textContent = visibleCount.toString();
+        }
+      }
+
+      // Tab click events
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          currentLevel = tab.getAttribute('data-level-filter') || 'all';
+          updateTabUI();
+          filterQuestions();
+        });
+      });
+
+      // Select events
+      if (tagSelect) {
+        tagSelect.addEventListener('change', (e) => {
+          currentTag = (e.target as HTMLSelectElement).value;
+          filterQuestions();
+        });
+      }
+
+      // Initialize UI state
+      updateTabUI();
+      filterQuestions();
+
+      // Practice status local storage logic
+      const checkBoxes = document.querySelectorAll('.practice-checkbox') as NodeListOf<HTMLInputElement>;
+      const countIndicator = document.getElementById('practiced-count-indicator');
+
+      function updatePracticedCounters() {
+        let practicedCount = 0;
+        checkBoxes.forEach((box) => {
+          const qId = box.getAttribute('data-question-id') || '';
+          const isPracticed = localStorage.getItem(`datalogify-practiced-${qId}`) === 'true';
+          box.checked = isPracticed;
+
+          const card = document.getElementById(`question-container-${qId}`);
+          if (card) {
+            const check = card.querySelector('.completed-checkmark');
+            const title = card.querySelector('.question-title-text');
+            if (isPracticed) {
+              practicedCount++;
+              check?.classList.remove('hidden');
+              title?.classList.add('opacity-40', 'line-through', 'decoration-slate-400');
+            } else {
+              check?.classList.add('hidden');
+              title?.classList.remove('opacity-40', 'line-through', 'decoration-slate-400');
+            }
+          }
+        });
+
+        if (countIndicator) {
+          countIndicator.textContent = practicedCount.toString();
+        }
+      }
+
+      checkBoxes.forEach((box) => {
+        box.addEventListener('change', (e) => {
+          const qId = box.getAttribute('data-question-id') || '';
+          const checked = (e.target as HTMLInputElement).checked;
+          localStorage.setItem(`datalogify-practiced-${qId}`, checked.toString());
+          updatePracticedCounters();
+        });
+      });
+
+      // Load initial practiced states
+      updatePracticedCounters();
+    }
+
+    // Run filters on load
+    initFilters();
+
+    // Re-run after view transitions
+    document.addEventListener('astro:page-load', initFilters);
+  </script>
+</BaseLayout>

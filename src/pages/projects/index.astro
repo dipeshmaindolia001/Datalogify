@@ -1,0 +1,23 @@
+---
+import ComingSoonPage from '../../components/ComingSoonPage.astro';
+---
+
+<ComingSoonPage
+  title="Portfolio Projects"
+  subtitle="Apply everything you've learned to real-world projects. Each one includes a dataset, problem statement, full solution, code, and insights."
+  phase={6}
+  icon="🚀"
+  gradientFrom="from-violet-500"
+  gradientTo="to-purple-500"
+  accentColor="bg-purple-100 text-purple-600"
+  topics={[
+    { name: 'Sales Dashboard Analysis', desc: 'Build a complete revenue analysis pipeline' },
+    { name: 'Customer Churn Analysis', desc: 'Identify why customers leave and predict risk' },
+    { name: 'Marketing Campaign Analysis', desc: 'Measure ROI and optimize ad spend' },
+    { name: 'Financial Data Analysis', desc: 'Analyze stock data and financial metrics' },
+    { name: 'Survey Data Analysis', desc: 'Clean, analyze, and visualize survey responses' },
+    { name: 'End-to-End Case Study', desc: 'A full portfolio-ready analytics project' },
+  ]}
+  prevPhase={{ name: 'Phase 5: Statistics', link: '/statistics/' }}
+  nextPhase={{ name: 'Phase 7: Interview Prep', link: '/interview-prep/' }}
+/>

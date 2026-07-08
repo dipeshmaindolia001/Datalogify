@@ -1,0 +1,724 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const pythonLessons = (await getCollection('lessons', ({ data }) => data.category === 'python'))
+  .sort((a, b) => a.data.order - b.data.order);
+
+const sqlLessons = (await getCollection('lessons', ({ data }) => data.category === 'sql'))
+  .sort((a, b) => a.data.order - b.data.order);
+
+const excelLessons = (await getCollection('lessons', ({ data }) => data.category === 'excel'))
+  .sort((a, b) => a.data.order - b.data.order);
+
+const allLessons = await getCollection('lessons');
+const totalLessons = allLessons.length;
+
+function getSlug(id: string, category: string): string {
+  return id.replace(new RegExp(`^${category}/`), '');
+}
+
+const baseUrl = Astro.site?.toString() || 'http://localhost:4321/';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': `${baseUrl}#website`,
+      'url': baseUrl,
+      'name': 'Datalogify',
+      'description': 'Learn Data Analytics & Business Analytics by doing — hands-on Python, SQL, Excel, EDA, and Statistics lessons with real code.',
+      'publisher': {
+        '@id': `${baseUrl}#organization`
+      },
+      'potentialAction': {
+        '@type': 'SearchAction',
+        'target': {
+          '@type': 'EntryPoint',
+          'urlTemplate': `${baseUrl}?s={search_term_string}`
+        },
+        'query-input': 'required name=search_term_string'
+      }
+    },
+    {
+      '@type': 'Organization',
+      '@id': `${baseUrl}#organization`,
+      'name': 'Datalogify',
+      'url': baseUrl,
+      'logo': {
+        '@type': 'ImageObject',
+        'url': `${baseUrl}favicon.svg`,
+        'caption': 'Datalogify Logo'
+      },
+      'sameAs': [
+        'https://twitter.com/datalogify',
+        'https://github.com/datalogify'
+      ]
+    },
+    {
+      '@type': 'Blog',
+      '@id': `${baseUrl}#blog`,
+      'name': 'Datalogify Blog',
+      'url': `${baseUrl}blog/`,
+      'publisher': {
+        '@id': `${baseUrl}#organization`
+      }
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${baseUrl}#breadcrumb`,
+      'itemListElement': [
+        {
+          '@type': 'ListItem',
+          'position': 1,
+          'name': 'Home',
+          'item': baseUrl
+        }
+      ]
+    }
+  ]
+};
+
+const phases = [
+  { num: 1, title: 'Python Foundations', desc: 'Variables, data types, functions, Pandas', icon: '🐍', color: 'from-indigo-500 to-blue-500', link: '/python/' },
+  { num: 2, title: 'SQL Mastery', desc: 'Queries, joins, window functions, CTEs', icon: '🗃️', color: 'from-blue-500 to-cyan-500', link: '/sql/' },
+  { num: 3, title: 'Excel Power Skills', desc: 'Formulas, pivot tables, dashboards', icon: '📊', color: 'from-cyan-500 to-teal-500', link: '/excel/' },
+  { num: 4, title: 'Exploratory Data Analysis', desc: 'Cleaning, visualization, storytelling', icon: '🔍', color: 'from-teal-500 to-emerald-500', link: '/eda/' },
+  { num: 5, title: 'Statistics for Analytics', desc: 'Distributions, hypothesis testing, A/B tests', icon: '📈', color: 'from-emerald-500 to-green-500', link: '/statistics/' },
+  { num: 6, title: 'Portfolio Projects', desc: 'End-to-end analytics projects', icon: '🚀', color: 'from-violet-500 to-purple-500', link: '/projects/' },
+  { num: 7, title: 'Interview Prep', desc: 'Technical, behavioral, take-home assignments', icon: '🎯', color: 'from-purple-500 to-pink-500', link: '/interview-prep/' },
+];
+
+const faqs = [
+  {
+    question: 'What is Data Analytics?',
+    answer: 'Data analytics is the systematic process of collecting, cleaning, transforming, and modeling raw data to discover actionable insights, draw conclusions, and support organizational decision-making. By leveraging statistical methods, specialized software, and analytical frameworks, a data analyst can identify trends, patterns, and correlations that would otherwise remain hidden. Key phases in this lifecycle include data acquisition, data quality preparation, exploratory analysis, and data visualization. Ultimately, data analytics serves as a bridge between raw operational records and strategic intelligence, helping businesses optimize operations, understand customer behavior, and drive sustainable growth across various industries.'
+  },
+  {
+    question: 'What is Business Analytics?',
+    answer: 'Business analytics refers to the practice of using data, statistical analysis, quantitative methods, and predictive modeling to solve specific business problems and make data-driven business decisions. While closely related to other data disciplines, it specifically focuses on the practical application of insights to improve operational efficiency, financial performance, and overall business strategy. A business analyst acts as the bridge between technical data teams and corporate management, translating technical findings into functional business requirements. Through business analytics, companies can forecast market trends, evaluate product performance, optimize supply chains, and identify new revenue streams, ensuring long-term competitiveness.'
+  },
+  {
+    question: 'What is the difference between Data Analytics and Business Analytics?',
+    answer: 'The primary difference between data analytics and business analytics lies in their scope, objectives, and application. Data analytics is a broader technical field focused on cleaning, querying, and analyzing complex datasets to uncover patterns, often using tools like SQL, Python, and advanced statistical models. In contrast, business analytics is more applied, taking those technical findings to solve specific organizational challenges and guide strategic business decisions. While a data analyst spends more time on database management, scripting, and data modeling, a business analyst focuses on business intelligence, stakeholder communication, and transforming insights into actionable operational improvements and corporate growth strategies.'
+  },
+  {
+    question: 'How do I become a Data Analyst?',
+    answer: 'To become a successful data analyst, you should follow a structured learning path. Start by mastering foundational technologies like Excel for basic data manipulation and SQL for querying databases. Next, learn a programming language like Python for data cleaning, analysis, and automation. Build proficiency in data visualization tools such as Power BI or Tableau to present insights clearly through an interactive dashboard. As you learn, apply your skills to practical analytics projects and build a comprehensive portfolio showcasing your work on GitHub or a personal website. Finally, prepare for technical interviews and customize your resume to highlight your analytical problem-solving abilities.'
+  },
+  {
+    question: 'What skills are required for Data Analytics?',
+    answer: 'A successful career in data analytics requires a balanced blend of technical skills and soft skills. On the technical side, you must be proficient in SQL for querying databases, Excel for spreadsheet analysis, and programming languages like Python or R for advanced data manipulation, cleaning, and statistical modeling. Additionally, expertise in data visualization tools like Power BI and Tableau is essential for creating an interactive dashboard that communicates insights to stakeholders. Beyond technical tools, you need strong business intelligence skills, critical thinking, mathematical reasoning, and the ability to explain complex data concepts to non-technical business teams.'
+  },
+  {
+    question: 'Is SQL necessary for Data Analytics?',
+    answer: 'Yes, SQL (Structured Query Language) is absolutely necessary and is widely considered the most critical skill for data analytics. Databases are the primary storage systems for modern organizational data, and SQL is the universal language used to communicate with them. As a data analyst, you will use SQL daily to retrieve, filter, aggregate, and join data from multiple tables. Without SQL, accessing and preparing large datasets for analysis or downstream tools like Python, Power BI, or Tableau would be extremely difficult. Mastering SQL queries, window functions, and CTEs is essential for passing technical interviews and succeeding on the job.'
+  },
+  {
+    question: 'Why is Python used in Data Analytics?',
+    answer: 'Python is highly popular in data analytics due to its simplicity, readability, and exceptionally powerful ecosystem of open-source libraries. While SQL is excellent for querying databases, Python takes over for complex data cleaning, transformation, statistical analysis, and machine learning. Libraries like Pandas and NumPy make working with structured data highly efficient, while Matplotlib and Seaborn are standard for data visualization. Furthermore, Python allows analysts to automate repetitive reports, integrate with APIs, and build end-to-end data pipelines. Its versatility makes it the preferred tool for a data analyst who wants to move beyond standard spreadsheet limitations.'
+  },
+  {
+    question: 'Which is better: Power BI or Tableau?',
+    answer: 'Neither tool is universally better; the choice between Power BI and Tableau depends on your organization\'s infrastructure, budget, and specific business needs. Power BI is highly integrated with the Microsoft ecosystem, uses DAX for data modeling, and is generally more cost-effective, making it a popular choice for enterprises relying on Excel. Tableau, on the other hand, excels in deep data visualization, handling massive datasets, and offering highly customizable, aesthetically pleasing design options. A skilled data analyst should ideally understand the basics of both, as both are widely used to build business intelligence dashboards and report metrics to stakeholders.'
+  },
+  {
+    question: 'Can I learn Data Analytics without coding?',
+    answer: 'Yes, you can start learning and practicing data analytics without writing code, though learning to code eventually opens up more advanced career opportunities. Many entry-level roles focus heavily on codeless tools like Excel for data cleaning and analysis, and business intelligence platforms like Power BI or Tableau for creating an interactive dashboard. These tools allow you to perform data visualization, build reports, and derive insights using drag-and-drop interfaces. However, to advance as a data analyst, learning SQL for data retrieval and Python for automation and complex modeling is highly recommended to handle large-scale datasets.'
+  },
+  {
+    question: 'How long does it take to learn Data Analytics?',
+    answer: 'The time it takes to learn data analytics depends on your background and the depth of study, but typically ranges from three to nine months of consistent daily practice. If you are starting from scratch, expect to spend the first few weeks mastering Excel and basic SQL. Over the next two to three months, you can transition to Python programming and data visualization tools like Power BI or Tableau. The remaining months should be dedicated to building hands-on analytics projects, compiling a professional portfolio, and preparing for technical data analyst job interviews.'
+  },
+  {
+    question: 'What are the best Data Analytics projects for beginners?',
+    answer: 'The best data analytics projects for beginners are those that showcase the entire data lifecycle: ingestion, cleaning, analysis, and visualization. Start with an Exploratory Data Analysis (EDA) project using Python to clean a messy public dataset and uncover interesting trends. Next, build a SQL project where you write complex queries to analyze business metrics like customer retention or sales growth. Finally, design a business intelligence project in Power BI or Tableau, creating an interactive dashboard that answers specific business questions. Avoid generic datasets like Titanic or Iris; instead, choose unique, real-world data that reflects your personal interests or target industry.'
+  },
+  {
+    question: 'What is Business Intelligence (BI)?',
+    answer: 'Business Intelligence (BI) comprises the strategies, architectures, and technologies used by enterprises to analyze business data and provide actionable historical, current, and predictive views of business operations. Unlike raw data analytics, which can be highly exploratory, business intelligence is directly focused on reporting key performance indicators (KPIs) through a centralized dashboard. BI developers and analyst roles leverage SQL databases and tools like Power BI or Tableau to transform complex data warehouse structures into clean, executive-ready reports. This enables management to make informed strategic decisions, identify inefficiencies, and track business performance in real time.'
+  },
+  {
+    question: 'What is Data Visualization?',
+    answer: 'Data visualization is the graphic representation of information and data using visual elements like charts, graphs, and maps. By converting complex numeric datasets into visual formats, data visualization makes it easier for stakeholders to detect patterns, trends, and outliers at a glance. It is an essential component of both data analytics and business intelligence. Using tools like Tableau, Power BI, Excel, or Python libraries like Seaborn, a data analyst can build an interactive dashboard that translates technical statistics into clear, visual stories, helping organizations make faster and more accurate strategic decisions.'
+  },
+  {
+    question: 'Which tools should I learn for Data Analytics?',
+    answer: 'If you want to build a career in data analytics, you should focus on a core stack of industry-standard tools. First, master Excel for quick calculations and data modeling. Second, learn SQL, which is the most critical language for querying databases. Third, adopt a programming language, with Python being the industry favorite for data cleaning, scripting, and advanced modeling. Fourth, learn a modern business intelligence tool like Power BI or Tableau for data visualization and dashboard design. Combining these tools allows you to handle any analytics project from initial data extraction to final stakeholder presentation.'
+  },
+  {
+    question: 'How can I prepare for Data Analyst interviews?',
+    answer: 'Preparing for data analyst interviews requires a combination of technical practice and portfolio building. First, practice writing SQL queries on platforms like LeetCode or StrataScratch, focusing on joins, aggregations, window functions, and CTEs. Second, review Python basics, particularly Pandas for data manipulation. Third, practice explaining your past analytics projects, focusing on the business impact and how you structured your dashboard or visualization. Be ready to discuss business intelligence concepts and walk through a mock case study where you translate a vague business problem into a concrete, data-driven solution.'
+  },
+  {
+    question: 'Are Data Analytics certifications worth it?',
+    answer: 'Data analytics certifications can be highly valuable, especially for beginners who need structure and a way to validate their skills on their resume. Popular certifications from Google, Microsoft (for Power BI), or Tableau help you learn foundational concepts in data analytics, SQL, Python, and data visualization. However, a certification alone will not guarantee a job. The most critical factor in landing a role as a data analyst is demonstrating your practical ability. Use certifications to learn, but prioritize building unique hands-on analytics projects and a strong portfolio that proves you can solve real-world problems.'
+  },
+  {
+    question: 'What are the highest-paying Data Analytics skills?',
+    answer: 'While entry-level data analyst positions require basic Excel, SQL, and dashboard tools, the highest-paying roles demand advanced technical expertise. Proficiency in Python or R for statistical analysis and machine learning is highly compensated. Furthermore, skills in cloud data warehouses (like Snowflake, BigQuery, or AWS) and data engineering concepts, such as ETL/ELT pipeline design, command premium salaries. Finally, mastering business intelligence architecture and demonstrating strong business analytics skills—such as product analytics or financial forecasting—allows you to transition into senior roles, advising executives on high-value business strategies.'
+  },
+  {
+    question: 'Where can I practice SQL for interviews?',
+    answer: 'To practice SQL queries for data analyst interviews, you should leverage specialized online platforms that offer real-world database scenarios. Websites like StrataScratch and DataLemur are specifically tailored to data analytics and feature actual interview questions from top tech companies. For general query practice, LeetCode and HackerRank offer extensive SQL challenge tracks ranging from easy to advanced levels. When practicing, focus on writing efficient queries using window functions, common table expressions (CTEs), complex joins, and subqueries, as these are the exact concepts tested by technical interviewers.'
+  },
+  {
+    question: 'Is Excel still important for Data Analytics?',
+    answer: 'Yes, Excel remains incredibly important and is one of the most widely used tools in data analytics. Despite the rise of programming languages like Python and business intelligence platforms like Power BI or Tableau, Excel is unmatched for quick data entry, ad-hoc analysis, and financial modeling. As a data analyst or business analyst, you will often use Excel to inspect small datasets, build pivot tables, and create initial charts. It acts as a universal business language, making it easy to share clean summaries and data visualizations directly with non-technical business partners.'
+  },
+  {
+    question: 'How do I build a strong Data Analytics portfolio?',
+    answer: 'Building a strong data analytics portfolio involves showcasing 3 to 4 high-quality projects that demonstrate your technical skills and business acumen. Each project should tell a story: start with a clear business problem, explain how you extracted and cleaned the data using SQL and Python, and conclude with an interactive dashboard in Power BI or Tableau. Host your code on GitHub with clear README files, and publish your interactive data visualization work. A strong portfolio proves to employers that you can function as a capable data analyst who drives real business value.'
+  }
+];
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((faq) => ({
+    '@type': 'Question',
+    name: faq.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.answer,
+    },
+  })),
+};
+---
+
+<BaseLayout 
+  title="Learn Data Analytics & Business Analytics" 
+  description="Learn data analytics and business analytics. Master SQL, Python, Excel, Power BI, and Tableau with hands-on tutorials, projects, and interview questions." 
+  jsonLd={jsonLd}
+>
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+  <!-- Hero Section -->
+  <section class="relative overflow-hidden">
+    <!-- Background decoration -->
+    <div class="absolute inset-0 -z-10">
+      <div class="absolute top-0 left-1/4 w-[500px] h-[500px] bg-indigo-100 rounded-full blur-[100px] opacity-40 animate-pulse"></div>
+      <div class="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-violet-100 rounded-full blur-[100px] opacity-30"></div>
+      <div class="absolute top-1/2 left-1/2 w-[300px] h-[300px] bg-cyan-50 rounded-full blur-[80px] opacity-30"></div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 sm:pt-24 sm:pb-32">
+      <div class="text-center max-w-3xl mx-auto animate-slide-up">
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm font-medium mb-8 shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+          Free &amp; open learning platform
+        </div>
+
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
+          Learn Data Analytics
+          <br />
+          <span class="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">by Doing</span>
+        </h1>
+
+        <p class="mt-6 text-lg sm:text-xl text-slate-600 leading-relaxed max-w-2xl mx-auto">
+          No fluff. No hour-long videos. Just practical, hands-on lessons with
+          <strong class="text-slate-800 font-semibold">real code</strong>,
+          <strong class="text-slate-800 font-semibold">real outputs</strong>, and
+          <strong class="text-slate-800 font-semibold">real interview prep</strong>
+          — structured like a course, written like a mentor's notes.
+        </p>
+
+        <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a
+            href="/python/basics/"
+            class="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-indigo-600 text-white font-semibold text-base shadow-lg shadow-indigo-200/70 hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-300/50 transition-all duration-200 hover:-translate-y-0.5"
+          >
+            Start Lesson 1
+            <svg class="w-5 h-5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+          <a
+            href="/roadmap/"
+            class="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-white text-slate-700 font-semibold text-base border border-slate-200 hover:border-indigo-200 hover:text-indigo-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5"
+          >
+            View Roadmap
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Strip -->
+  <section class="relative -mt-8 z-10">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6 sm:p-8">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 text-center">
+          <div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-indigo-600">7</div>
+            <div class="text-xs sm:text-sm text-slate-500 mt-1">Learning Phases</div>
+          </div>
+          <div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-violet-600">{totalLessons}+</div>
+            <div class="text-xs sm:text-sm text-slate-500 mt-1">Hands-on Lessons</div>
+          </div>
+          <div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-purple-600">100%</div>
+            <div class="text-xs sm:text-sm text-slate-500 mt-1">Free Forever</div>
+          </div>
+          <div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-pink-600">0</div>
+            <div class="text-xs sm:text-sm text-slate-500 mt-1">Fluff Tolerance</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works Section -->
+  <section class="py-24">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600 uppercase tracking-wider">Our method</span>
+        <h2 class="mt-4 text-3xl sm:text-4xl font-bold text-slate-900">
+          Every lesson follows the same structure
+        </h2>
+        <p class="mt-4 text-lg text-slate-500 max-w-2xl mx-auto">
+          Predictable, efficient, no guesswork. Open any lesson and you know exactly what to expect.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-5 gap-4">
+        {[
+          { step: '01', title: 'Concept', desc: '2-3 lines. Why this matters. No walls of text.', color: 'bg-indigo-50 text-indigo-600 border-indigo-100' },
+          { step: '02', title: 'Code', desc: 'Real, runnable, copy-pasteable. Not pseudocode.', color: 'bg-blue-50 text-blue-600 border-blue-100' },
+          { step: '03', title: 'Output', desc: 'See the result immediately. No guessing.', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
+          { step: '04', title: 'Real-World Use', desc: 'Where this shows up in jobs and interviews.', color: 'bg-amber-50 text-amber-600 border-amber-100' },
+          { step: '05', title: 'Challenge', desc: 'Mini-project to cement what you just learned.', color: 'bg-violet-50 text-violet-600 border-violet-100' },
+        ].map((item) => (
+          <div class={`rounded-xl p-5 border ${item.color} text-center`}>
+            <span class="text-xs font-bold opacity-50">{item.step}</span>
+            <h3 class="text-base font-bold mt-1">{item.title}</h3>
+            <p class="text-xs mt-2 opacity-70 leading-relaxed">{item.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Datalogify Section -->
+  <section class="py-24 bg-slate-50/70">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 uppercase tracking-wider">Why us</span>
+        <h2 class="mt-4 text-3xl sm:text-4xl font-bold text-slate-900">
+          Built different. On purpose.
+        </h2>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="group bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-lg hover:border-indigo-100 transition-all duration-300 hover:-translate-y-1">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-2xl mb-6 shadow-lg shadow-indigo-200/50 group-hover:scale-110 transition-transform">
+            ⚡
+          </div>
+          <h3 class="text-xl font-bold text-slate-900 mb-3">Zero Fluff</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">
+            We respect your time. Every concept gets straight to the point — 2-3 lines of context, then hands-on code. If a paragraph doesn't teach you something, it doesn't exist here.
+          </p>
+        </div>
+
+        <div class="group bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-lg hover:border-emerald-100 transition-all duration-300 hover:-translate-y-1">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-2xl mb-6 shadow-lg shadow-emerald-200/50 group-hover:scale-110 transition-transform">
+            💻
+          </div>
+          <h3 class="text-xl font-bold text-slate-900 mb-3">Real Code, Real Output</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">
+            Every lesson has copy-pasteable code with the exact output shown right below. You see exactly what runs and what you get — like pair programming with a senior analyst.
+          </p>
+        </div>
+
+        <div class="group bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-lg hover:border-amber-100 transition-all duration-300 hover:-translate-y-1">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-2xl mb-6 shadow-lg shadow-amber-200/50 group-hover:scale-110 transition-transform">
+            🎯
+          </div>
+          <h3 class="text-xl font-bold text-slate-900 mb-3">Interview-Ready</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">
+            Every topic ends with common interview questions and answers. You don't just learn a concept — you prepare to prove you know it when it matters most.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Learning Path Overview -->
+  <section class="py-24">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-violet-50 text-violet-600 uppercase tracking-wider">The journey</span>
+        <h2 class="mt-4 text-3xl sm:text-4xl font-bold text-slate-900">
+          7 Phases. Zero to Analyst.
+        </h2>
+        <p class="mt-4 text-lg text-slate-500 max-w-2xl mx-auto">
+          A structured path from "what is Python" to acing your data analyst interview.
+        </p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        {phases.map((phase, i) => (
+          <a
+            href={phase.link}
+            class:list={[
+              "group relative bg-white rounded-xl p-6 border transition-all duration-300 hover:-translate-y-1",
+              i === 0
+                ? "border-indigo-200 shadow-md shadow-indigo-100/50 ring-1 ring-indigo-50 hover:shadow-lg hover:shadow-indigo-100/50"
+                : "border-slate-100 hover:border-slate-200 hover:shadow-lg opacity-80 hover:opacity-100",
+            ]}
+          >
+            <div class={`inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br ${phase.color} text-white font-bold text-sm mb-4 shadow-sm`}>
+              {phase.num}
+            </div>
+            <div class="text-xl mb-2">{phase.icon}</div>
+            <h3 class="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+              {phase.title}
+            </h3>
+            <p class="text-sm text-slate-500 mt-1.5 leading-relaxed">{phase.desc}</p>
+            {i === 0 && (
+              <span class="absolute top-4 right-4 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-600 text-white">
+                <span class="w-1 h-1 rounded-full bg-white animate-pulse"></span>
+                START HERE
+              </span>
+            )}
+            {i > 0 && (
+              <span class="absolute top-4 right-4 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-400">
+                Coming Soon
+              </span>
+            )}
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Detailed Copy Section -->
+  <section class="py-24 bg-white border-t border-slate-100">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl mx-auto text-center mb-16">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600 uppercase tracking-wider mb-4 shadow-sm border border-indigo-100/50">
+          Learning Guide &amp; Resources
+        </span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+          Unlock Your Potential with Data Analytics &amp; Business Analytics
+        </h2>
+        <p class="mt-4 text-base sm:text-lg text-slate-500 leading-relaxed">
+          Welcome to Datalogify, the ultimate open learning platform designed to help beginners and professionals alike master the fields of <strong>data analytics</strong> and <strong>business analytics</strong>. In today’s digital economy, data is the new currency. Our mission is to guide you step-by-step through a practical, hands-on curriculum that takes you from complete beginner to job-ready analyst. We eliminate the fluff and provide direct, code-first lessons written like a mentor's personal notebook.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-12 mt-12">
+        <div class="space-y-4">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 font-bold shadow-sm">
+              🗃️
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Mastering SQL for Database Querying &amp; Manipulation</h3>
+              <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+                Every analytics journey starts with database communication. Database management systems are the primary storage hubs for modern businesses, and <strong>SQL</strong> (Structured Query Language) is the universal tool used to retrieve and manipulate this information. Our comprehensive <strong>SQL tutorials</strong> cover everything from basic queries and where-clause filters to advanced window functions, common table expressions (CTEs), and query optimization techniques. You will learn how to clean tables, perform complex joins, and aggregate millions of rows of data. Mastering SQL is non-negotiable for passing technical interviews and executing daily tasks as a data analyst.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 font-bold shadow-sm">
+              🐍
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Programming with Python for Data Analytics &amp; Automation</h3>
+              <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+                While SQL is perfect for querying databases, <strong>Python</strong> is the preferred language for advanced statistics, data cleaning, and automation. <strong>Python for data analytics</strong> has exploded in popularity due to its readable syntax and its massive open-source library ecosystem. At Datalogify, we teach you how to leverage Pandas for data manipulation, NumPy for numerical operations, and Matplotlib and Seaborn for custom data visualization. You will write scripts that automate repetitive reporting, clean messy CSV files, and connect to REST APIs to build robust data pipelines, moving beyond the limits of standard spreadsheets.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 font-bold shadow-sm">
+              📊
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Data Visualization: Business Intelligence with Power BI &amp; Tableau</h3>
+              <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+                Finding insights in raw numbers is only half the battle; the other half is communicating those findings to business stakeholders. This is where <strong>data visualization</strong> and <strong>business intelligence</strong> tools come in. Through our step-by-step <strong>Power BI tutorials</strong> and <strong>Tableau tutorials</strong>, you will learn how to design an interactive <strong>KPI dashboard</strong> that answers critical business questions at a glance. We cover dashboard design best practices, data modeling, and DAX formulas, teaching you how to structure reports that executive teams can use to monitor performance, spot inefficiencies, and make quick strategic decisions.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 font-bold shadow-sm">
+              📈
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Spreadsheet Mastery: Excel for Data Analysis</h3>
+              <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+                Despite the rise of complex programming languages and cloud platforms, <strong>Excel</strong> remains the most widely used analytics tool in the corporate world. Knowing how to use <strong>Excel for data analysis</strong> is a required skill for almost every entry-level data analyst or business analyst. Datalogify provides practical tutorials on essential spreadsheet functions, lookup formulas, pivot tables, and conditional formatting. You will learn how to perform ad-hoc analysis, clean small datasets quickly, and build financial models, making you a highly efficient problem-solver from day one.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 font-bold shadow-sm">
+              🔍
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Exploratory Data Analysis (EDA) &amp; Statistics for Data Analytics</h3>
+              <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+                Before diving into machine learning or predictive analytics, you must learn to perform Exploratory Data Analysis (EDA). EDA is the process of summarizing a dataset's main characteristics, often using visual methods. Our curriculum teaches you how to clean data, identify anomalies, and uncover correlations. We combine this with essential <strong>statistics for data analytics</strong>, teaching you key concepts like probability distributions, hypothesis testing, and A/B tests. This rigorous approach ensures you can distinguish between random noise and meaningful statistical significance in your reports.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 font-bold shadow-sm">
+              🚀
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Build a Portfolio with Real-World Analytics Projects &amp; Case Studies</h3>
+              <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+                The best way to prove your analytical abilities to employers is through a strong project portfolio. We guide you through end-to-end <strong>analytics projects</strong> and real-world <strong>analytics case studies</strong> that reflect actual business challenges. Instead of working with generic toy datasets, you will solve practical problems: analyzing customer churn, building predictive marketing models, or designing dashboard layouts for supply chain monitoring. Each project is designed to be hosted on GitHub, showing recruiters that you possess the technical skills and business intelligence needed to drive organizational growth.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4 md:col-span-2 max-w-2xl mx-auto mt-6">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center shrink-0 font-bold shadow-sm">
+              🎯
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Acing the Job Hunt: Data Analytics Interview Questions &amp; Career Tips</h3>
+              <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+                Transitioning into a professional role requires more than technical knowledge; you need to know how to navigate the hiring process. Datalogify offers extensive resources for career preparation, including a curated repository of <strong>data analytics interview questions</strong> and answers. We break down what to expect in technical SQL assessments, Python live coding sessions, and business case study interviews. Additionally, we provide career guidance on writing resumes, optimization strategies for LinkedIn, and tips on building a professional portfolio that stands out in the competitive job market.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Latest Python Lessons -->
+  {pythonLessons.length > 0 && (
+    <section class="py-24 bg-slate-50/70">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-end justify-between mb-12">
+          <div>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600 uppercase tracking-wider mb-4">Phase 1</span>
+            <h2 class="text-3xl font-bold text-slate-900">Python Fundamentals</h2>
+            <p class="mt-2 text-slate-500">Your first 5 lessons. Start from the top and work down.</p>
+          </div>
+          <a href="/python/" class="hidden sm:inline-flex items-center gap-1.5 text-indigo-600 font-semibold hover:text-indigo-700 transition-colors">
+            View all
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+
+        <div class="space-y-3">
+          {pythonLessons.map((lesson, i) => (
+            <a
+              href={`/python/${getSlug(lesson.id, 'python')}/`}
+              class="group flex items-center gap-5 bg-white rounded-xl px-6 py-5 border border-slate-100 hover:border-indigo-200 hover:shadow-md transition-all duration-300"
+            >
+              <div class="shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-white font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
+                {i + 1}
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                  {lesson.data.title}
+                </h3>
+                <p class="text-sm text-slate-500 mt-0.5 truncate">{lesson.data.description}</p>
+              </div>
+              <svg class="w-5 h-5 text-slate-300 group-hover:text-indigo-400 shrink-0 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- SQL Lessons -->
+  {sqlLessons.length > 0 && (
+    <section class="py-24">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-end justify-between mb-12">
+          <div>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 uppercase tracking-wider mb-4">Phase 2</span>
+            <h2 class="text-3xl font-bold text-slate-900">SQL for Analytics</h2>
+            <p class="mt-2 text-slate-500">Master the language of databases — {sqlLessons.length} lessons from SELECT to advanced.</p>
+          </div>
+          <a href="/sql/" class="hidden sm:inline-flex items-center gap-1.5 text-blue-600 font-semibold hover:text-blue-700 transition-colors">
+            View all
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+
+        <div class="space-y-3">
+          {sqlLessons.slice(0, 5).map((lesson, i) => (
+            <a
+              href={`/sql/${getSlug(lesson.id, 'sql')}/`}
+              class="group flex items-center gap-5 bg-white rounded-xl px-6 py-5 border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all duration-300"
+            >
+              <div class="shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
+                {i + 1}
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                  {lesson.data.title}
+                </h3>
+                <p class="text-sm text-slate-500 mt-0.5 truncate">{lesson.data.description}</p>
+              </div>
+              <svg class="w-5 h-5 text-slate-300 group-hover:text-blue-400 shrink-0 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Excel Lessons -->
+  {excelLessons.length > 0 && (
+    <section class="py-24">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-end justify-between mb-12">
+          <div>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-600 uppercase tracking-wider mb-4">Phase 3</span>
+            <h2 class="text-3xl font-bold text-slate-900">Excel Power Skills</h2>
+            <p class="mt-2 text-slate-500">Formulas, pivot tables, dashboards & Power Query — {excelLessons.length} lessons.</p>
+          </div>
+          <a href="/excel/" class="hidden sm:inline-flex items-center gap-1.5 text-teal-600 font-semibold hover:text-teal-700 transition-colors">
+            View all
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+
+        <div class="space-y-3">
+          {excelLessons.slice(0, 5).map((lesson, i) => (
+            <a
+              href={`/excel/${getSlug(lesson.id, 'excel')}/`}
+              class="group flex items-center gap-5 bg-white rounded-xl px-6 py-5 border border-slate-100 hover:border-teal-200 hover:shadow-md transition-all duration-300"
+            >
+              <div class="shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-500 text-white font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
+                {i + 1}
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="font-bold text-slate-900 group-hover:text-teal-600 transition-colors">
+                  {lesson.data.title}
+                </h3>
+                <p class="text-sm text-slate-500 mt-0.5 truncate">{lesson.data.description}</p>
+              </div>
+              <svg class="w-5 h-5 text-slate-300 group-hover:text-teal-400 shrink-0 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- FAQ Section -->
+  <section class="py-24 bg-slate-50/70 border-y border-slate-100 relative overflow-hidden">
+    <!-- Background decoration -->
+    <div class="absolute inset-0 -z-10">
+      <div class="absolute top-1/2 left-1/4 w-[350px] h-[350px] bg-indigo-50 rounded-full blur-[80px] opacity-40"></div>
+      <div class="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-violet-50 rounded-full blur-[80px] opacity-40"></div>
+    </div>
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16 animate-slide-up">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600 uppercase tracking-wider mb-4 shadow-sm border border-indigo-100/50">
+          Got Questions?
+        </span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          Frequently Asked Questions (FAQs)
+        </h2>
+        <p class="mt-4 text-base sm:text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
+          Everything you need to know about Data Analytics, Business Analytics, SQL, Python, Power BI, and launching your career.
+        </p>
+      </div>
+
+      <div class="space-y-4">
+        {faqs.map((faq, index) => (
+          <details 
+            class="group bg-white rounded-xl border border-slate-200/60 shadow-sm hover:border-indigo-200 hover:shadow-md transition-all duration-300 open:border-indigo-300 open:shadow-lg open:shadow-indigo-500/5 [&_summary::-webkit-details-marker]:hidden"
+            id={`faq-item-${index + 1}`}
+          >
+            <summary class="flex items-center justify-between gap-4 p-5 sm:p-6 font-bold text-slate-900 cursor-pointer select-none list-none group-open:border-b group-open:border-slate-100 transition-colors">
+              <span class="text-base sm:text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors duration-200">
+                {faq.question}
+              </span>
+              <div class="w-8 h-8 rounded-lg bg-slate-50 group-hover:bg-indigo-50 group-open:bg-indigo-600 group-open:text-white flex items-center justify-center shrink-0 transition-all duration-300">
+                <svg 
+                  class="w-4 h-4 text-slate-500 group-hover:text-indigo-600 group-open:text-white group-open:rotate-180 transition-all duration-300" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </summary>
+            <div class="p-5 sm:p-6 text-slate-600 text-sm sm:text-base leading-relaxed animate-fade-in border-t border-slate-50/50">
+              <p class="whitespace-pre-line">{faq.answer}</p>
+            </div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-24">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div class="relative bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 rounded-3xl p-12 sm:p-16 text-white shadow-2xl shadow-indigo-300/30 overflow-hidden">
+        <!-- Decorative circles -->
+        <div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4"></div>
+        <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4"></div>
+
+        <div class="relative">
+          <h2 class="text-3xl sm:text-4xl font-extrabold mb-4">
+            Stop watching. Start doing.
+          </h2>
+          <p class="text-indigo-100 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+            No sign-up. No paywall. Just open the first lesson, copy the code, run it, and learn. That's it.
+          </p>
+          <a
+            href="/python/basics/"
+            class="group inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-white text-indigo-700 font-bold text-base hover:bg-indigo-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+          >
+            Open Lesson 1
+            <svg class="w-5 h-5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>

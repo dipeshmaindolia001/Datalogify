@@ -1,0 +1,134 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TopicSidebar from '../../components/TopicSidebar.astro';
+import { getCollection } from 'astro:content';
+
+const sqlLessons = (await getCollection('lessons', ({ data }) => data.category === 'sql'))
+  .sort((a, b) => a.data.order - b.data.order);
+
+function getSlug(id: string): string {
+  return id.replace(/^sql\//, '');
+}
+
+const beginnerLessons = sqlLessons.filter(l => l.data.order >= 1 && l.data.order <= 100);
+const intermediateLessons = sqlLessons.filter(l => l.data.order >= 101 && l.data.order <= 200);
+const advancedLessons = sqlLessons.filter(l => l.data.order >= 201 && l.data.order <= 300);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Course',
+  name: 'SQL for Data Analytics',
+  description: `Complete SQL tutorial with ${sqlLessons.length} lessons — from SELECT to window functions, CTEs, query optimization, and database design.`,
+  provider: { '@type': 'Organization', name: 'Datalogify' },
+  numberOfLessons: sqlLessons.length,
+};
+
+interface LessonGroup {
+  label: string;
+  emoji: string;
+  desc: string;
+  items: typeof sqlLessons;
+}
+
+const groups: LessonGroup[] = [
+  { label: 'Basics', emoji: '🟢', desc: 'SELECT, WHERE, JOINs, GROUP BY.', items: beginnerLessons },
+  { label: 'Intermediate', emoji: '🟡', desc: 'Window functions, CTEs, optimization.', items: intermediateLessons },
+  { label: 'Advanced', emoji: '🟠', desc: 'Design, performance, advanced patterns.', items: advancedLessons },
+].filter(g => g.items.length > 0);
+---
+
+<BaseLayout
+  title="SQL Tutorial for Data Analytics — From Basics to Pro"
+  description={`Master SQL with ${sqlLessons.length} hands-on lessons — SELECT, JOINs, GROUP BY, window functions, CTEs, optimization, and database design. Free tutorials.`}
+  jsonLd={jsonLd}
+>
+  <div class="max-w-[1400px] mx-auto px-4 sm:px-6 py-8 lg:py-12">
+    <div class="flex gap-8">
+      <!-- Left Sidebar -->
+      <aside class="hidden lg:block w-64 shrink-0">
+        <div class="sticky top-24">
+          <TopicSidebar category="sql" />
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="flex-1 min-w-0">
+        <div class="mb-10 animate-slide-up">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white text-2xl shadow-lg shadow-blue-200/50">🗃️</span>
+            <div>
+              <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                SQL Tutorial
+              </h1>
+              <p class="text-sm text-slate-500">{sqlLessons.length} lessons · Basics → Pro</p>
+            </div>
+          </div>
+          <p class="text-base text-slate-500 max-w-2xl leading-relaxed mt-3">
+            The <strong class="text-slate-700">#1 skill every data analyst needs</strong>. From basic SELECT queries to window functions,
+            CTEs, query optimization, and database design. Each lesson has real SQL and interview prep.
+          </p>
+
+          <!-- Prereq Banner -->
+          <div class="mt-6 flex items-start gap-3 p-4 bg-amber-50 rounded-xl border border-amber-100 max-w-lg">
+            <span class="text-lg shrink-0">💡</span>
+            <div>
+              <p class="text-sm text-amber-800 font-medium">Recommended: Complete Python basics first</p>
+              <p class="text-xs text-amber-600 mt-1">SQL is easier when you already understand data types and logic. <a href="/python/" class="underline hover:text-amber-700">Python Tutorial →</a></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lesson Groups -->
+        {groups.map((group) => (
+          <section class="mb-10">
+            <div class="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100">
+              <span class="text-xl">{group.emoji}</span>
+              <div>
+                <h2 class="text-lg font-bold text-slate-800">{group.label}</h2>
+                <p class="text-xs text-slate-400">{group.desc} · {group.items.length} lessons</p>
+              </div>
+            </div>
+            <div class="grid sm:grid-cols-2 gap-3">
+              {group.items.map((lesson) => (
+                <a
+                  href={`/sql/${getSlug(lesson.id)}/`}
+                  class="group flex items-start gap-3 bg-white rounded-xl p-4 border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                >
+                  <div class="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 text-white text-xs font-bold shadow-sm">
+                    {lesson.data.order}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-semibold text-slate-800 group-hover:text-blue-600 transition-colors leading-snug">
+                      {lesson.data.title.replace(/\s*—.*$/, '')}
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1 line-clamp-1">{lesson.data.description}</p>
+                  </div>
+                  <svg class="w-4 h-4 text-slate-200 group-hover:text-blue-400 shrink-0 mt-1 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              ))}
+            </div>
+          </section>
+        ))}
+
+        <!-- What's Next -->
+        <div class="mt-12 bg-gradient-to-br from-teal-50 to-cyan-50/30 rounded-2xl p-8 border border-teal-100">
+          <div class="flex items-start gap-4">
+            <div class="shrink-0 w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center text-xl">📊</div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 mb-2">Finished SQL? Next up: Excel</h3>
+              <p class="text-slate-500 text-sm leading-relaxed mb-4">
+                Excel is still the universal analytics tool. Learn VLOOKUP, pivot tables, 
+                and dashboards that every analyst uses daily.
+              </p>
+              <a href="/excel/" class="inline-flex items-center gap-1.5 text-teal-600 font-semibold text-sm hover:text-teal-700 transition-colors">
+                Excel Tutorial →
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

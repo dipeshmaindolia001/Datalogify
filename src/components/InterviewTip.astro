@@ -1,0 +1,21 @@
+---
+interface Props {
+  title?: string;
+}
+
+const { title = 'Where This Shows Up in Real Jobs' } = Astro.props;
+---
+
+<aside class="my-8 rounded-xl border-l-4 border-amber-500 bg-amber-50 px-5 py-5 sm:px-6" role="note">
+  <div class="flex items-start gap-3">
+    <span class="mt-0.5 text-xl shrink-0" aria-hidden="true">🎯</span>
+    <div class="min-w-0">
+      <p class="text-sm font-semibold text-amber-800 mb-2">
+        {title}
+      </p>
+      <div class="text-sm text-amber-900/80 leading-relaxed [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:space-y-1 [&>code]:bg-amber-100 [&>code]:px-1 [&>code]:py-0.5 [&>code]:rounded [&>code]:text-amber-900 [&>code]:text-xs">
+        <slot />
+      </div>
+    </div>
+  </div>
+</aside>

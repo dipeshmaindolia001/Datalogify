@@ -1,0 +1,158 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import RoadmapPhase from '../components/RoadmapPhase.astro';
+
+const phases = [
+  {
+    number: 1,
+    title: 'Python Foundations',
+    description: 'Build a solid programming foundation. Learn variables, data types, loops, functions, and your first data library — Pandas.',
+    topics: ['Variables & Print', 'Data Types & Casting', 'Loops & Functions', 'Lists & Dictionaries', 'Intro to Pandas', 'File I/O & CSV'],
+    duration: '2-3 weeks',
+    status: 'completed' as const,
+    link: '/python/',
+  },
+  {
+    number: 2,
+    title: 'SQL for Analytics',
+    description: 'Master the language of databases. Write queries that extract, filter, join, and aggregate data from relational databases.',
+    topics: ['SELECT & WHERE', 'JOINs (INNER, LEFT, FULL)', 'GROUP BY & Aggregations', 'Subqueries & CTEs', 'Window Functions', 'Query Optimization'],
+    duration: '2-3 weeks',
+    status: 'current' as const,
+    link: '/sql/',
+  },
+  {
+    number: 3,
+    title: 'Excel Power Skills',
+    description: 'Go beyond basic spreadsheets. Learn the formulas, pivot tables, and dashboard techniques analysts actually use at work.',
+    topics: ['VLOOKUP & INDEX/MATCH', 'Pivot Tables', 'Conditional Formatting', 'Charts & Dashboards', 'Power Query Basics', 'Data Validation'],
+    duration: '1-2 weeks',
+    status: 'upcoming' as const,
+    link: '/excel/',
+  },
+  {
+    number: 4,
+    title: 'Exploratory Data Analysis',
+    description: 'Learn to clean messy data, find patterns, create compelling visualizations, and tell stories with data.',
+    topics: ['Data Cleaning with Pandas', 'Handling Missing Data', 'Matplotlib & Seaborn', 'Distribution Analysis', 'Correlation & Outliers', 'Data Storytelling'],
+    duration: '2-3 weeks',
+    status: 'upcoming' as const,
+    link: '/eda/',
+  },
+  {
+    number: 5,
+    title: 'Statistics for Analytics',
+    description: 'Applied statistics — not textbook theory. Learn the stats that matter for making data-driven decisions at work.',
+    topics: ['Descriptive Statistics', 'Probability Basics', 'Normal Distribution', 'Hypothesis Testing', 'A/B Testing', 'Regression Basics'],
+    duration: '2-3 weeks',
+    status: 'upcoming' as const,
+    link: '/statistics/',
+  },
+  {
+    number: 6,
+    title: 'Portfolio Projects',
+    description: 'Apply everything to real-world projects. Each project includes a dataset, problem statement, full solution, and insights.',
+    topics: ['Sales Dashboard Analysis', 'Customer Churn Prediction', 'Marketing Campaign Analysis', 'Financial Data Analysis', 'Survey Data Analysis', 'End-to-End Case Study'],
+    duration: '3-4 weeks',
+    status: 'upcoming' as const,
+    link: '/projects/',
+  },
+  {
+    number: 7,
+    title: 'Interview Prep',
+    description: 'Get interview-ready with categorized questions, take-home assignments, and case study walkthroughs.',
+    topics: ['Python Technical Qs', 'SQL Technical Qs', 'Statistics Qs', 'Case Study Practice', 'Behavioral Questions', 'Take-Home Assignments'],
+    duration: '1-2 weeks',
+    status: 'upcoming' as const,
+    link: '/interview-prep/',
+  },
+];
+
+const baseUrl = Astro.site?.toString() || 'https://datalogify.com/';
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  'itemListElement': [
+    {
+      '@type': 'ListItem',
+      'position': 1,
+      'name': 'Home',
+      'item': baseUrl
+    },
+    {
+      '@type': 'ListItem',
+      'position': 2,
+      'name': 'Learning Roadmap',
+      'item': `${baseUrl}roadmap/`
+    }
+  ]
+};
+---
+
+<BaseLayout
+  title="Data Analyst Career & Learning Roadmap"
+  description="Follow our step-by-step roadmap to become a data analyst. Master SQL, Python, Excel, data visualization, and statistics, from absolute basics to interview prep."
+>
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+    <!-- Header -->
+    <div class="text-center mb-14 animate-slide-up">
+      <h1 class="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
+        Learning Roadmap
+      </h1>
+      <p class="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
+        7 phases. Each builds on the last. Go at your own pace — the lessons aren't going anywhere.
+      </p>
+
+      <div class="mt-8 inline-flex items-center gap-4 text-sm text-slate-500">
+        <span class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
+          Current
+        </span>
+        <span class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-slate-300"></span>
+          Coming Soon
+        </span>
+        <span class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+          Complete
+        </span>
+      </div>
+    </div>
+
+    <!-- Roadmap Timeline -->
+    <div class="relative">
+      <!-- Vertical connector line -->
+      <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-300 via-slate-200 to-slate-200 hidden sm:block"></div>
+
+      <div class="space-y-8">
+        {phases.map((phase) => (
+          <RoadmapPhase
+            number={phase.number}
+            title={phase.title}
+            description={phase.description}
+            topics={phase.topics}
+            duration={phase.duration}
+            status={phase.status}
+            link={phase.link}
+          />
+        ))}
+      </div>
+    </div>
+
+    <!-- Bottom CTA -->
+    <div class="mt-16 text-center">
+      <p class="text-slate-600 mb-4">Ready to begin?</p>
+      <a
+        href="/python/"
+        class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-indigo-600 text-white font-semibold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:-translate-y-0.5"
+      >
+        Start Phase 1: Python
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </a>
+    </div>
+  </div>
+</BaseLayout>

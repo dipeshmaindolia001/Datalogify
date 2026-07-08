@@ -1,0 +1,135 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TopicSidebar from '../../components/TopicSidebar.astro';
+import { getCollection } from 'astro:content';
+
+const excelLessons = (await getCollection('lessons', ({ data }) => data.category === 'excel'))
+  .sort((a, b) => a.data.order - b.data.order);
+
+function getSlug(id: string): string {
+  return id.replace(/^excel\//, '');
+}
+
+const beginnerLessons = excelLessons.filter(l => l.data.order >= 1 && l.data.order <= 100);
+const intermediateLessons = excelLessons.filter(l => l.data.order >= 101 && l.data.order <= 200);
+const advancedLessons = excelLessons.filter(l => l.data.order >= 201 && l.data.order <= 300);
+const proLessons = excelLessons.filter(l => l.data.order >= 301);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Course',
+  name: 'Excel for Data & Business Analytics',
+  description: `Complete Excel tutorial from fundamentals to Power Query & DAX — ${excelLessons.length} hands-on lessons covering formulas, pivot tables, charts, dashboards, and Power Pivot.`,
+  provider: { '@type': 'Organization', name: 'Datalogify' },
+  numberOfLessons: excelLessons.length,
+  hasCourseInstance: {
+    '@type': 'CourseInstance',
+    courseMode: 'online',
+    courseWorkload: 'PT30H',
+  },
+};
+
+interface LessonGroup {
+  label: string;
+  emoji: string;
+  desc: string;
+  color: string;
+  border: string;
+  items: typeof excelLessons;
+}
+
+const groups: LessonGroup[] = [
+  { label: 'Basics', emoji: '🟢', desc: 'Fundamentals, formulas, cell references, shortcuts.', color: 'from-emerald-500 to-green-500', border: 'border-emerald-200 bg-emerald-50/30', items: beginnerLessons },
+  { label: 'Intermediate', emoji: '🟡', desc: 'Lookups, pivot tables, charts, statistics.', color: 'from-amber-500 to-yellow-500', border: 'border-amber-200 bg-amber-50/30', items: intermediateLessons },
+  { label: 'Advanced', emoji: '🟠', desc: 'Dynamic arrays, Power Query, Power Pivot & DAX.', color: 'from-orange-500 to-red-500', border: 'border-orange-200 bg-orange-50/30', items: advancedLessons },
+  { label: 'Pro', emoji: '🔴', desc: 'Dashboards, macros, real-world projects.', color: 'from-red-500 to-rose-500', border: 'border-red-200 bg-red-50/30', items: proLessons },
+].filter(g => g.items.length > 0);
+---
+
+<BaseLayout
+  title="Excel Tutorial for Data Analytics — From Basics to Power Pivot"
+  description={`Master Excel with ${excelLessons.length} hands-on lessons — formulas, VLOOKUP, pivot tables, charts, Power Query, and DAX. Free, practical, no-fluff tutorials.`}
+  jsonLd={jsonLd}
+>
+  <div class="max-w-[1400px] mx-auto px-4 sm:px-6 py-8 lg:py-12">
+    <div class="flex gap-8">
+      <!-- Left Sidebar -->
+      <aside class="hidden lg:block w-64 shrink-0">
+        <div class="sticky top-24">
+          <TopicSidebar category="excel" />
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="flex-1 min-w-0">
+        <!-- Header -->
+        <div class="mb-10 animate-slide-up">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-500 text-white text-2xl shadow-lg shadow-teal-200/50">📊</span>
+            <div>
+              <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                Excel Tutorial
+              </h1>
+              <p class="text-sm text-slate-500">{excelLessons.length} lessons · Basics → Pro</p>
+            </div>
+          </div>
+          <p class="text-base text-slate-500 max-w-2xl leading-relaxed mt-3">
+            Everything you need to go from Excel beginner to power user — formulas, VLOOKUP, pivot tables,
+            dashboards, Power Query, and Power Pivot/DAX. Each lesson has <strong class="text-slate-700">real formulas with example data</strong> and <strong class="text-slate-700">interview Q&As</strong>.
+          </p>
+        </div>
+
+        <!-- Lesson Groups -->
+        {groups.map((group) => (
+          <section class="mb-10">
+            <div class="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100">
+              <span class="text-xl">{group.emoji}</span>
+              <div>
+                <h2 class="text-lg font-bold text-slate-800">{group.label}</h2>
+                <p class="text-xs text-slate-400">{group.desc} · {group.items.length} lessons</p>
+              </div>
+            </div>
+            <div class="grid sm:grid-cols-2 gap-3">
+              {group.items.map((lesson, i) => (
+                <a
+                  href={`/excel/${getSlug(lesson.id)}/`}
+                  class="group flex items-start gap-3 bg-white rounded-xl p-4 border border-slate-100 hover:border-teal-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                >
+                  <div class="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-500 text-white text-xs font-bold shadow-sm">
+                    {lesson.data.order}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-semibold text-slate-800 group-hover:text-teal-600 transition-colors leading-snug">
+                      {lesson.data.title.replace(/\s*—.*$/, '')}
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1 line-clamp-1">{lesson.data.description}</p>
+                  </div>
+                  <svg class="w-4 h-4 text-slate-200 group-hover:text-teal-400 shrink-0 mt-1 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              ))}
+            </div>
+          </section>
+        ))}
+
+        <!-- What's Next -->
+        <div class="mt-12 bg-gradient-to-br from-violet-50 to-purple-50/30 rounded-2xl p-8 border border-violet-100">
+          <div class="flex items-start gap-4">
+            <div class="shrink-0 w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center text-xl">🔍</div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 mb-2">Finished Excel? Next up: Exploratory Data Analysis</h3>
+              <p class="text-slate-500 text-sm leading-relaxed mb-4">
+                Now that you can wrangle data in spreadsheets, learn to <strong class="text-slate-700">find patterns, detect outliers, and tell data stories</strong> using
+                Python libraries like Pandas, Matplotlib, and Seaborn.
+              </p>
+              <a href="/eda/" class="inline-flex items-center gap-1.5 text-violet-600 font-semibold text-sm hover:text-violet-700 transition-colors">
+                Start EDA Tutorial →
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

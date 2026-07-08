@@ -1,0 +1,23 @@
+---
+import ComingSoonPage from '../../components/ComingSoonPage.astro';
+---
+
+<ComingSoonPage
+  title="Statistics for Analytics"
+  subtitle="Applied statistics — not textbook theory. Learn the stats concepts that actually matter for making data-driven decisions at work."
+  phase={5}
+  icon="📈"
+  gradientFrom="from-emerald-500"
+  gradientTo="to-green-500"
+  accentColor="bg-green-100 text-green-600"
+  topics={[
+    { name: 'Descriptive Statistics', desc: 'Mean, median, mode, std dev — and when each matters' },
+    { name: 'Probability Basics', desc: 'Just enough probability for analytics work' },
+    { name: 'Normal Distribution', desc: 'The bell curve and why it shows up everywhere' },
+    { name: 'Hypothesis Testing', desc: 'p-values, confidence intervals, significance' },
+    { name: 'A/B Testing', desc: 'Design and analyze experiments like a pro' },
+    { name: 'Regression Basics', desc: 'Predict outcomes and understand relationships' },
+  ]}
+  prevPhase={{ name: 'Phase 4: EDA', link: '/eda/' }}
+  nextPhase={{ name: 'Phase 6: Projects', link: '/projects/' }}
+/>

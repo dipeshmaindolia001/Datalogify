@@ -1,0 +1,23 @@
+---
+import ComingSoonPage from '../../components/ComingSoonPage.astro';
+---
+
+<ComingSoonPage
+  title="Exploratory Data Analysis"
+  subtitle="Learn to clean messy data, spot patterns, create compelling visualizations, and tell stories that drive decisions."
+  phase={4}
+  icon="🔍"
+  gradientFrom="from-teal-500"
+  gradientTo="to-emerald-500"
+  accentColor="bg-emerald-100 text-emerald-600"
+  topics={[
+    { name: 'Data Cleaning with Pandas', desc: 'Handle real-world messy datasets' },
+    { name: 'Handling Missing Data', desc: 'Imputation, dropping, and strategy decisions' },
+    { name: 'Matplotlib & Seaborn', desc: 'Create publication-quality charts' },
+    { name: 'Distribution Analysis', desc: 'Understand your data shape and spread' },
+    { name: 'Correlation & Outliers', desc: 'Find relationships and anomalies' },
+    { name: 'Data Storytelling', desc: 'Present insights that actually drive action' },
+  ]}
+  prevPhase={{ name: 'Phase 3: Excel', link: '/excel/' }}
+  nextPhase={{ name: 'Phase 5: Statistics', link: '/statistics/' }}
+/>

@@ -1,0 +1,135 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TopicSidebar from '../../components/TopicSidebar.astro';
+import { getCollection } from 'astro:content';
+
+const pythonLessons = (await getCollection('lessons', ({ data }) => data.category === 'python'))
+  .sort((a, b) => a.data.order - b.data.order);
+
+function getSlug(id: string): string {
+  return id.replace(/^python\//, '');
+}
+
+const beginnerLessons = pythonLessons.filter(l => l.data.order >= 1 && l.data.order <= 100);
+const intermediateLessons = pythonLessons.filter(l => l.data.order >= 101 && l.data.order <= 200);
+const advancedLessons = pythonLessons.filter(l => l.data.order >= 201 && l.data.order <= 300);
+const proLessons = pythonLessons.filter(l => l.data.order >= 301);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Course',
+  name: 'Python for Data Analytics',
+  description: 'Complete Python tutorial from basics to advanced — variables, data types, Pandas, NumPy, visualization, and more.',
+  provider: { '@type': 'Organization', name: 'Datalogify' },
+  numberOfLessons: pythonLessons.length,
+  hasCourseInstance: {
+    '@type': 'CourseInstance',
+    courseMode: 'online',
+    courseWorkload: 'PT40H',
+  },
+};
+
+interface LessonGroup {
+  label: string;
+  emoji: string;
+  desc: string;
+  color: string;
+  border: string;
+  items: typeof pythonLessons;
+}
+
+const groups: LessonGroup[] = [
+  { label: 'Basics', emoji: '🟢', desc: 'Start here. Zero to functional Python.', color: 'from-emerald-500 to-green-500', border: 'border-emerald-200 bg-emerald-50/30', items: beginnerLessons },
+  { label: 'Intermediate', emoji: '🟡', desc: 'Pandas, NumPy, visualization, APIs.', color: 'from-amber-500 to-yellow-500', border: 'border-amber-200 bg-amber-50/30', items: intermediateLessons },
+  { label: 'Advanced', emoji: '🟠', desc: 'Decorators, generators, advanced patterns.', color: 'from-orange-500 to-red-500', border: 'border-orange-200 bg-orange-50/30', items: advancedLessons },
+  { label: 'Pro', emoji: '🔴', desc: 'Production-level Python for analytics.', color: 'from-red-500 to-rose-500', border: 'border-red-200 bg-red-50/30', items: proLessons },
+].filter(g => g.items.length > 0);
+---
+
+<BaseLayout
+  title="Python Tutorial for Data Analytics — From Basics to Pro"
+  description={`Master Python with ${pythonLessons.length} hands-on lessons — variables, data types, Pandas, NumPy, visualization, APIs, and more. Free, practical, no-fluff tutorials.`}
+  jsonLd={jsonLd}
+>
+  <div class="max-w-[1400px] mx-auto px-4 sm:px-6 py-8 lg:py-12">
+    <div class="flex gap-8">
+      <!-- Left Sidebar -->
+      <aside class="hidden lg:block w-64 shrink-0">
+        <div class="sticky top-24">
+          <TopicSidebar category="python" />
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="flex-1 min-w-0">
+        <!-- Header -->
+        <div class="mb-10 animate-slide-up">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white text-2xl shadow-lg shadow-indigo-200/50">🐍</span>
+            <div>
+              <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                Python Tutorial
+              </h1>
+              <p class="text-sm text-slate-500">{pythonLessons.length} lessons · Basics → Pro</p>
+            </div>
+          </div>
+          <p class="text-base text-slate-500 max-w-2xl leading-relaxed mt-3">
+            Everything you need to write Python for data analytics — from "Hello World" to advanced Pandas,
+            NumPy, visualization, web scraping, and beyond. Each lesson has <strong class="text-slate-700">real, runnable code</strong> and <strong class="text-slate-700">interview Q&As</strong>.
+          </p>
+        </div>
+
+        <!-- Lesson Groups -->
+        {groups.map((group) => (
+          <section class="mb-10">
+            <div class="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100">
+              <span class="text-xl">{group.emoji}</span>
+              <div>
+                <h2 class="text-lg font-bold text-slate-800">{group.label}</h2>
+                <p class="text-xs text-slate-400">{group.desc} · {group.items.length} lessons</p>
+              </div>
+            </div>
+            <div class="grid sm:grid-cols-2 gap-3">
+              {group.items.map((lesson, i) => (
+                <a
+                  href={`/python/${getSlug(lesson.id)}/`}
+                  class="group flex items-start gap-3 bg-white rounded-xl p-4 border border-slate-100 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                >
+                  <div class="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-white text-xs font-bold shadow-sm">
+                    {lesson.data.order}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors leading-snug">
+                      {lesson.data.title.replace(/\s*—.*$/, '')}
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1 line-clamp-1">{lesson.data.description}</p>
+                  </div>
+                  <svg class="w-4 h-4 text-slate-200 group-hover:text-indigo-400 shrink-0 mt-1 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              ))}
+            </div>
+          </section>
+        ))}
+
+        <!-- What's Next -->
+        <div class="mt-12 bg-gradient-to-br from-blue-50 to-indigo-50/30 rounded-2xl p-8 border border-blue-100">
+          <div class="flex items-start gap-4">
+            <div class="shrink-0 w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-xl">🗃️</div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 mb-2">Finished Python? Next up: SQL</h3>
+              <p class="text-slate-500 text-sm leading-relaxed mb-4">
+                SQL is the <strong class="text-slate-700">#1 skill recruiters test for</strong> in data analyst interviews.
+                After Python foundations, SQL will feel natural.
+              </p>
+              <a href="/sql/" class="inline-flex items-center gap-1.5 text-blue-600 font-semibold text-sm hover:text-blue-700 transition-colors">
+                Start SQL Tutorial →
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,67 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Blog"
+  description="Industry trends, tool comparisons, career advice, and deep dives for aspiring data analysts."
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+    <div class="text-center animate-slide-up">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 text-slate-600 text-sm font-medium mb-8">
+        <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+        Coming Soon
+      </div>
+
+      <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white text-4xl shadow-xl mb-8">
+        ✍️
+      </div>
+
+      <h1 class="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
+        The Datalogify Blog
+      </h1>
+      <p class="mt-4 text-lg text-slate-500 max-w-xl mx-auto leading-relaxed">
+        Industry trends, tool comparisons (Python vs R? Tableau vs Power BI?), career advice, salary guides, 
+        and deep dives — all written with the same no-fluff philosophy as our lessons.
+      </p>
+
+      <!-- Preview articles -->
+      <div class="mt-14 grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto text-left">
+        {[
+          { title: 'Python vs R for Data Analytics in 2025', tag: 'Comparison' },
+          { title: 'How to Build a Data Analytics Portfolio', tag: 'Career' },
+          { title: 'SQL vs Pandas: When to Use Which', tag: 'Tools' },
+          { title: 'Data Analyst Salary Guide by City', tag: 'Career' },
+          { title: 'Top 10 Mistakes in Your First Analytics Role', tag: 'Advice' },
+          { title: 'How to Ace the Take-Home Analytics Assignment', tag: 'Interview' },
+        ].map((article) => (
+          <div class="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-100 opacity-70">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-600">{article.tag}</span>
+            <span class="text-sm text-slate-700">{article.title}</span>
+          </div>
+        ))}
+      </div>
+
+      <!-- Notify -->
+      <div class="mt-14 p-8 bg-gradient-to-br from-slate-50 to-indigo-50/30 rounded-2xl border border-slate-200 max-w-lg mx-auto">
+        <h3 class="text-lg font-bold text-slate-800 mb-2">📬 Get new articles in your inbox</h3>
+        <p class="text-sm text-slate-500 mb-5">Short, practical articles. No spam. Unsubscribe anytime.</p>
+        <form class="flex gap-2" onsubmit="event.preventDefault(); this.querySelector('button').textContent = 'Subscribed! ✓'; this.querySelector('input').disabled = true;">
+          <input
+            type="email"
+            placeholder="your@email.com"
+            class="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 bg-white"
+          />
+          <button type="submit" class="px-5 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shrink-0 cursor-pointer">
+            Subscribe
+          </button>
+        </form>
+      </div>
+
+      <a href="/" class="inline-flex items-center gap-2 mt-10 text-sm text-slate-500 hover:text-indigo-600 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to home
+      </a>
+    </div>
+  </div>
+</BaseLayout>

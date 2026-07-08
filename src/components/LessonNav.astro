@@ -1,0 +1,76 @@
+---
+interface Props {
+  prevSlug?: string;
+  prevTitle?: string;
+  nextSlug?: string;
+  nextTitle?: string;
+  category?: string;
+}
+
+const { prevSlug, prevTitle, nextSlug, nextTitle, category = 'python' } = Astro.props;
+
+const hasPrev = prevSlug && prevTitle;
+const hasNext = nextSlug && nextTitle;
+---
+
+{(hasPrev || hasNext) && (
+  <nav class="mt-12 mb-4 pt-8 border-t border-slate-200" aria-label="Lesson navigation">
+    <div class="flex flex-col sm:flex-row gap-4">
+      <!-- Previous -->
+      {hasPrev ? (
+        <a
+          href={`/${category}/${prevSlug}/`}
+          class="group flex-1 flex items-center gap-3 px-5 py-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-300 hover:shadow-md transition-all duration-200"
+        >
+          <svg
+            class="h-5 w-5 text-slate-400 group-hover:text-indigo-500 shrink-0 transition-colors"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          <div class="min-w-0">
+            <span class="block text-xs font-medium text-slate-400 uppercase tracking-wider">
+              Previous
+            </span>
+            <span class="block text-sm font-semibold text-slate-700 group-hover:text-indigo-600 truncate transition-colors">
+              {prevTitle}
+            </span>
+          </div>
+        </a>
+      ) : (
+        <div class="flex-1 hidden sm:block"></div>
+      )}
+
+      <!-- Next -->
+      {hasNext ? (
+        <a
+          href={`/${category}/${nextSlug}/`}
+          class="group flex-1 flex items-center justify-end gap-3 px-5 py-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-300 hover:shadow-md transition-all duration-200 text-right"
+        >
+          <div class="min-w-0">
+            <span class="block text-xs font-medium text-slate-400 uppercase tracking-wider">
+              Next
+            </span>
+            <span class="block text-sm font-semibold text-slate-700 group-hover:text-indigo-600 truncate transition-colors">
+              {nextTitle}
+            </span>
+          </div>
+          <svg
+            class="h-5 w-5 text-slate-400 group-hover:text-indigo-500 shrink-0 transition-colors"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      ) : (
+        <div class="flex-1 hidden sm:block"></div>
+      )}
+    </div>
+  </nav>
+)}

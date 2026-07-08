@@ -1,0 +1,21 @@
+---
+interface Props {
+  title?: string;
+}
+
+const { title = 'Mini-Challenge' } = Astro.props;
+---
+
+<aside class="my-8 rounded-xl border-l-4 border-indigo-500 bg-indigo-50 px-5 py-5 sm:px-6" role="note">
+  <div class="flex items-start gap-3">
+    <span class="mt-0.5 text-xl shrink-0" aria-hidden="true">💪</span>
+    <div class="min-w-0">
+      <p class="text-sm font-semibold text-indigo-800 mb-2">
+        {title}
+      </p>
+      <div class="text-sm text-indigo-900/80 leading-relaxed [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:space-y-1 [&>ol]:list-decimal [&>ol]:pl-4 [&>ol]:space-y-1 [&>code]:bg-indigo-100 [&>code]:px-1 [&>code]:py-0.5 [&>code]:rounded [&>code]:text-indigo-900 [&>code]:text-xs">
+        <slot />
+      </div>
+    </div>
+  </div>
+</aside>

@@ -1,0 +1,48 @@
+---
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const lessons = await getCollection('lessons', ({ data }) => data.category === 'sql');
+  const sorted = lessons.sort((a, b) => a.data.order - b.data.order);
+
+  return sorted.map((lesson) => {
+    const currentIndex = sorted.findIndex((l) => l.id === lesson.id);
+    const prevLesson = currentIndex > 0 ? sorted[currentIndex - 1] : null;
+    const nextLesson = currentIndex < sorted.length - 1 ? sorted[currentIndex + 1] : null;
+
+    return {
+      params: { slug: lesson.id.replace(/^sql\//, '') },
+      props: {
+        lesson,
+        prevTitle: prevLesson?.data.title || '',
+        nextTitle: nextLesson?.data.title || '',
+        lessonNumber: currentIndex + 1,
+        totalLessons: sorted.length,
+      },
+    };
+  });
+}
+
+const { lesson, prevTitle, nextTitle, lessonNumber, totalLessons } = Astro.props;
+const { Content } = await render(lesson);
+---
+
+<LessonLayout
+  title={lesson.data.title}
+  description={lesson.data.description}
+  category={lesson.data.category}
+  phase={lesson.data.phase}
+  prevSlug={lesson.data.prevSlug}
+  prevTitle={prevTitle}
+  nextSlug={lesson.data.nextSlug}
+  nextTitle={nextTitle}
+  publishedDate={lesson.data.publishedDate.toISOString()}
+  seoTitle={lesson.data.seoTitle}
+  seoDescription={lesson.data.seoDescription}
+  tags={lesson.data.tags}
+  lessonNumber={lessonNumber}
+  totalLessons={totalLessons}
+>
+  <Content />
+</LessonLayout>
