@@ -53,17 +53,62 @@ const { challenge } = Astro.props;
 
       <!-- Table Schema Structure Card -->
       <div class="pt-4 border-t border-slate-800">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-450 mb-2">Database Schema</h3>
-        <div class="bg-[#0b0f19] border border-slate-800/80 rounded-xl p-4">
-          <table class="w-full text-left font-mono text-xs text-indigo-300">
-            <tbody>
-              {challenge.schemaNote.split('\n').map(line => (
-                <tr>
-                  <td class="py-1 px-1 border-b border-slate-800/30">{line}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-450 mb-3">Database Schema</h3>
+        <div class="space-y-4">
+          {challenge.schemaNote.split('\n').map(line => {
+            const match = line.trim().match(/^([a-zA-Z_0-9]+)\((.+)\)$/);
+            if (!match) return <div class="font-mono text-xs text-indigo-300 bg-[#0b0f19] border border-slate-800/80 rounded-xl p-3">{line}</div>;
+
+            const tableName = match[1];
+            const columns = match[2].split(',').map(c => c.trim());
+
+            return (
+              <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl overflow-hidden shadow-sm">
+                <!-- Table Header -->
+                <div class="bg-[#0b0f19] border-b border-slate-800/80 px-4 py-2 flex items-center gap-2">
+                  <span class="text-xs">🗂️</span>
+                  <span class="font-mono text-xs font-bold text-slate-200">{tableName}</span>
+                </div>
+                <!-- Columns List -->
+                <div class="divide-y divide-slate-800/30 font-mono text-xs">
+                  {columns.map(col => {
+                    const isId = col === 'id' || col.endsWith('_id');
+                    const isDate = col.endsWith('date');
+                    const isNumeric = col === 'price' || col === 'salary' || col === 'amount' || col === 'quantity' || col === 'minutes_played';
+                    
+                    let typeTag = 'TEXT';
+                    let typeClass = 'bg-slate-800/50 text-slate-400 border-slate-700/30';
+                    if (isId) {
+                      typeTag = 'INT';
+                      typeClass = 'bg-indigo-950/40 text-indigo-300 border-indigo-900/40';
+                    } else if (isDate) {
+                      typeTag = 'DATE';
+                      typeClass = 'bg-amber-950/40 text-amber-300 border-amber-900/40';
+                    } else if (isNumeric) {
+                      typeTag = 'NUM';
+                      typeClass = 'bg-emerald-950/40 text-emerald-300 border-emerald-900/40';
+                    }
+
+                    return (
+                      <div class="px-4 py-2 flex items-center justify-between hover:bg-slate-800/10">
+                        <span class="flex items-center gap-2 text-slate-300">
+                          {isId ? (
+                            <span class="text-indigo-400 select-none">🔑</span>
+                          ) : (
+                            <span class="text-slate-500 select-none">🔹</span>
+                          )}
+                          <span class={isId ? 'font-semibold text-slate-100' : 'text-slate-350'}>{col}</span>
+                        </span>
+                        <span class={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${typeClass}`}>
+                          {typeTag}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
