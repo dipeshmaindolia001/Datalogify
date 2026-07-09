@@ -9,6 +9,26 @@ const matplotlibChallenges = challenges.filter(c => c.section === 'libraries' &&
 const seabornChallenges = challenges.filter(c => c.section === 'libraries' && c.subCategory === 'seaborn');
 const algorithmsChallenges = challenges.filter(c => c.section === 'algorithms');
 
+// Break basics into 11 tiers based on order ranges
+const tierRanges = [
+  { key: 'tier1',  label: 'Syntax & I/O',         icon: '🌱', min: 1,  max: 8  },
+  { key: 'tier2',  label: 'Variables & Types',     icon: '📦', min: 9,  max: 18 },
+  { key: 'tier3',  label: 'Control Flow',          icon: '🔀', min: 19, max: 28 },
+  { key: 'tier4',  label: 'Strings',               icon: '🔤', min: 29, max: 38 },
+  { key: 'tier5',  label: 'Lists & Tuples',        icon: '📋', min: 39, max: 48 },
+  { key: 'tier6',  label: 'Sets & Dicts',          icon: '🗂️', min: 49, max: 56 },
+  { key: 'tier7',  label: 'Functions & Scope',     icon: '⚙️', min: 57, max: 66 },
+  { key: 'tier8',  label: 'Comprehensions',        icon: '🔄', min: 67, max: 72 },
+  { key: 'tier9',  label: 'OOP',                   icon: '🏗️', min: 73, max: 80 },
+  { key: 'tier10', label: 'Errors & Files',        icon: '📂', min: 81, max: 86 },
+  { key: 'tier11', label: 'Advanced',              icon: '🧬', min: 87, max: 90 },
+];
+
+const tierChallenges = tierRanges.map(t => ({
+  ...t,
+  challenges: basicsChallenges.filter(c => c.order >= t.min && c.order <= t.max),
+}));
+
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Course',
@@ -27,14 +47,18 @@ const jsonLd = {
   <!-- Metadata provider to pass challenge IDs to client script dynamically -->
   <div 
     id="metadata-provider" 
-    data-basics-ids={JSON.stringify(basicsChallenges.map(c => c.id))}
+    data-tier-keys={JSON.stringify(tierChallenges.map(t => t.key))}
     data-numpy-ids={JSON.stringify(numpyChallenges.map(c => c.id))}
     data-pandas-ids={JSON.stringify(pandasChallenges.map(c => c.id))}
     data-matplotlib-ids={JSON.stringify(matplotlibChallenges.map(c => c.id))}
     data-seaborn-ids={JSON.stringify(seabornChallenges.map(c => c.id))}
     data-algorithms-ids={JSON.stringify(algorithmsChallenges.map(c => c.id))}
     class="hidden"
-  ></div>
+  >
+    {tierChallenges.map(t => (
+      <span data-tier-ids={t.key} data-ids={JSON.stringify(t.challenges.map(c => c.id))}></span>
+    ))}
+  </div>
 
   <div class="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 lg:py-12">
     <!-- Header banner -->
@@ -78,15 +102,17 @@ const jsonLd = {
       <!-- Left Side: Sticky Navigation Sidebar -->
       <aside class="w-full lg:w-1/4 shrink-0 lg:sticky lg:top-24 h-fit">
         <div class="bg-white border border-slate-100 rounded-2xl p-4 space-y-1.5 shadow-sm">
-          <h3 class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-3 mb-2">Language</h3>
+          <h3 class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-3 mb-2">Language Basics</h3>
           
-          <button 
-            data-track-btn="basics" 
-            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
-          >
-            <span class="flex items-center gap-2">🌱 Language Basics</span>
-            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-basics">0/{basicsChallenges.length}</span>
-          </button>
+          {tierChallenges.map((tier, idx) => (
+            <button 
+              data-track-btn={tier.key}
+              class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+            >
+              <span class="flex items-center gap-2">{tier.icon} Tier {idx + 1} — {tier.label}</span>
+              <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id={`badge-count-${tier.key}`}>0/{tier.challenges.length}</span>
+            </button>
+          ))}
 
           <div class="h-px bg-slate-100 my-2"></div>
           <h3 class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-3 mb-2">Practice Libraries</h3>
@@ -138,44 +164,46 @@ const jsonLd = {
 
       <!-- Right Side: Challenge cards list matching selection -->
       <main class="flex-1 min-w-0">
-        <!-- Section: Language Foundations (Basics) -->
-        <div id="track-panel-basics" class="space-y-6 hidden">
-          <div class="pb-3 border-b border-slate-100">
-            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🌱 Language Foundations (Basics)</h2>
-            <p class="text-xs text-slate-450 mt-1">Master core syntax, types, collections, functions, OOP, and error handling</p>
-          </div>
-          <div class="grid md:grid-cols-2 gap-6">
-            {basicsChallenges.map((challenge) => (
-              <a
-                href={`/practice/${challenge.slug}/`}
-                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
-              >
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <div class="flex items-center gap-2 mb-1">
-                      <span class="text-xs font-bold text-slate-350">#{challenge.order}</span>
-                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
-                        {challenge.title}
-                      </h3>
+        <!-- Per-Tier Panels for Language Basics -->
+        {tierChallenges.map((tier, idx) => (
+          <div id={`track-panel-${tier.key}`} class="space-y-6 hidden">
+            <div class="pb-3 border-b border-slate-100">
+              <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">{tier.icon} Tier {idx + 1} — {tier.label}</h2>
+              <p class="text-xs text-slate-450 mt-1">Questions {tier.min}–{tier.max} · {tier.challenges.length} challenges</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6">
+              {tier.challenges.map((challenge) => (
+                <a
+                  href={`/practice/${challenge.slug}/`}
+                  class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                >
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="text-xs font-bold text-slate-350">#{challenge.order}</span>
+                        <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
+                          {challenge.title}
+                        </h3>
+                      </div>
+                      <p class="text-xs text-slate-450 line-clamp-2">{challenge.description}</p>
                     </div>
-                    <p class="text-xs text-slate-450 line-clamp-2">{challenge.description}</p>
                   </div>
-                </div>
-                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
-                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">
-                    {challenge.difficulty}
-                  </span>
-                  <span 
-                    data-challenge-status={challenge.id}
-                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
-                  >
-                    Not Started
-                  </span>
-                </div>
-              </a>
-            ))}
+                  <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                    <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">
+                      {challenge.difficulty}
+                    </span>
+                    <span 
+                      data-challenge-status={challenge.id}
+                      class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                    >
+                      Not Started
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
           </div>
-        </div>
+        ))}
 
         <!-- Section: NumPy -->
         <div id="track-panel-numpy" class="space-y-6 hidden">
@@ -383,16 +411,24 @@ const jsonLd = {
     const solvedList = JSON.parse(localStorage.getItem('datalogify_solved_challenges') || '[]');
     const progressList = JSON.parse(localStorage.getItem('datalogify_in_progress_challenges') || '[]');
 
-    // Track challenges mappings — loaded dynamically from server-rendered metadata
-    const meta = document.getElementById('metadata-provider');
-    const challengeMappings: Record<string, string[]> = {
-      basics: meta ? JSON.parse(meta.dataset.basicsIds || '[]') : [],
-      numpy: meta ? JSON.parse(meta.dataset.numpyIds || '[]') : [],
-      pandas: meta ? JSON.parse(meta.dataset.pandasIds || '[]') : [],
-      matplotlib: meta ? JSON.parse(meta.dataset.matplotlibIds || '[]') : [],
-      seaborn: meta ? JSON.parse(meta.dataset.seabornIds || '[]') : [],
-      algorithms: meta ? JSON.parse(meta.dataset.algorithmsIds || '[]') : []
-    };
+    // Build challenge mappings dynamically from server-rendered metadata
+    const meta = document.getElementById('metadata-provider') as HTMLElement | null;
+    const challengeMappings: Record<string, string[]> = {};
+
+    if (meta) {
+      // Read tier IDs from nested spans
+      const tierSpans = meta.querySelectorAll('[data-tier-ids]');
+      tierSpans.forEach(span => {
+        const key = span.getAttribute('data-tier-ids') || '';
+        challengeMappings[key] = JSON.parse(span.getAttribute('data-ids') || '[]');
+      });
+      // Library + algorithms tracks
+      challengeMappings['numpy'] = JSON.parse(meta.dataset.numpyIds || '[]');
+      challengeMappings['pandas'] = JSON.parse(meta.dataset.pandasIds || '[]');
+      challengeMappings['matplotlib'] = JSON.parse(meta.dataset.matplotlibIds || '[]');
+      challengeMappings['seaborn'] = JSON.parse(meta.dataset.seabornIds || '[]');
+      challengeMappings['algorithms'] = JSON.parse(meta.dataset.algorithmsIds || '[]');
+    }
 
     // Calculate solved counts for badges
     Object.keys(challengeMappings).forEach(trackKey => {
@@ -403,7 +439,7 @@ const jsonLd = {
       if (countBadge) {
         countBadge.textContent = `${solvedInTrack}/${totalInTrack}`;
         // Color badge based on completed
-        if (solvedInTrack === totalInTrack) {
+        if (solvedInTrack === totalInTrack && totalInTrack > 0) {
           countBadge.className = 'text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold';
         } else if (solvedInTrack > 0) {
           countBadge.className = 'text-[9px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold';
@@ -449,14 +485,14 @@ const jsonLd = {
       window.location.hash = trackName;
     }
 
-    // Initialize track selection from URL hash (default to basics)
-    const initialTrack = window.location.hash.replace('#', '') || 'basics';
+    // Initialize track selection from URL hash (default to tier1)
+    const initialTrack = window.location.hash.replace('#', '') || 'tier1';
     selectTrack(initialTrack);
 
     // Bind sidebar clicks
     trackBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        const trackName = btn.getAttribute('data-track-btn') || 'basics';
+        const trackName = btn.getAttribute('data-track-btn') || 'tier1';
         selectTrack(trackName);
       });
     });
