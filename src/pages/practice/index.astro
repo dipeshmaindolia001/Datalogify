@@ -24,6 +24,18 @@ const jsonLd = {
   description="Practice Python and SQL interactively. Write code directly in the browser and verify solutions with real-time test runners. Track your progress now!"
   jsonLd={jsonLd}
 >
+  <!-- Metadata provider to pass challenge IDs to client script dynamically -->
+  <div 
+    id="metadata-provider" 
+    data-basics-ids={JSON.stringify(basicsChallenges.map(c => c.id))}
+    data-numpy-ids={JSON.stringify(numpyChallenges.map(c => c.id))}
+    data-pandas-ids={JSON.stringify(pandasChallenges.map(c => c.id))}
+    data-matplotlib-ids={JSON.stringify(matplotlibChallenges.map(c => c.id))}
+    data-seaborn-ids={JSON.stringify(seabornChallenges.map(c => c.id))}
+    data-algorithms-ids={JSON.stringify(algorithmsChallenges.map(c => c.id))}
+    class="hidden"
+  ></div>
+
   <div class="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 lg:py-12">
     <!-- Header banner -->
     <div class="relative overflow-hidden rounded-3xl bg-slate-900 px-6 py-12 sm:px-12 sm:py-16 shadow-2xl mb-12 animate-fade-in">
@@ -73,7 +85,7 @@ const jsonLd = {
             class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
           >
             <span class="flex items-center gap-2">🌱 Language Basics</span>
-            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-basics">0/29</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-basics">0/{basicsChallenges.length}</span>
           </button>
 
           <div class="h-px bg-slate-100 my-2"></div>
@@ -84,7 +96,7 @@ const jsonLd = {
             class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
           >
             <span class="flex items-center gap-2">🔢 NumPy Arrays</span>
-            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-numpy">0/12</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-numpy">0/{numpyChallenges.length}</span>
           </button>
 
           <button 
@@ -92,7 +104,7 @@ const jsonLd = {
             class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
           >
             <span class="flex items-center gap-2">🐼 Pandas DataFrames</span>
-            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-pandas">0/13</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-pandas">0/{pandasChallenges.length}</span>
           </button>
 
           <button 
@@ -100,7 +112,7 @@ const jsonLd = {
             class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
           >
             <span class="flex items-center gap-2">📊 Matplotlib Plots</span>
-            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-matplotlib">0/8</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-matplotlib">0/{matplotlibChallenges.length}</span>
           </button>
 
           <button 
@@ -108,7 +120,7 @@ const jsonLd = {
             class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
           >
             <span class="flex items-center gap-2">🌊 Seaborn Statistics</span>
-            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-seaborn">0/6</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-seaborn">0/{seabornChallenges.length}</span>
           </button>
 
           <div class="h-px bg-slate-100 my-2"></div>
@@ -119,7 +131,7 @@ const jsonLd = {
             class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
           >
             <span class="flex items-center gap-2">🧠 Algorithms</span>
-            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-algorithms">0/5</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-algorithms">0/{algorithmsChallenges.length}</span>
           </button>
         </div>
       </aside>
@@ -371,19 +383,20 @@ const jsonLd = {
     const solvedList = JSON.parse(localStorage.getItem('datalogify_solved_challenges') || '[]');
     const progressList = JSON.parse(localStorage.getItem('datalogify_in_progress_challenges') || '[]');
 
-    // Track challenges mappings
-    const challengeMappings = {
-      basics: ['py-basics-1', 'py-basics-2', 'py-basics-3', 'py-basics-4', 'py-basics-5', 'py-basics-6', 'py-basics-7', 'py-basics-8', 'py-basics-9', 'py-basics-10', 'py-basics-11', 'py-basics-12', 'py-basics-13', 'py-basics-14', 'py-basics-15', 'py-basics-16', 'py-basics-17', 'py-basics-18', 'py-basics-19', 'py-basics-20', 'py-basics-21', 'py-basics-22', 'py-basics-23', 'py-basics-24', 'py-basics-25', 'py-basics-26', 'py-basics-27', 'py-basics-28', 'py-basics-29'],
-      numpy: ['py-numpy-1', 'py-numpy-2', 'py-numpy-3', 'py-numpy-4', 'py-numpy-5', 'py-numpy-6', 'py-numpy-7', 'py-numpy-8', 'py-numpy-9', 'py-numpy-10', 'py-numpy-11', 'py-numpy-12'],
-      pandas: ['py-pandas-1', 'py-pandas-2', 'py-pandas-3', 'py-pandas-4', 'py-pandas-5', 'py-pandas-6', 'py-pandas-7', 'py-pandas-8', 'py-pandas-9', 'py-pandas-10', 'py-pandas-11', 'py-pandas-12', 'py-pandas-13'],
-      matplotlib: ['py-matplotlib-1', 'py-matplotlib-2', 'py-matplotlib-3', 'py-matplotlib-4', 'py-matplotlib-5', 'py-matplotlib-6', 'py-matplotlib-7', 'py-matplotlib-8'],
-      seaborn: ['py-seaborn-1', 'py-seaborn-2', 'py-seaborn-3', 'py-seaborn-4', 'py-seaborn-5', 'py-seaborn-6'],
-      algorithms: ['py-second-largest', 'py-missing-number', 'py-group-anagrams', 'py-regex-phone', 'py-fibonacci']
+    // Track challenges mappings — loaded dynamically from server-rendered metadata
+    const meta = document.getElementById('metadata-provider');
+    const challengeMappings: Record<string, string[]> = {
+      basics: meta ? JSON.parse(meta.dataset.basicsIds || '[]') : [],
+      numpy: meta ? JSON.parse(meta.dataset.numpyIds || '[]') : [],
+      pandas: meta ? JSON.parse(meta.dataset.pandasIds || '[]') : [],
+      matplotlib: meta ? JSON.parse(meta.dataset.matplotlibIds || '[]') : [],
+      seaborn: meta ? JSON.parse(meta.dataset.seabornIds || '[]') : [],
+      algorithms: meta ? JSON.parse(meta.dataset.algorithmsIds || '[]') : []
     };
 
     // Calculate solved counts for badges
     Object.keys(challengeMappings).forEach(trackKey => {
-      const ids = challengeMappings[trackKey as keyof typeof challengeMappings];
+      const ids = challengeMappings[trackKey];
       const solvedInTrack = ids.filter(id => solvedList.includes(id)).length;
       const totalInTrack = ids.length;
       const countBadge = document.getElementById(`badge-count-${trackKey}`);
