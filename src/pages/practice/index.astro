@@ -2,14 +2,14 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { challenges } from '../../data/practice-challenges';
 
-const basicChallenges = challenges.filter(c => c.difficulty === 'basic');
-const intermediateChallenges = challenges.filter(c => c.difficulty === 'intermediate');
-const advancedChallenges = challenges.filter(c => c.difficulty === 'advanced');
+const basicsChallenges = challenges.filter(c => c.section === 'basics');
+const librariesChallenges = challenges.filter(c => c.section === 'libraries');
+const algorithmsChallenges = challenges.filter(c => c.section === 'algorithms');
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Course',
-  name: 'Python Interactive Coding Practice',
+  name: 'Interactive Python Coding Practice',
   description: 'Practice Python coding directly in your browser. Solve hands-on Python exercises, run tests, and check answers instantly with client-side WebAssembly.',
   provider: { '@type': 'Organization', name: 'Datalogify' },
   numberOfLessons: challenges.length,
@@ -17,8 +17,8 @@ const jsonLd = {
 ---
 
 <BaseLayout
-  title="Interactive Python Coding Practice — Code, Run & Solve | Datalogify"
-  description="Solve interactive Python programming challenges directly in the browser. Run test cases instantly with client-side WebAssembly execution. Start practicing now!"
+  title="Interactive Coding Practice Arena — Python & SQL | Datalogify"
+  description="Practice Python and SQL interactively. Write code directly in the browser and verify solutions with real-time test runners. Track your progress now!"
   jsonLd={jsonLd}
 >
   <div class="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 lg:py-12">
@@ -42,19 +42,36 @@ const jsonLd = {
       </div>
     </div>
 
-    <!-- Challenges layout -->
-    <div class="grid lg:grid-cols-3 gap-8">
-      <!-- Basic Section -->
+    <!-- Main Navigation Tabs (Python vs SQL) -->
+    <div class="flex gap-4 border-b border-slate-200 pb-4 mb-8">
+      <button 
+        class="px-5 py-2.5 rounded-xl text-sm font-bold bg-indigo-550 text-white shadow-md shadow-indigo-500/15 focus:outline-none cursor-pointer flex items-center gap-2"
+        id="tab-py-btn"
+      >
+        🐍 Python Practice
+      </button>
+      <button 
+        class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100 hover:text-slate-500 transition-colors focus:outline-none cursor-not-allowed flex items-center justify-between gap-3"
+        disabled
+      >
+        <span>🗃️ SQL Practice</span>
+        <span class="text-[9px] font-bold uppercase tracking-wider bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded">Soon</span>
+      </button>
+    </div>
+
+    <!-- Tab Contents (Python Active) -->
+    <div id="python-practice-area" class="space-y-12">
+      <!-- Section 1: Language Foundations (Basics) -->
       <div>
-        <div class="flex items-center gap-2 mb-6 pb-2 border-b border-slate-100">
-          <span class="text-xl">🟢</span>
+        <div class="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
+          <span class="text-2xl">🌱</span>
           <div>
-            <h2 class="font-bold text-slate-800 text-lg">Basic Foundations</h2>
-            <p class="text-xs text-slate-400">{basicChallenges.length} challenges · For absolute beginners</p>
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl">Language Foundations (Basics)</h2>
+            <p class="text-xs text-slate-400">Master core syntax, types, loops, lists, sets, and error handling</p>
           </div>
         </div>
-        <div class="space-y-4">
-          {basicChallenges.map((challenge) => (
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {basicsChallenges.map((challenge) => (
             <a
               href={`/practice/${challenge.slug}/`}
               class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
@@ -62,21 +79,21 @@ const jsonLd = {
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 mb-1">
-                    <span class="text-xs font-bold text-slate-300">#{challenge.order}</span>
-                    <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors truncate">
+                    <span class="text-xs font-bold text-slate-305">#{challenge.order}</span>
+                    <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
                       {challenge.title}
                     </h3>
                   </div>
                   <p class="text-xs text-slate-400 line-clamp-2">{challenge.description}</p>
                 </div>
               </div>
-              <div class="mt-4 flex items-center justify-between">
-                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">
-                  Easy
+              <div class="mt-4 flex items-center justify-between border-t border-slate-50 pt-3">
+                <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  {challenge.difficulty}
                 </span>
                 <span 
                   data-challenge-status={challenge.id}
-                  class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400"
+                  class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
                 >
                   Not Started
                 </span>
@@ -86,17 +103,17 @@ const jsonLd = {
         </div>
       </div>
 
-      <!-- Intermediate Section -->
+      <!-- Section 2: Data Libraries Practice (NumPy & Pandas) -->
       <div>
-        <div class="flex items-center gap-2 mb-6 pb-2 border-b border-slate-100">
-          <span class="text-xl">🟡</span>
+        <div class="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
+          <span class="text-2xl">📊</span>
           <div>
-            <h2 class="font-bold text-slate-800 text-lg">Intermediate Skills</h2>
-            <p class="text-xs text-slate-400">{intermediateChallenges.length} challenges · Loops, Lists, String logic</p>
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl">Data Science Libraries (NumPy & Pandas)</h2>
+            <p class="text-xs text-slate-400">Filter, query, mask, and aggregate tabular arrays and dataframes</p>
           </div>
         </div>
-        <div class="space-y-4">
-          {intermediateChallenges.map((challenge) => (
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {librariesChallenges.map((challenge) => (
             <a
               href={`/practice/${challenge.slug}/`}
               class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
@@ -104,21 +121,21 @@ const jsonLd = {
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 mb-1">
-                    <span class="text-xs font-bold text-slate-300">#{challenge.order}</span>
-                    <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors truncate">
+                    <span class="text-xs font-bold text-slate-305">#{challenge.order}</span>
+                    <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-655 transition-colors truncate">
                       {challenge.title}
                     </h3>
                   </div>
                   <p class="text-xs text-slate-400 line-clamp-2">{challenge.description}</p>
                 </div>
               </div>
-              <div class="mt-4 flex items-center justify-between">
-                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100">
-                  Medium
+              <div class="mt-4 flex items-center justify-between border-t border-slate-50 pt-3">
+                <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100">
+                  {challenge.difficulty}
                 </span>
                 <span 
                   data-challenge-status={challenge.id}
-                  class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400"
+                  class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
                 >
                   Not Started
                 </span>
@@ -128,17 +145,17 @@ const jsonLd = {
         </div>
       </div>
 
-      <!-- Advanced Section -->
+      <!-- Section 3: Algorithms & Problem Solving -->
       <div>
-        <div class="flex items-center gap-2 mb-6 pb-2 border-b border-slate-100">
-          <span class="text-xl">🟠</span>
+        <div class="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
+          <span class="text-2xl">🧠</span>
           <div>
-            <h2 class="font-bold text-slate-800 text-lg">Advanced Mastery</h2>
-            <p class="text-xs text-slate-400">{advancedChallenges.length} challenges · Algos, Regex, Sequences</p>
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl">Intermediate & Advanced Algorithms</h2>
+            <p class="text-xs text-slate-400">Solve advanced coding challenges, recursion, regex, and sequences</p>
           </div>
         </div>
-        <div class="space-y-4">
-          {advancedChallenges.map((challenge) => (
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {algorithmsChallenges.map((challenge) => (
             <a
               href={`/practice/${challenge.slug}/`}
               class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
@@ -146,21 +163,21 @@ const jsonLd = {
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 mb-1">
-                    <span class="text-xs font-bold text-slate-300">#{challenge.order}</span>
-                    <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors truncate">
+                    <span class="text-xs font-bold text-slate-305">#{challenge.order}</span>
+                    <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-660 transition-colors truncate">
                       {challenge.title}
                     </h3>
                   </div>
                   <p class="text-xs text-slate-400 line-clamp-2">{challenge.description}</p>
                 </div>
               </div>
-              <div class="mt-4 flex items-center justify-between">
-                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-red-50 text-red-600 border border-red-100">
-                  Hard
+              <div class="mt-4 flex items-center justify-between border-t border-slate-50 pt-3">
+                <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-red-50 text-red-600 border border-red-100">
+                  {challenge.difficulty}
                 </span>
                 <span 
                   data-challenge-status={challenge.id}
-                  class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400"
+                  class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
                 >
                   Not Started
                 </span>
@@ -187,10 +204,10 @@ const jsonLd = {
 
       if (solvedList.includes(challengeId)) {
         badge.textContent = 'Solved';
-        badge.className = 'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-700';
+        badge.className = 'text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200';
       } else if (progressList.includes(challengeId)) {
         badge.textContent = 'In Progress';
-        badge.className = 'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-700';
+        badge.className = 'text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200';
       }
     });
 
@@ -239,3 +256,15 @@ const jsonLd = {
     }
   });
 </script>
+
+<style>
+  /* Typewriter blinking cursor helper */
+  .typewriter-cursor {
+    font-weight: 200;
+  }
+  
+  /* Slate/Purple button highlights */
+  .bg-indigo-555 {
+    background-color: #6366f1;
+  }
+</style>

@@ -201,7 +201,7 @@ const { challenge } = Astro.props;
   </div>
 </BaseLayout>
 
-<!-- Load Pyodide and Prism synchronously -->
+<!-- Load Pyodide and Prism asynchronously -->
 <script is:inline src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
 <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
 <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
@@ -313,10 +313,45 @@ const { challenge } = Astro.props;
     const resultsConsole = document.getElementById('panel-tests');
     const stdoutConsole = document.getElementById('panel-output');
     const stderrConsole = document.getElementById('panel-errors');
+    const statusLabel = document.getElementById('pyodide-status');
 
     if (!jar || !resultsConsole || !pyodideInstance) return;
 
     const userCode = jar.toString();
+
+    // Dynamically load NumPy or Pandas if user code imports them!
+    if (userCode.includes('import numpy') || userCode.includes('np.')) {
+      if (statusLabel) {
+        statusLabel.innerHTML = `
+          <svg class="w-4 h-4 text-amber-500 animate-spin mr-1 inline-block" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Loading NumPy...
+        `;
+      }
+      await pyodideInstance.loadPackage('numpy');
+    }
+
+    if (userCode.includes('import pandas') || userCode.includes('pd.')) {
+      if (statusLabel) {
+        statusLabel.innerHTML = `
+          <svg class="w-4 h-4 text-amber-500 animate-spin mr-1 inline-block" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Loading Pandas...
+        `;
+      }
+      await pyodideInstance.loadPackage('pandas');
+    }
+
+    if (statusLabel) {
+      statusLabel.innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        Running code...
+      `;
+    }
 
     // Filter test cases based on run mode
     const casesToRun = submitMode 
@@ -431,6 +466,14 @@ except Exception as e:
         <div class="mt-4 p-3 bg-emerald-950/40 border border-emerald-800/40 rounded-xl text-emerald-400 font-semibold text-center animate-bounce">
           Congratulations! All test cases passed. Submission successful! 🎉
         </div>
+      `;
+    }
+
+    // Reset status label back to Ready
+    if (statusLabel) {
+      statusLabel.innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        Ready to run
       `;
     }
 
