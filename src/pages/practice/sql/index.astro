@@ -2,9 +2,15 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { sqlChallenges } from '../../../data/sql-challenges';
 
-const basicsChallenges = sqlChallenges.filter(c => c.section === 'basics');
-const intermediateChallenges = sqlChallenges.filter(c => c.section === 'intermediate');
-const advancedChallenges = sqlChallenges.filter(c => c.section === 'advanced');
+const tier1Challenges = sqlChallenges.filter(c => c.section === 'tier1');
+const tier2Challenges = sqlChallenges.filter(c => c.section === 'tier2');
+const tier3Challenges = sqlChallenges.filter(c => c.section === 'tier3');
+const tier4Challenges = sqlChallenges.filter(c => c.section === 'tier4');
+const tier5Challenges = sqlChallenges.filter(c => c.section === 'tier5');
+const tier6Challenges = sqlChallenges.filter(c => c.section === 'tier6');
+const tier7Challenges = sqlChallenges.filter(c => c.section === 'tier7');
+const tier8Challenges = sqlChallenges.filter(c => c.section === 'tier8');
+const tier9Challenges = sqlChallenges.filter(c => c.section === 'tier9');
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -37,7 +43,7 @@ const jsonLd = {
           Directly in Your Browser
         </h1>
         <p class="mt-4 text-base sm:text-lg text-slate-300 leading-relaxed">
-          Test your SQL skills with real SQLite interactive challenges. Write queries, execute them in-browser, and verify solutions against expected outputs instantly.
+          Test your SQL skills with 100 SQLite interactive challenges. Write queries, execute them in-browser, and verify solutions against expected outputs instantly.
         </p>
       </div>
     </div>
@@ -66,41 +72,89 @@ const jsonLd = {
           <h3 class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-3 mb-2">SQL Tracks</h3>
           
           <button 
-            data-track-btn="basics" 
+            data-track-btn="tier1" 
             class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
           >
-            <span class="flex items-center gap-2">🗃️ SQL Basics</span>
-            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-basics">0/10</span>
+            <span class="flex items-center gap-2">🌱 Tier 1 — Fundamentals</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-tier1">0/15</span>
           </button>
 
           <button 
-            data-track-btn="intermediate" 
+            data-track-btn="tier2" 
             class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
           >
-            <span class="flex items-center gap-2">🔗 Joins & Subqueries</span>
-            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-intermediate">0/5</span>
+            <span class="flex items-center gap-2">📊 Tier 2 — Aggregations</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-tier2">0/15</span>
           </button>
 
           <button 
-            data-track-btn="advanced" 
+            data-track-btn="tier3" 
             class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
           >
-            <span class="flex items-center gap-2">📈 Advanced & Window</span>
-            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-advanced">0/4</span>
+            <span class="flex items-center gap-2">📆 Tier 3 — Functions</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-tier3">0/10</span>
+          </button>
+
+          <button 
+            data-track-btn="tier4" 
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+          >
+            <span class="flex items-center gap-2">🔗 Tier 4 — Joins</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-tier4">0/15</span>
+          </button>
+
+          <button 
+            data-track-btn="tier5" 
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+          >
+            <span class="flex items-center gap-2">🔎 Tier 5 — Subqueries</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-tier5">0/10</span>
+          </button>
+
+          <button 
+            data-track-btn="tier6" 
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+          >
+            <span class="flex items-center gap-2">🗳️ Tier 6 — Set Operations</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-tier6">0/5</span>
+          </button>
+
+          <button 
+            data-track-btn="tier7" 
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+          >
+            <span class="flex items-center gap-2">📈 Tier 7 — Window Fn</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-tier7">0/15</span>
+          </button>
+
+          <button 
+            data-track-btn="tier8" 
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+          >
+            <span class="flex items-center gap-2">🔁 Tier 8 — CTEs & Recursion</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-tier8">0/7</span>
+          </button>
+
+          <button 
+            data-track-btn="tier9" 
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+          >
+            <span class="flex items-center gap-2">🧠 Tier 9 — Advanced Patterns</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-tier9">0/8</span>
           </button>
         </div>
       </aside>
 
       <!-- Right Side: Challenge cards list matching selection -->
       <main class="flex-1 min-w-0">
-        <!-- Section: SQL Basics -->
-        <div id="track-panel-basics" class="space-y-6 hidden">
+        <!-- Section: Tier 1 -->
+        <div id="track-panel-tier1" class="space-y-6 hidden">
           <div class="pb-3 border-b border-slate-100">
-            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🗃️ SQL Basics</h2>
-            <p class="text-xs text-slate-450 mt-1">Master core SELECT statements, filtering, logical operators, distinct, aggregates, and date functions</p>
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🌱 Tier 1 — Fundamentals</h2>
+            <p class="text-xs text-slate-450 mt-1">Master basic SELECT statements, WHERE filters, ranges, NULL checks, sorting, and simple CASE logic</p>
           </div>
           <div class="grid md:grid-cols-2 gap-6">
-            {basicsChallenges.map((challenge) => (
+            {tier1Challenges.map((challenge) => (
               <a
                 href={`/practice/sql/${challenge.slug}/`}
                 class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
@@ -108,7 +162,7 @@ const jsonLd = {
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
                     <div class="flex items-center gap-2 mb-1">
-                      <span class="text-xs font-bold text-slate-350">#{challenge.order}</span>
+                      <span class="text-xs font-bold text-slate-355">#{challenge.order}</span>
                       <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
                         {challenge.title}
                       </h3>
@@ -132,14 +186,14 @@ const jsonLd = {
           </div>
         </div>
 
-        <!-- Section: Joins & Subqueries -->
-        <div id="track-panel-intermediate" class="space-y-6 hidden">
+        <!-- Section: Tier 2 -->
+        <div id="track-panel-tier2" class="space-y-6 hidden">
           <div class="pb-3 border-b border-slate-100">
-            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🔗 Joins & Subqueries</h2>
-            <p class="text-xs text-slate-455 mt-1">Practice inner/left joins, self-joins, multiple joins, and subquery logic</p>
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">📊 Tier 2 — Aggregation & Grouping</h2>
+            <p class="text-xs text-slate-450 mt-1">Master COUNT, SUM, AVG, MIN/MAX, GROUP BY, HAVING, and conditional aggregation ratios</p>
           </div>
           <div class="grid md:grid-cols-2 gap-6">
-            {intermediateChallenges.map((challenge) => (
+            {tier2Challenges.map((challenge) => (
               <a
                 href={`/practice/sql/${challenge.slug}/`}
                 class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
@@ -147,7 +201,85 @@ const jsonLd = {
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
                     <div class="flex items-center gap-2 mb-1">
-                      <span class="text-xs font-bold text-slate-350">#{challenge.order}</span>
+                      <span class="text-xs font-bold text-slate-355">#{challenge.order}</span>
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
+                        {challenge.title}
+                      </h3>
+                    </div>
+                    <p class="text-xs text-slate-455 line-clamp-2">{challenge.prompt}</p>
+                  </div>
+                </div>
+                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">
+                    {challenge.difficulty}
+                  </span>
+                  <span 
+                    data-challenge-status={challenge.id}
+                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                  >
+                    Not Started
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <!-- Section: Tier 3 -->
+        <div id="track-panel-tier3" class="space-y-6 hidden">
+          <div class="pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">📆 Tier 3 — String, Date & Numeric Functions</h2>
+            <p class="text-xs text-slate-455 mt-1">Master UPPER/LOWER, string length, substring extraction, date arithmetic, and rounding logic</p>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6">
+            {tier3Challenges.map((challenge) => (
+              <a
+                href={`/practice/sql/${challenge.slug}/`}
+                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold text-slate-355">#{challenge.order}</span>
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
+                        {challenge.title}
+                      </h3>
+                    </div>
+                    <p class="text-xs text-slate-455 line-clamp-2">{challenge.prompt}</p>
+                  </div>
+                </div>
+                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">
+                    {challenge.difficulty}
+                  </span>
+                  <span 
+                    data-challenge-status={challenge.id}
+                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                  >
+                    Not Started
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <!-- Section: Tier 4 -->
+        <div id="track-panel-tier4" class="space-y-6 hidden">
+          <div class="pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🔗 Tier 4 — Joins</h2>
+            <p class="text-xs text-slate-455 mt-1">Master inner joins, left joins, self joins, cross joins, multi-table joins, and semi-joins</p>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6">
+            {tier4Challenges.map((challenge) => (
+              <a
+                href={`/practice/sql/${challenge.slug}/`}
+                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold text-slate-355">#{challenge.order}</span>
                       <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
                         {challenge.title}
                       </h3>
@@ -171,14 +303,170 @@ const jsonLd = {
           </div>
         </div>
 
-        <!-- Section: Advanced & Window -->
-        <div id="track-panel-advanced" class="space-y-6 hidden">
+        <!-- Section: Tier 5 -->
+        <div id="track-panel-tier5" class="space-y-6 hidden">
           <div class="pb-3 border-b border-slate-100">
-            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">📈 Advanced & Window Functions</h2>
-            <p class="text-xs text-slate-455 mt-1">Master window rankings, running sums, common table expressions (CTEs), and correlated subqueries</p>
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🔎 Tier 5 — Subqueries</h2>
+            <p class="text-xs text-slate-455 mt-1">Master scalar subqueries, derived tables, correlated subqueries, and EXISTS vs IN operators</p>
           </div>
           <div class="grid md:grid-cols-2 gap-6">
-            {advancedChallenges.map((challenge) => (
+            {tier5Challenges.map((challenge) => (
+              <a
+                href={`/practice/sql/${challenge.slug}/`}
+                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold text-slate-355">#{challenge.order}</span>
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
+                        {challenge.title}
+                      </h3>
+                    </div>
+                    <p class="text-xs text-slate-455 line-clamp-2">{challenge.prompt}</p>
+                  </div>
+                </div>
+                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    {challenge.difficulty}
+                  </span>
+                  <span 
+                    data-challenge-status={challenge.id}
+                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                  >
+                    Not Started
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <!-- Section: Tier 6 -->
+        <div id="track-panel-tier6" class="space-y-6 hidden">
+          <div class="pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🗳️ Tier 6 — Set Operations</h2>
+            <p class="text-xs text-slate-455 mt-1">Master UNION, UNION ALL, INTERSECT, and EXCEPT combinations</p>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6">
+            {tier6Challenges.map((challenge) => (
+              <a
+                href={`/practice/sql/${challenge.slug}/`}
+                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold text-slate-355">#{challenge.order}</span>
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
+                        {challenge.title}
+                      </h3>
+                    </div>
+                    <p class="text-xs text-slate-455 line-clamp-2">{challenge.prompt}</p>
+                  </div>
+                </div>
+                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    {challenge.difficulty}
+                  </span>
+                  <span 
+                    data-challenge-status={challenge.id}
+                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                  >
+                    Not Started
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <!-- Section: Tier 7 -->
+        <div id="track-panel-tier7" class="space-y-6 hidden">
+          <div class="pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">📈 Tier 7 — Window Functions</h2>
+            <p class="text-xs text-slate-455 mt-1">Master ROW_NUMBER, RANK/DENSE_RANK, NTILE, LAG/LEAD, running totals, and moving averages</p>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6">
+            {tier7Challenges.map((challenge) => (
+              <a
+                href={`/practice/sql/${challenge.slug}/`}
+                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold text-slate-355">#{challenge.order}</span>
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
+                        {challenge.title}
+                      </h3>
+                    </div>
+                    <p class="text-xs text-slate-455 line-clamp-2">{challenge.prompt}</p>
+                  </div>
+                </div>
+                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    {challenge.difficulty}
+                  </span>
+                  <span 
+                    data-challenge-status={challenge.id}
+                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                  >
+                    Not Started
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <!-- Section: Tier 8 -->
+        <div id="track-panel-tier8" class="space-y-6 hidden">
+          <div class="pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🔁 Tier 8 — CTEs & Recursion</h2>
+            <p class="text-xs text-slate-455 mt-1">Master standard Common Table Expressions (WITH), multiple CTEs, recursive CTEs, and hierarchies</p>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6">
+            {tier8Challenges.map((challenge) => (
+              <a
+                href={`/practice/sql/${challenge.slug}/`}
+                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold text-slate-355">#{challenge.order}</span>
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
+                        {challenge.title}
+                      </h3>
+                    </div>
+                    <p class="text-xs text-slate-455 line-clamp-2">{challenge.prompt}</p>
+                  </div>
+                </div>
+                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    {challenge.difficulty}
+                  </span>
+                  <span 
+                    data-challenge-status={challenge.id}
+                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                  >
+                    Not Started
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <!-- Section: Tier 9 -->
+        <div id="track-panel-tier9" class="space-y-6 hidden">
+          <div class="pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🧠 Tier 9 — Real-World / Advanced Patterns</h2>
+            <p class="text-xs text-slate-455 mt-1">Master deduplication, pivoting, unpivoting, gaps & islands active streaks, funnels, and retention cohort conversions</p>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6">
+            {tier9Challenges.map((challenge) => (
               <a
                 href={`/practice/sql/${challenge.slug}/`}
                 class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
@@ -223,9 +511,15 @@ const jsonLd = {
 
     // Track challenges mappings
     const challengeMappings = {
-      basics: ['sql-b1', 'sql-b2', 'sql-b3', 'sql-b4', 'sql-b5', 'sql-b6', 'sql-b7', 'sql-b8', 'sql-b9', 'sql-b10'],
-      intermediate: ['sql-i1', 'sql-i2', 'sql-i3', 'sql-i4', 'sql-i5'],
-      advanced: ['sql-a1', 'sql-a2', 'sql-a3', 'sql-a4']
+      tier1: ['sql-1','sql-2','sql-3','sql-4','sql-5','sql-6','sql-7','sql-8','sql-9','sql-10','sql-11','sql-12','sql-13','sql-14','sql-15'],
+      tier2: ['sql-16','sql-17','sql-18','sql-19','sql-20','sql-21','sql-22','sql-23','sql-24','sql-25','sql-26','sql-27','sql-28','sql-29','sql-30'],
+      tier3: ['sql-31','sql-32','sql-33','sql-34','sql-35','sql-36','sql-37','sql-38','sql-39','sql-40'],
+      tier4: ['sql-41','sql-42','sql-43','sql-44','sql-45','sql-46','sql-47','sql-48','sql-49','sql-50','sql-51','sql-52','sql-53','sql-54','sql-55'],
+      tier5: ['sql-56','sql-57','sql-58','sql-59','sql-60','sql-61','sql-62','sql-63','sql-64','sql-65'],
+      tier6: ['sql-66','sql-67','sql-68','sql-69','sql-70'],
+      tier7: ['sql-71','sql-72','sql-73','sql-74','sql-75','sql-76','sql-77','sql-78','sql-79','sql-80','sql-81','sql-82','sql-83','sql-84','sql-85'],
+      tier8: ['sql-86','sql-87','sql-88','sql-89','sql-90','sql-91','sql-92'],
+      tier9: ['sql-93','sql-94','sql-95','sql-96','sql-97','sql-98','sql-99','sql-100']
     };
 
     // Calculate solved counts for badges
@@ -283,14 +577,14 @@ const jsonLd = {
       window.location.hash = trackName;
     }
 
-    // Initialize track selection from URL hash (default to basics)
-    const initialTrack = window.location.hash.replace('#', '') || 'basics';
+    // Initialize track selection from URL hash (default to tier1)
+    const initialTrack = window.location.hash.replace('#', '') || 'tier1';
     selectTrack(initialTrack);
 
     // Bind sidebar clicks
     trackBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        const trackName = btn.getAttribute('data-track-btn') || 'basics';
+        const trackName = btn.getAttribute('data-track-btn') || 'tier1';
         selectTrack(trackName);
       });
     });
