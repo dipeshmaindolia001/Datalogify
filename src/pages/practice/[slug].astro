@@ -1,0 +1,385 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { challenges } from '../../data/practice-challenges';
+
+export async function getStaticPaths() {
+  return challenges.map((challenge) => ({
+    params: { slug: challenge.slug },
+    props: { challenge },
+  }));
+}
+
+const { challenge } = Astro.props;
+---
+
+<BaseLayout
+  title={`Practice: ${challenge.title} | Datalogify`}
+  description={`Solve the ${challenge.title} challenge in Python. Run test cases directly in the browser and verify your solution.`}
+>
+  <div class="h-[calc(100vh-4rem)] flex flex-col lg:flex-row bg-slate-950 text-slate-100 overflow-hidden" data-challenge-id={challenge.id}>
+    <!-- Left panel: Challenge description -->
+    <div class="w-full lg:w-1/2 flex flex-col border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-900 h-1/2 lg:h-full overflow-y-auto">
+      <div class="p-6 space-y-6">
+        <!-- Back and title -->
+        <div>
+          <a href="/practice/" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors mb-4">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Challenges
+          </a>
+          <div class="flex items-center gap-3">
+            <h1 class="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              {challenge.title}
+            </h1>
+            <span class:list={[
+              'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border',
+              challenge.difficulty === 'basic' ? 'bg-emerald-950/50 text-emerald-400 border-emerald-800/60' : '',
+              challenge.difficulty === 'intermediate' ? 'bg-amber-950/50 text-amber-400 border-amber-800/60' : '',
+              challenge.difficulty === 'advanced' ? 'bg-red-950/50 text-red-400 border-red-800/60' : '',
+            ]}>
+              {challenge.difficulty}
+            </span>
+          </div>
+        </div>
+
+        <!-- Problem Statement -->
+        <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+          <p class="whitespace-pre-line">{challenge.description}</p>
+        </div>
+
+        <!-- Format details -->
+        <div class="grid sm:grid-cols-2 gap-4 pt-4 border-t border-slate-800">
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Input Format</h3>
+            <p class="text-xs text-slate-300 whitespace-pre-line">{challenge.inputFormat}</p>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Output Format</h3>
+            <p class="text-xs text-slate-300 whitespace-pre-line">{challenge.outputFormat}</p>
+          </div>
+        </div>
+
+        <!-- Constraints -->
+        <div class="pt-4 border-t border-slate-800">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Constraints</h3>
+          <code class="text-xs font-mono bg-slate-950 px-2 py-1 rounded text-slate-300 border border-slate-800/50 inline-block">
+            {challenge.constraints}
+          </code>
+        </div>
+
+        <!-- Sample test cases -->
+        <div class="space-y-4 pt-4 border-t border-slate-800">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Example Test Cases</h3>
+          
+          {challenge.testCases.filter(tc => tc.isExample).map((tc, idx) => (
+            <div class="space-y-2 bg-slate-950/50 border border-slate-800/50 rounded-xl p-4">
+              <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Example {idx + 1}</div>
+              <div class="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Input</span>
+                  <pre class="font-mono text-xs text-slate-300 bg-slate-950 p-2 rounded border border-slate-850 overflow-x-auto">{tc.input}</pre>
+                </div>
+                <div>
+                  <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Expected Output</span>
+                  <pre class="font-mono text-xs text-emerald-400 bg-slate-950 p-2 rounded border border-slate-850 overflow-x-auto">{tc.expectedOutput}</pre>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel: Code Editor and Test runner -->
+    <div class="w-full lg:w-1/2 flex flex-col h-1/2 lg:h-full overflow-hidden bg-slate-950">
+      <!-- Editor Header -->
+      <div class="flex items-center justify-between px-6 py-3 border-b border-slate-800 bg-slate-900/60">
+        <span class="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+          Python 3.x
+        </span>
+        <button 
+          id="btn-reset-code"
+          class="text-xs font-semibold text-slate-400 hover:text-white transition-colors flex items-center gap-1"
+          data-starter-code={challenge.starterCode}
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5" />
+          </svg>
+          Reset Code
+        </button>
+      </div>
+
+      <!-- Code Editor Textarea -->
+      <div class="flex-1 relative overflow-hidden">
+        <!-- Lines numbers sidebar gutter -->
+        <div class="absolute left-0 top-0 bottom-0 w-12 bg-slate-900 border-r border-slate-800 flex flex-col items-center py-4 select-none text-slate-600 font-mono text-xs leading-6" id="line-gutter">
+          <span>1</span>
+        </div>
+        <textarea
+          id="editor"
+          class="w-full h-full pl-16 pr-6 py-4 bg-slate-950 text-slate-200 font-mono text-xs leading-6 resize-none focus:outline-none overflow-y-auto block whitespace-pre"
+          spellcheck="false"
+          data-challenge-id={challenge.id}
+        >{challenge.starterCode}</textarea>
+      </div>
+
+      <!-- Action Bar and test runner panel -->
+      <div class="border-t border-slate-800 bg-slate-900 flex flex-col">
+        <!-- Control buttons -->
+        <div class="flex items-center justify-between px-6 py-3 border-b border-slate-800/80">
+          <div class="flex items-center gap-2">
+            <!-- Pyodide Loader Status -->
+            <span id="pyodide-status" class="text-xs text-slate-400 flex items-center gap-2 font-medium">
+              <svg class="w-4 h-4 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Starting runner engine...
+            </span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button
+              id="btn-run-code"
+              class="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled
+            >
+              Run Code
+            </button>
+            <button
+              id="btn-submit-code"
+              class="px-4 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled
+            >
+              Submit Code
+            </button>
+          </div>
+        </div>
+
+        <!-- Test cases display results console -->
+        <div class="p-5 max-h-48 overflow-y-auto space-y-3 font-mono text-xs bg-slate-950/70" id="runner-results">
+          <div class="text-slate-500">Click "Run Code" to compile and run example cases.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<!-- Load Pyodide asynchronously -->
+<script is:inline src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+
+<script define:vars={{ challenge }}>
+  let pyodideInstance = null;
+  let isPyodideLoading = true;
+
+  // Initialize Pyodide on page load
+  async function initPyodide() {
+    const statusLabel = document.getElementById('pyodide-status');
+    const runBtn = document.getElementById('btn-run-code');
+    const submitBtn = document.getElementById('btn-submit-code');
+
+    try {
+      if (typeof loadPyodide === 'undefined') {
+        throw new Error('Pyodide script failed to load from CDN.');
+      }
+      
+      pyodideInstance = await loadPyodide();
+      isPyodideLoading = false;
+
+      if (statusLabel) {
+        statusLabel.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          Ready to run
+        `;
+      }
+      if (runBtn) runBtn.removeAttribute('disabled');
+      if (submitBtn) submitBtn.removeAttribute('disabled');
+    } catch (err) {
+      console.error(err);
+      if (statusLabel) {
+        statusLabel.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-red-500"></span>
+          Engine error
+        `;
+      }
+    }
+  }
+
+  // Set line numbers in editor gutter
+  function updateLineNumbers() {
+    const editor = document.getElementById('editor');
+    const gutter = document.getElementById('line-gutter');
+    if (!editor || !gutter) return;
+
+    const lines = editor.value.split('\n').length;
+    let numbersHtml = '';
+    for (let i = 1; i <= lines; i++) {
+      numbersHtml += `<span>${i}</span>`;
+    }
+    gutter.innerHTML = numbersHtml;
+  }
+
+  // Handle runs
+  async function executeTestCases(submitMode = false) {
+    const editor = document.getElementById('editor');
+    const resultsConsole = document.getElementById('runner-results');
+    const statusLabel = document.getElementById('pyodide-status');
+
+    if (!editor || !resultsConsole || !pyodideInstance) return;
+
+    // Filter test cases based on run mode
+    const casesToRun = submitMode 
+      ? challenge.testCases 
+      : challenge.testCases.filter(tc => tc.isExample);
+
+    resultsConsole.innerHTML = '<div class="text-indigo-400 animate-pulse">Running test cases...</div>';
+    
+    // Save state as in progress
+    const progressList = JSON.parse(localStorage.getItem('datalogify_in_progress_challenges') || '[]');
+    if (!progressList.includes(challenge.id)) {
+      progressList.push(challenge.id);
+      localStorage.setItem('datalogify_in_progress_challenges', JSON.stringify(progressList));
+    }
+
+    let allPassed = true;
+    let consoleOutputHtml = '';
+
+    for (let i = 0; i < casesToRun.length; i++) {
+      const tc = casesToRun[i];
+      const caseLabel = tc.isExample ? `Example Test Case ${i + 1}` : `Test Case ${i + 1}`;
+      
+      let stdoutBuffer = '';
+      pyodideInstance.setStdout({
+        batched: (msg) => {
+          stdoutBuffer += msg + '\n';
+        }
+      });
+
+      // Python execution wrapper to mock stdin & redirect sys.stdin
+      const wrapperScript = `
+import sys
+import io
+
+# Mock stdin
+sys.stdin = io.StringIO("""${tc.input}""")
+
+# Mock input() to prevent infinite blocking read calls
+def input(prompt=""):
+    line = sys.stdin.readline()
+    if not line:
+        raise EOFError("EOF when reading input")
+    return line.rstrip("\\r\\n")
+
+# Inject input wrapper into built-ins namespace
+import builtins
+builtins.input = input
+
+# User code execution
+try:
+    code = """${editor.value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'''/g, "\\'\\'\\'")}"""
+    exec(code, {})
+except Exception as e:
+    print(f"ERROR: {e}", file=sys.stderr)
+`;
+
+      try {
+        await pyodideInstance.runPythonAsync(wrapperScript);
+        
+        const actualOutput = stdoutBuffer.trim().replace(/\r\n/g, '\n');
+        const expectedOutput = tc.expectedOutput.trim().replace(/\r\n/g, '\n');
+
+        if (actualOutput === expectedOutput) {
+          consoleOutputHtml += `
+            <div class="border-l-2 border-emerald-500 pl-3 py-1 space-y-1">
+              <div class="text-emerald-400 font-bold">Passed ✅ — ${caseLabel}</div>
+              <div class="text-[10px] text-slate-500">Input: ${tc.input.replace(/\n/g, ' ')}</div>
+            </div>
+          `;
+        } else {
+          allPassed = false;
+          consoleOutputHtml += `
+            <div class="border-l-2 border-red-500 pl-3 py-1 space-y-1">
+              <div class="text-red-400 font-bold">Failed ❌ — ${caseLabel}</div>
+              <div class="text-[10px] text-slate-500">Input: ${tc.input.replace(/\n/g, ' ')}</div>
+              <div class="text-[10px] text-slate-400">Expected: <span class="text-emerald-400">${expectedOutput}</span> | Got: <span class="text-red-400">${actualOutput || '(Empty)'}</span></div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        allPassed = false;
+        consoleOutputHtml += `
+          <div class="border-l-2 border-red-500 pl-3 py-1 space-y-1">
+            <div class="text-red-400 font-bold">Runtime Error ⚠️ — ${caseLabel}</div>
+            <div class="text-[10px] text-slate-400">${err.message}</div>
+          </div>
+        `;
+      }
+    }
+
+    resultsConsole.innerHTML = consoleOutputHtml;
+
+    if (submitMode && allPassed) {
+      // Mark as solved
+      const solvedList = JSON.parse(localStorage.getItem('datalogify_solved_challenges') || '[]');
+      if (!solvedList.includes(challenge.id)) {
+        solvedList.push(challenge.id);
+        localStorage.setItem('datalogify_solved_challenges', JSON.stringify(solvedList));
+      }
+      
+      resultsConsole.innerHTML += `
+        <div class="mt-4 p-3 bg-emerald-950/40 border border-emerald-800/40 rounded-xl text-emerald-400 font-semibold text-center">
+          Congratulations! All test cases passed. Submission successful! 🎉
+        </div>
+      `;
+    }
+  }
+
+  // Page lifecycle events
+  document.addEventListener('astro:page-load', () => {
+    // Initial gutter setup
+    updateLineNumbers();
+    
+    // Wire up events
+    const editor = document.getElementById('editor');
+    if (editor) {
+      editor.addEventListener('input', updateLineNumbers);
+      editor.addEventListener('keydown', (e) => {
+        // Tab support inside editor
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const start = editor.selectionStart;
+          const end = editor.selectionEnd;
+          editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
+          editor.selectionStart = editor.selectionEnd = start + 4;
+          updateLineNumbers();
+        }
+      });
+    }
+
+    const resetBtn = document.getElementById('btn-reset-code');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        const starter = resetBtn.getAttribute('data-starter-code');
+        if (editor && starter) {
+          editor.value = starter;
+          updateLineNumbers();
+        }
+      });
+    }
+
+    const runBtn = document.getElementById('btn-run-code');
+    if (runBtn) {
+      runBtn.addEventListener('click', () => executeTestCases(false));
+    }
+
+    const submitBtn = document.getElementById('btn-submit-code');
+    if (submitBtn) {
+      submitBtn.addEventListener('click', () => executeTestCases(true));
+    }
+
+    // Launch Pyodide compilation
+    initPyodide();
+  });
+</script>
