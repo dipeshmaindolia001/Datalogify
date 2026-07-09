@@ -1,129 +1,212 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { sqlChallenges } from '../../../data/sql-challenges';
+
+const basicsChallenges = sqlChallenges.filter(c => c.section === 'basics');
+const intermediateChallenges = sqlChallenges.filter(c => c.section === 'intermediate');
+const advancedChallenges = sqlChallenges.filter(c => c.section === 'advanced');
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Course',
-  name: 'Interactive SQL Query Practice',
-  description: 'Practice SQL queries directly in your browser. Solve hands-on SQLite exercises, run queries, and verify solutions instantly with client-side WebAssembly.',
+  name: 'Interactive SQL Coding Practice',
+  description: 'Practice SQL coding directly in your browser. Solve hands-on SQLite exercises, run queries, and check answers instantly with client-side WebAssembly.',
   provider: { '@type': 'Organization', name: 'Datalogify' },
-  numberOfLessons: 19,
+  numberOfLessons: sqlChallenges.length,
 };
 ---
 
 <BaseLayout
-  title="Interactive SQL Practice Query Console | Datalogify"
-  description="Practice SQL interactively. Write queries directly in the browser and verify solutions with real-time SQLite compiler. Track your progress now!"
+  title="Interactive SQL Practice Arena | Datalogify"
+  description="Practice SQL queries interactively. Write SQLite queries directly in the browser and verify solutions with real-time test cases. Track your progress now!"
   jsonLd={jsonLd}
 >
-  <!-- Load Prism Tomorrow styles -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
-
-  <div id="sql-loading" class="fixed inset-0 bg-[#090d16] flex flex-col items-center justify-center text-slate-400 font-mono text-sm z-50 gap-4">
-    <svg class="w-8 h-8 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-    </svg>
-    <span>Initializing SQLite WebAssembly Engine...</span>
-  </div>
-
-  <div class="sql-ide-container flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
-    <!-- Top Tabs Header -->
-    <div class="flex items-center justify-between px-6 py-3 bg-[#0f172a] border-b border-[#1e293b] shrink-0">
-      <div class="flex items-center gap-4">
-        <a 
-          href="/practice/"
-          class="px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-colors"
-        >
-          🐍 Python Practice
-        </a>
-        <a 
-          href="/practice/sql/"
-          class="px-4 py-1.5 rounded-lg text-xs font-bold bg-indigo-650 text-white shadow-md shadow-indigo-500/10"
-        >
-          🗃️ SQL Practice
-        </a>
-      </div>
-      <div class="text-[11px] font-semibold text-slate-450 tracking-wider flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        SQLite 3.x Sandbox
+  <div class="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 lg:py-12">
+    <!-- Header banner -->
+    <div class="relative overflow-hidden rounded-3xl bg-slate-900 px-6 py-12 sm:px-12 sm:py-16 shadow-2xl mb-12 animate-fade-in">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,#312e81,transparent)] opacity-40"></div>
+      <div class="absolute -right-16 -top-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl"></div>
+      <div class="absolute right-12 bottom-12 text-7xl opacity-10 select-none animate-pulse">💻</div>
+      
+      <div class="relative z-10 max-w-2xl">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 mb-4 uppercase tracking-wider">
+          ⚡ Interactive Arena
+        </span>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight min-h-[72px] sm:min-h-[96px] lg:min-h-[120px]">
+          Practice <span id="typed-text" class="bg-gradient-to-r from-indigo-400 via-sky-400 to-emerald-400 bg-clip-text text-transparent">SQL</span><span class="typewriter-cursor text-indigo-400 animate-pulse ml-0.5">|</span> Coding <br/>
+          Directly in Your Browser
+        </h1>
+        <p class="mt-4 text-base sm:text-lg text-slate-300 leading-relaxed">
+          Test your SQL skills with real SQLite interactive challenges. Write queries, execute them in-browser, and verify solutions against expected outputs instantly.
+        </p>
       </div>
     </div>
 
-    <!-- Main Workspace Split Pane -->
-    <div class="flex flex-1 min-h-0 overflow-hidden">
-      <!-- Left Sidebar: Question Bank -->
-      <aside class="w-72 shrink-0 border-r border-[#1e293b] bg-[#0f172a] overflow-y-auto flex flex-col">
-        <div class="p-4 border-b border-[#1e293b] bg-[#0b0f19]">
-          <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest">SQL Challenges</h2>
-        </div>
-        <div id="sql-sidebar-list" class="flex-1 divide-y divide-[#1e293b]/50">
-          <!-- Dynamic sidebar links injected here -->
+    <!-- Main Navigation Tabs (Python vs SQL) -->
+    <div class="flex gap-4 border-b border-slate-200 pb-4 mb-8">
+      <a 
+        href="/practice/"
+        class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-50 text-slate-500 border border-slate-100 hover:bg-slate-100 hover:text-slate-700 transition-colors focus:outline-none flex items-center gap-2"
+      >
+        🐍 Python Practice
+      </a>
+      <a 
+        href="/practice/sql/"
+        class="px-5 py-2.5 rounded-xl text-sm font-bold bg-indigo-650 text-white shadow-md shadow-indigo-500/15 focus:outline-none flex items-center gap-2"
+      >
+        🗃️ SQL Practice
+      </a>
+    </div>
+
+    <!-- Split Pane Layout: Sidebar + Challenge Cards -->
+    <div class="flex flex-col lg:flex-row gap-8">
+      <!-- Left Side: Sticky Navigation Sidebar -->
+      <aside class="w-full lg:w-1/4 shrink-0 lg:sticky lg:top-24 h-fit">
+        <div class="bg-white border border-slate-100 rounded-2xl p-4 space-y-1.5 shadow-sm">
+          <h3 class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-3 mb-2">SQL Tracks</h3>
+          
+          <button 
+            data-track-btn="basics" 
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+          >
+            <span class="flex items-center gap-2">🗃️ SQL Basics</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-basics">0/10</span>
+          </button>
+
+          <button 
+            data-track-btn="intermediate" 
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+          >
+            <span class="flex items-center gap-2">🔗 Joins & Subqueries</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-intermediate">0/5</span>
+          </button>
+
+          <button 
+            data-track-btn="advanced" 
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+          >
+            <span class="flex items-center gap-2">📈 Advanced & Window</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-advanced">0/4</span>
+          </button>
         </div>
       </aside>
 
-      <!-- Right Panel: Title, Description, Editor & Output -->
-      <main class="flex-1 flex flex-col min-w-0 bg-[#090d16]">
-        <!-- Title bar -->
-        <div class="px-6 py-4 bg-[#0f172a] border-b border-[#1e293b]">
-          <div class="flex items-center gap-3">
-            <h2 id="q-title" class="text-base font-bold text-white tracking-tight">—</h2>
-            <span id="q-difficulty" class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border bg-indigo-950/50 text-indigo-400 border-indigo-800/60">
-              —
-            </span>
+      <!-- Right Side: Challenge cards list matching selection -->
+      <main class="flex-1 min-w-0">
+        <!-- Section: SQL Basics -->
+        <div id="track-panel-basics" class="space-y-6 hidden">
+          <div class="pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🗃️ SQL Basics</h2>
+            <p class="text-xs text-slate-450 mt-1">Master core SELECT statements, filtering, logical operators, distinct, aggregates, and date functions</p>
           </div>
-          <div class="text-[10px] font-mono text-slate-455 mt-1" id="q-meta">—</div>
+          <div class="grid md:grid-cols-2 gap-6">
+            {basicsChallenges.map((challenge) => (
+              <a
+                href={`/practice/sql/${challenge.slug}/`}
+                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold text-slate-350">#{challenge.order}</span>
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
+                        {challenge.title}
+                      </h3>
+                    </div>
+                    <p class="text-xs text-slate-455 line-clamp-2">{challenge.prompt}</p>
+                  </div>
+                </div>
+                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">
+                    {challenge.difficulty}
+                  </span>
+                  <span 
+                    data-challenge-status={challenge.id}
+                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                  >
+                    Not Started
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
 
-        <!-- Prompt and Schema (Fixed top section) -->
-        <div class="px-6 py-4 border-b border-[#1e293b] bg-[#0f172a]/40 overflow-y-auto max-h-[30vh]">
-          <div id="qbody" class="space-y-4">
-            <!-- Prompt text and table schema cards loaded here -->
+        <!-- Section: Joins & Subqueries -->
+        <div id="track-panel-intermediate" class="space-y-6 hidden">
+          <div class="pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🔗 Joins & Subqueries</h2>
+            <p class="text-xs text-slate-455 mt-1">Practice inner/left joins, self-joins, multiple joins, and subquery logic</p>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6">
+            {intermediateChallenges.map((challenge) => (
+              <a
+                href={`/practice/sql/${challenge.slug}/`}
+                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold text-slate-350">#{challenge.order}</span>
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
+                        {challenge.title}
+                      </h3>
+                    </div>
+                    <p class="text-xs text-slate-455 line-clamp-2">{challenge.prompt}</p>
+                  </div>
+                </div>
+                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    {challenge.difficulty}
+                  </span>
+                  <span 
+                    data-challenge-status={challenge.id}
+                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                  >
+                    Not Started
+                  </span>
+                </div>
+              </a>
+            ))}
           </div>
         </div>
 
-        <!-- Editor and output results -->
-        <div class="flex-1 flex flex-col min-h-0">
-          <!-- Query Action bar -->
-          <div class="flex items-center justify-between px-6 py-2.5 bg-[#0f172a] border-b border-[#1e293b]">
-            <div class="flex items-center gap-3">
-              <button 
-                id="run-btn"
-                class="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-100 transition-colors cursor-pointer"
-              >
-                Run Query ▸
-              </button>
-              <button 
-                id="check-btn"
-                class="px-4 py-1.5 rounded-lg text-xs font-bold bg-indigo-650 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all cursor-pointer"
-              >
-                Check Answer
-              </button>
-              <button 
-                id="reset-btn"
-                class="px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-450 hover:text-white transition-colors cursor-pointer"
-              >
-                Reset
-              </button>
-            </div>
-            <span id="status" class="text-xs font-mono font-medium"></span>
+        <!-- Section: Advanced & Window -->
+        <div id="track-panel-advanced" class="space-y-6 hidden">
+          <div class="pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">📈 Advanced & Window Functions</h2>
+            <p class="text-xs text-slate-455 mt-1">Master window rankings, running sums, common table expressions (CTEs), and correlated subqueries</p>
           </div>
-
-          <!-- CodeJar SQL Input Editor -->
-          <div class="flex-0 h-40 border-b border-[#1e293b] relative overflow-hidden flex min-h-[120px]">
-            <div id="sql-gutter" class="w-12 border-r border-[#1e293b] flex flex-col items-end pr-3 py-3 select-none font-mono text-xs leading-6 overflow-hidden text-slate-600 bg-[#0b0f19]">
-              <span>1</span>
-            </div>
-            <div
-              id="sql-editor"
-              class="language-sql flex-1 h-full py-3 px-4 font-mono text-xs leading-6 focus:outline-none overflow-y-auto whitespace-pre tab-size-4 bg-[#090d16] text-slate-100"
-              spellcheck="false"
-            ></div>
-          </div>
-
-          <!-- Output grid results -->
-          <div id="results" class="flex-1 overflow-auto p-6 font-mono text-xs leading-relaxed bg-[#05080f]">
-            <div class="text-slate-500">Run a query to see results here.</div>
+          <div class="grid md:grid-cols-2 gap-6">
+            {advancedChallenges.map((challenge) => (
+              <a
+                href={`/practice/sql/${challenge.slug}/`}
+                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold text-slate-355">#{challenge.order}</span>
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-660 transition-colors truncate">
+                        {challenge.title}
+                      </h3>
+                    </div>
+                    <p class="text-xs text-slate-455 line-clamp-2">{challenge.prompt}</p>
+                  </div>
+                </div>
+                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-red-50 text-red-600 border border-red-100">
+                    {challenge.difficulty}
+                  </span>
+                  <span 
+                    data-challenge-status={challenge.id}
+                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                  >
+                    Not Started
+                  </span>
+                </div>
+              </a>
+            ))}
           </div>
         </div>
       </main>
@@ -131,664 +214,136 @@ const jsonLd = {
   </div>
 </BaseLayout>
 
-<!-- Load SQLite and Prism SQL assets -->
-<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
-<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
-<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
-
 <script>
-  import { CodeJar } from 'codejar';
-
-  const QUESTIONS = [
-    {
-      id:'b1', section:'Basics', concept:'SELECT & WHERE', difficulty:'Easy',
-      title:'Long Streaming Sessions',
-      prompt:'StreamHub logs every listening/watching session. Return session_id, user_id, and minutes_played for sessions where minutes_played is greater than 30.',
-      setup:`
-        CREATE TABLE sessions(session_id INTEGER, user_id INTEGER, app_name TEXT, minutes_played INTEGER, session_date TEXT);
-        INSERT INTO sessions VALUES
-        (1,101,'BeatWave',45,'2026-06-02'),
-        (2,102,'BeatWave',12,'2026-06-03'),
-        (3,101,'ClipStream',60,'2026-06-05'),
-        (4,103,'BeatWave',5,'2026-06-06'),
-        (5,104,NULL,25,'2026-06-07'),
-        (6,102,'ClipStream',80,'2026-06-08'),
-        (7,105,'BeatWave',33,'2026-06-10'),
-        (8,101,'BeatWave',20,'2026-06-11'),
-        (9,103,'ClipStream',50,'2026-06-15'),
-        (10,106,'BeatWave',15,'2026-07-01');
-      `,
-      solution:`SELECT session_id, user_id, minutes_played FROM sessions WHERE minutes_played > 30;`,
-      orderMatters:false,
-      schemaNote:`sessions(session_id, user_id, app_name, minutes_played, session_date)`
-    },
-    {
-      id:'b2', section:'Basics', concept:'ORDER BY & LIMIT', difficulty:'Easy',
-      title:'Top 3 Longest Sessions',
-      prompt:'Return session_id and minutes_played for the 3 longest sessions, ordered from longest to shortest.',
-      setup:`__SESSIONS__`,
-      solution:`SELECT session_id, minutes_played FROM sessions ORDER BY minutes_played DESC LIMIT 3;`,
-      orderMatters:true,
-      schemaNote:`sessions(session_id, user_id, app_name, minutes_played, session_date)`
-    },
-    {
-      id:'b3', section:'Basics', concept:'Aggregate Functions', difficulty:'Easy',
-      title:'Average Session Length',
-      prompt:'Return the average minutes_played across all sessions, rounded to 2 decimal places, aliased as avg_minutes.',
-      setup:`__SESSIONS__`,
-      solution:`SELECT ROUND(AVG(minutes_played),2) AS avg_minutes FROM sessions;`,
-      orderMatters:false,
-      schemaNote:`sessions(session_id, user_id, app_name, minutes_played, session_date)`
-    },
-    {
-      id:'b4', section:'Basics', concept:'GROUP BY', difficulty:'Easy',
-      title:'Total Minutes per App',
-      prompt:'For each app_name (ignore sessions with a missing app name), return total minutes played as total_minutes. Order by total_minutes descending.',
-      setup:`__SESSIONS__`,
-      solution:`SELECT app_name, SUM(minutes_played) AS total_minutes FROM sessions WHERE app_name IS NOT NULL GROUP BY app_name ORDER BY total_minutes DESC;`,
-      orderMatters:true,
-      schemaNote:`sessions(session_id, user_id, app_name, minutes_played, session_date)`
-    },
-    {
-      id:'b5', section:'Basics', concept:'HAVING', difficulty:'Easy',
-      title:'Frequently Used Apps',
-      prompt:'Find app_name(s) that appear in more than 4 sessions (ignore missing app names). Return app_name and session_count.',
-      setup:`__SESSIONS__`,
-      solution:`SELECT app_name, COUNT(*) AS session_count FROM sessions WHERE app_name IS NOT NULL GROUP BY app_name HAVING COUNT(*) > 4;`,
-      orderMatters:false,
-      schemaNote:`sessions(session_id, user_id, app_name, minutes_played, session_date)`
-    },
-    {
-      id:'b6', section:'Basics', concept:'DISTINCT', difficulty:'Easy',
-      title:'Unique BeatWave Listeners',
-      prompt: "List the distinct user_id values for sessions on the app 'BeatWave', ordered ascending.",
-      setup:`__SESSIONS__`,
-      solution:`SELECT DISTINCT user_id FROM sessions WHERE app_name='BeatWave' ORDER BY user_id;`,
-      orderMatters:true,
-      schemaNote:`sessions(session_id, user_id, app_name, minutes_played, session_date)`
-    },
-    {
-      id:'b7', section:'Basics', concept:'CASE WHEN', difficulty:'Easy',
-      title:'Session Length Category',
-      prompt: "For every session, return session_id, minutes_played, and a length_category column: 'Short' if under 15 minutes, 'Medium' if 15-45 minutes (inclusive), otherwise 'Long'. Order by session_id.",
-      setup:`__SESSIONS__`,
-      solution:`SELECT session_id, minutes_played, CASE WHEN minutes_played<15 THEN 'Short' WHEN minutes_played<=45 THEN 'Medium' ELSE 'Long' END AS length_category FROM sessions ORDER BY session_id;`,
-      orderMatters:true,
-      schemaNote:`sessions(session_id, user_id, app_name, minutes_played, session_date)`
-    },
-    {
-      id:'b8', section:'Basics', concept:'NULL Handling', difficulty:'Easy',
-      title:'Filling In Missing App Names',
-      prompt: "Return session_id and app_name for every session, replacing any missing (NULL) app_name with 'Unknown'. Order by session_id.",
-      setup:`__SESSIONS__`,
-      solution:`SELECT session_id, COALESCE(app_name,'Unknown') AS app_name FROM sessions ORDER BY session_id;`,
-      orderMatters:true,
-      schemaNote:`sessions(session_id, user_id, app_name, minutes_played, session_date)`
-    },
-    {
-      id:'b9', section:'Basics', concept:'String Functions', difficulty:'Easy',
-      title:'Extracting Email Domains',
-      prompt: "Return user_id, name, and the email domain (everything after '@') as domain, ordered by user_id.",
-      setup:`__USERS__`,
-      solution:`SELECT user_id, name, SUBSTR(email, INSTR(email,'@')+1) AS domain FROM users ORDER BY user_id;`,
-      orderMatters:true,
-      schemaNote:`users(user_id, name, email)`
-    },
-    {
-      id:'b10', section:'Basics', concept:'Date Functions', difficulty:'Easy',
-      title:'June Session Count',
-      prompt: "Return the total number of sessions that occurred in June 2026, aliased as session_count.",
-      setup:`__SESSIONS__`,
-      solution:`SELECT COUNT(*) AS session_count FROM sessions WHERE strftime('%Y-%m', session_date) = '2026-06';`,
-      orderMatters:false,
-      schemaNote:`sessions(session_id, user_id, app_name, minutes_played, session_date)`
-    },
-    {
-      id:'i1', section:'Intermediate', concept:'INNER JOIN', difficulty:'Medium',
-      title:'Sessions With Listener Names',
-      prompt:'Return session_id, the user\'s name, app_name, and minutes_played for sessions longer than 40 minutes. Order by minutes_played descending.',
-      setup:`__SESSIONS__\n__USERS_FULL__`,
-      solution:`SELECT s.session_id, u.name, s.app_name, s.minutes_played FROM sessions s JOIN users u ON s.user_id=u.user_id WHERE s.minutes_played>40 ORDER BY s.minutes_played DESC;`,
-      orderMatters:true,
-      schemaNote:`sessions(session_id, user_id, app_name, minutes_played, session_date)\nusers(user_id, name, email)`
-    },
-    {
-      id:'i2', section:'Intermediate', concept:'LEFT JOIN / Anti-Join', difficulty:'Medium',
-      title:'Users Who Never Streamed',
-      prompt:'Return user_id and name for every user who has zero sessions logged.',
-      setup:`__SESSIONS__\n__USERS_FULL__`,
-      solution:`SELECT u.user_id, u.name FROM users u LEFT JOIN sessions s ON u.user_id=s.user_id WHERE s.session_id IS NULL;`,
-      orderMatters:false,
-      schemaNote:`sessions(session_id, user_id, app_name, minutes_played, session_date)\nusers(user_id, name, email)`
-    },
-    {
-      id:'i3', section:'Intermediate', concept:'Subqueries', difficulty:'Medium',
-      title:'Above-Average Total Listeners',
-      prompt: "Find users whose total minutes played (summed across all their sessions) is greater than the average total-per-user across all users who have sessions. Return user_id and total_minutes, ordered by total_minutes descending.",
-      setup:`__SESSIONS__`,
-      solution:`SELECT user_id, SUM(minutes_played) AS total_minutes FROM sessions GROUP BY user_id HAVING SUM(minutes_played) > (SELECT AVG(total) FROM (SELECT SUM(minutes_played) AS total FROM sessions GROUP BY user_id)) ORDER BY total_minutes DESC;`,
-      orderMatters:true,
-      schemaNote:`sessions(session_id, user_id, app_name, minutes_played, session_date)`
-    },
-    {
-      id:'i4', section:'Intermediate', concept:'Self-Join', difficulty:'Medium',
-      title:'Employee-Manager Pairs',
-      prompt: "For every employee who has a manager, return the employee's name and their manager's name. Order by employee's emp_id.",
-      setup:`
-        CREATE TABLE employees(emp_id INTEGER, name TEXT, manager_id INTEGER);
-        INSERT INTO employees VALUES
-        (1,'Meera',NULL),
-        (2,'Arjun',1),
-        (3,'Priya',1),
-        (4,'Rohan',2),
-        (5,'Tara',2),
-        (6,'Vikram',3);
-      `,
-      solution:`SELECT e.name AS employee, m.name AS manager FROM employees e JOIN employees m ON e.manager_id=m.emp_id ORDER BY e.emp_id;`,
-      orderMatters:true,
-      schemaNote:`employees(emp_id, name, manager_id)`
-    },
-    {
-      id:'i5', section:'Intermediate', concept:'Multiple JOINs', difficulty:'Medium',
-      title:'Order Values Across Tables',
-      prompt:'For each order, return the customer name, product_name, and total_value (price × quantity). Order by total_value descending.',
-      setup:`
-        CREATE TABLE customers(customer_id INTEGER, name TEXT);
-        INSERT INTO customers VALUES (1,'Anaya'),(2,'Dev'),(3,'Sana');
-        CREATE TABLE products(product_id INTEGER, product_name TEXT, price INTEGER);
-        INSERT INTO products VALUES (1,'Wireless Mouse',799),(2,'Mechanical Keyboard',2999),(3,'USB-C Hub',1499);
-        CREATE TABLE orders(order_id INTEGER, customer_id INTEGER, product_id INTEGER, quantity INTEGER);
-        INSERT INTO orders VALUES (1,1,1,2),(2,2,2,1),(3,1,3,1),(4,3,1,3),(5,2,3,2);
-      `,
-      solution:`SELECT c.name AS customer, p.product_name, (p.price*o.quantity) AS total_value FROM orders o JOIN customers c ON o.customer_id=c.customer_id JOIN products p ON o.product_id=p.product_id ORDER BY total_value DESC;`,
-      orderMatters:true,
-      schemaNote:`customers(customer_id, name)\nproducts(product_id, product_name, price)\norders(order_id, customer_id, product_id, quantity)`
-    },
-    {
-      id:'a1', section:'Advanced', concept:'Window Functions — RANK', difficulty:'Advanced',
-      title:'Runner-Up Salary Per Department',
-      prompt:'Find the second-highest distinct salary within each department. Return dept and salary, ordered by dept.',
-      setup:`
-        CREATE TABLE emp_salaries(emp_id INTEGER, name TEXT, dept TEXT, salary INTEGER);
-        INSERT INTO emp_salaries VALUES
-        (1,'Meera','Engineering',95000),
-        (2,'Arjun','Engineering',88000),
-        (3,'Priya','Engineering',88000),
-        (4,'Rohan','Sales',72000),
-        (5,'Tara','Sales',68000),
-        (6,'Vikram','Marketing',60000);
-      `,
-      solution:`WITH ranked AS (SELECT dept, salary, DENSE_RANK() OVER (PARTITION BY dept ORDER BY salary DESC) AS rnk FROM emp_salaries) SELECT DISTINCT dept, salary FROM ranked WHERE rnk=2 ORDER BY dept;`,
-      orderMatters:true,
-      schemaNote:`emp_salaries(emp_id, name, dept, salary)`
-    },
-    {
-      id:'a2', section:'Advanced', concept:'Window Functions — Running Total', difficulty:'Advanced',
-      title:'Cumulative Daily Revenue',
-      prompt:'Return order_date, amount, and a running_total of amount ordered chronologically by order_date.',
-      setup:`
-        CREATE TABLE daily_orders(order_date TEXT, amount INTEGER);
-        INSERT INTO daily_orders VALUES
-        ('2026-06-01',500),
-        ('2026-06-02',300),
-        ('2026-06-03',450),
-        ('2026-06-04',200),
-        ('2026-06-05',600);
-      `,
-      solution:`SELECT order_date, amount, SUM(amount) OVER (ORDER BY order_date) AS running_total FROM daily_orders ORDER BY order_date;`,
-      orderMatters:true,
-      schemaNote:`daily_orders(order_date, amount)`
-    },
-    {
-      id:'a3', section:'Advanced', concept:'CTEs', difficulty:'Advanced',
-      title:'Frequent June Listeners (via CTE)',
-      prompt:'Using a CTE, find users with more than 2 sessions in June 2026. Return user_id and cnt (session count).',
-      setup:`__SESSIONS__`,
-      solution:`WITH june_sessions AS (SELECT user_id, COUNT(*) AS cnt FROM sessions WHERE strftime('%Y-%m',session_date)='2026-06' GROUP BY user_id) SELECT user_id, cnt FROM june_sessions WHERE cnt>2;`,
-      orderMatters:false,
-      schemaNote:`sessions(session_id, user_id, app_name, minutes_played, session_date)`
-    },
-    {
-      id:'a4', section:'Advanced', concept:'Correlated Subquery', difficulty:'Advanced',
-      title:'Above-Category-Average Priced Products',
-      prompt: "Find products priced above the average price within their own category. Return id, category, and price, ordered by id.",
-      setup:`
-        CREATE TABLE cat_products(id INTEGER, category TEXT, price INTEGER);
-        INSERT INTO cat_products VALUES
-        (1,'Audio',799),
-        (2,'Audio',1999),
-        (3,'Accessories',299),
-        (4,'Accessories',1499),
-        (5,'Storage',2499),
-        (6,'Storage',999);
-      `,
-      solution:`SELECT p.id, p.category, p.price FROM cat_products p WHERE p.price > (SELECT AVG(price) FROM cat_products p2 WHERE p2.category=p.category) ORDER BY p.id;`,
-      orderMatters:true,
-      schemaNote:`cat_products(id, category, price)`
-    }
-  ];
-
-  const FRAGMENTS: Record<string, string> = {
-    __SESSIONS__:`
-      CREATE TABLE sessions(session_id INTEGER, user_id INTEGER, app_name TEXT, minutes_played INTEGER, session_date TEXT);
-      INSERT INTO sessions VALUES
-      (1,101,'BeatWave',45,'2026-06-02'),
-      (2,102,'BeatWave',12,'2026-06-03'),
-      (3,101,'ClipStream',60,'2026-06-05'),
-      (4,103,'BeatWave',5,'2026-06-06'),
-      (5,104,NULL,25,'2026-06-07'),
-      (6,102,'ClipStream',80,'2026-06-08'),
-      (7,105,'BeatWave',33,'2026-06-10'),
-      (8,101,'BeatWave',20,'2026-06-11'),
-      (9,103,'ClipStream',50,'2026-06-15'),
-      (10,106,'BeatWave',15,'2026-07-01');
-    `,
-    __USERS__:`
-      CREATE TABLE users(user_id INTEGER, name TEXT, email TEXT);
-      INSERT INTO users VALUES
-      (101,'Aarav','aarav.k@mailbox.com'),
-      (102,'Diya','diya102@streammail.com'),
-      (103,'Kabir','kabir_c@mailbox.com'),
-      (104,'Isha','isha.p@quickmail.com'),
-      (105,'Neel','neel99@streammail.com'),
-      (106,'Riya','riya.b@mailbox.com');
-    `,
-    __USERS_FULL__:`
-      CREATE TABLE users(user_id INTEGER, name TEXT, email TEXT);
-      INSERT INTO users VALUES
-      (101,'Aarav','aarav.k@mailbox.com'),
-      (102,'Diya','diya102@streammail.com'),
-      (103,'Kabir','kabir_c@mailbox.com'),
-      (104,'Isha','isha.p@quickmail.com'),
-      (105,'Neel','neel99@streammail.com'),
-      (106,'Riya','riya.b@mailbox.com'),
-      (107,'Kavya','kavya.s@mailbox.com');
-    `
-  };
-
-  function resolveSetup(setup: string): string {
-    let out = setup;
-    Object.keys(FRAGMENTS).forEach(k => {
-      out = out.split(k).join(FRAGMENTS[k]);
-    });
-    return out;
-  }
-
-  let SQLLib: any = null;
-  const dbCache: Record<string, any> = {};
-  let jar: any = null;
-  let currentQ: any = null;
-
-  function getDb(q: any) {
-    if (dbCache[q.id]) return dbCache[q.id];
-    const db = new SQLLib.Database();
-    db.run(resolveSetup(q.setup));
-    dbCache[q.id] = db;
-    return db;
-  }
-
-  function execToRows(db: any, query: string) {
-    const res = db.exec(query);
-    if (res.length === 0) return { columns: [], rows: [] };
-    return { columns: res[0].columns, rows: res[0].values };
-  }
-
-  function renderTable(columns: string[], rows: any[][]) {
-    const results = document.getElementById('results');
-    if (!results) return;
-
-    if (columns.length === 0) {
-      results.innerHTML = '<div class="empty-hint text-slate-500">Query ran successfully — no rows returned.</div>';
-      return;
-    }
-
-    let html = `<div class="text-[11px] text-slate-500 mb-2">${rows.length} row${rows.length !== 1 ? 's' : ''} returned</div>`;
-    html += '<div class="overflow-x-auto"><table class="w-full border-collapse text-left text-slate-350 min-w-max">';
-    html += '<thead><tr class="border-b border-[#1e293b]">';
-    columns.forEach(c => html += `<th class="pb-2 font-bold text-indigo-400 px-3">${escapeHtml(c)}</th>`);
-    html += '</tr></thead><tbody>';
-    rows.forEach(r => {
-      html += '<tr class="border-b border-[#1e293b]/50 hover:bg-[#1e293b]/20">' + r.map(v => `<td class="py-2 px-3">${v === null ? '<span class="text-slate-600">NULL</span>' : escapeHtml(String(v))}</td>`).join('') + '</tr>';
-    });
-    html += '</tbody></table></div>';
-    results.innerHTML = html;
-  }
-
-  function escapeHtml(s: string) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
-  function setStatus(text: string, statusType?: 'ok' | 'bad') {
-    const el = document.getElementById('status');
-    if (!el) return;
-    el.textContent = text;
-    if (statusType === 'ok') {
-      el.className = 'text-xs font-mono text-emerald-400';
-    } else if (statusType === 'bad') {
-      el.className = 'text-xs font-mono text-red-400 animate-pulse';
-    } else {
-      el.className = 'text-xs font-mono text-slate-450';
-    }
-  }
-
-  function rowsSignature(columns: string[], rows: any[][], ordered: boolean) {
-    let r = rows.map(row => row.map(v => v === null ? '∅' : String(v)).join('\u0001'));
-    if (!ordered) r = r.slice().sort();
-    return columns.join('\u0002') + '||' + r.join('\u0003');
-  }
-
-  function runQuery() {
-    if (!jar || !currentQ || !SQLLib) return;
-    const query = jar.toString().trim();
-    if (!query) { setStatus('Write a query first', 'bad'); return; }
-    const db = getDb(currentQ);
-    try {
-      const { columns, rows } = execToRows(db, query);
-      renderTable(columns, rows);
-      setStatus('Query executed successfully', 'ok');
-    } catch (e: any) {
-      const results = document.getElementById('results');
-      if (results) results.innerHTML = `<div class="text-red-400 font-mono text-xs whitespace-pre-wrap">${escapeHtml(e.message)}</div>`;
-      setStatus('Execution error', 'bad');
-    }
-  }
-
-  function checkAnswer() {
-    if (!jar || !currentQ || !SQLLib) return;
-    const query = jar.toString().trim();
-    if (!query) { setStatus('Write a query first', 'bad'); return; }
-    const db = getDb(currentQ);
-    try {
-      const user = execToRows(db, query);
-      const solution = execToRows(db, currentQ.solution);
-      renderTable(user.columns, user.rows);
-      
-      const userSig = rowsSignature(user.columns, user.rows, currentQ.orderMatters);
-      const solSig = rowsSignature(solution.columns, solution.rows, currentQ.orderMatters);
-
-      if (userSig === solSig) {
-        setStatus('✓ Correct Answer!', 'ok');
-        
-        // Save to solved challenges in localStorage
-        const solvedList = JSON.parse(localStorage.getItem('datalogify_solved_sql_challenges') || '[]');
-        if (!solvedList.includes(currentQ.id)) {
-          solvedList.push(currentQ.id);
-          localStorage.setItem('datalogify_solved_sql_challenges', JSON.stringify(solvedList));
-        }
-
-        markSolvedInSidebar(currentQ.id);
-        updateProgressCounters();
-      } else {
-        setStatus(`✗ Incorrect — expected ${solution.rows.length} row(s)${currentQ.orderMatters ? ' in sorted order' : ''}`, 'bad');
-      }
-    } catch (e: any) {
-      const results = document.getElementById('results');
-      if (results) results.innerHTML = `<div class="text-red-400 font-mono text-xs whitespace-pre-wrap">${escapeHtml(e.message)}</div>`;
-      setStatus('Execution error', 'bad');
-    }
-  }
-
-  function markSolvedInSidebar(id: string) {
-    const el = document.querySelector(`.sql-q-item[data-id="${id}"]`);
-    if (el) {
-      const dot = el.querySelector('.dot');
-      if (dot) {
-        dot.className = 'dot w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] flex-shrink-0';
-      }
-    }
-  }
-
-  function updateProgressCounters() {
+  // Page load setups
+  document.addEventListener('astro:page-load', () => {
+    // 1. LocalStorage Challenge Badges & Sidebar Solved Counts
     const solvedList = JSON.parse(localStorage.getItem('datalogify_solved_sql_challenges') || '[]');
-    const sections = ['Basics', 'Intermediate', 'Advanced'];
-    
-    sections.forEach(sec => {
-      const qs = QUESTIONS.filter(q => q.section === sec);
-      const solvedInSec = qs.filter(q => solvedList.includes(q.id)).length;
-      const countLabel = document.getElementById(`sql-count-${sec.toLowerCase()}`);
-      if (countLabel) {
-        countLabel.textContent = `${solvedInSec}/${qs.length}`;
-        if (solvedInSec === qs.length) {
-          countLabel.className = 'text-[9px] bg-emerald-950/60 text-emerald-400 px-2 py-0.5 rounded-full font-bold border border-emerald-800/40';
-        } else if (solvedInSec > 0) {
-          countLabel.className = 'text-[9px] bg-amber-950/60 text-amber-400 px-2 py-0.5 rounded-full font-bold border border-amber-800/40';
-        }
-      }
-    });
-  }
+    const progressList = JSON.parse(localStorage.getItem('datalogify_in_progress_sql_challenges') || '[]');
 
-  function selectQuestion(id: string) {
-    const q = QUESTIONS.find(x => x.id === id);
-    if (!q) return;
-
-    currentQ = q;
-    window.location.hash = q.id;
-
-    // Toggle active styles in sidebar
-    document.querySelectorAll('.sql-q-item').forEach(el => {
-      const itemEl = el as HTMLElement;
-      if (itemEl.dataset.id === id) {
-        itemEl.className = 'sql-q-item w-full text-left px-4 py-3 text-xs flex items-center gap-3 transition-colors bg-[#1e293b]/40 border-l-4 border-indigo-500 font-semibold text-slate-100 cursor-pointer';
-      } else {
-        itemEl.className = 'sql-q-item w-full text-left px-4 py-3 text-xs flex items-center gap-3 transition-colors hover:bg-[#1e293b]/20 border-l-4 border-transparent text-slate-400 cursor-pointer';
-      }
-    });
-
-    const titleEl = document.getElementById('q-title');
-    const difficultyEl = document.getElementById('q-difficulty');
-    const metaEl = document.getElementById('q-meta');
-    const qbodyEl = document.getElementById('qbody');
-
-    if (titleEl) titleEl.textContent = q.title;
-    if (difficultyEl) {
-      difficultyEl.textContent = q.difficulty;
-      difficultyEl.className = `text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
-        q.difficulty === 'Easy' ? 'bg-emerald-950/50 text-emerald-400 border-emerald-800/60' :
-        q.difficulty === 'Medium' ? 'bg-amber-950/50 text-amber-400 border-amber-800/60' :
-        'bg-red-950/50 text-red-400 border-red-800/60'
-      }`;
-    }
-    if (metaEl) metaEl.textContent = `${q.section} · ${q.concept}`;
-
-    const schemaLines = q.schemaNote.split('\n').map(l => `<tr><td class="py-1 px-3 border-b border-[#1e293b]/50">${escapeHtml(l)}</td></tr>`).join('');
-    
-    if (qbodyEl) {
-      qbodyEl.innerHTML = `
-        <p class="text-sm text-slate-300 leading-relaxed">${escapeHtml(q.prompt)}</p>
-        <div class="bg-[#0b0f19] border border-[#1e293b] rounded-xl p-4 mt-4">
-          <h4 class="text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Table Schema Details</h4>
-          <table class="w-full text-left font-mono text-xs text-indigo-300">
-            <tbody>${schemaLines}</tbody>
-          </table>
-        </div>
-      `;
-    }
-
-    if (jar) {
-      jar.updateCode('-- Write your SQLite queries below\n');
-      updateGutter(2);
-    }
-    
-    const results = document.getElementById('results');
-    if (results) results.innerHTML = '<div class="text-slate-500">Run a query to see results here.</div>';
-    setStatus('');
-  }
-
-  function buildSidebar() {
-    const container = document.getElementById('sql-sidebar-list');
-    if (!container) return;
-
-    container.innerHTML = '';
-    const solvedList = JSON.parse(localStorage.getItem('datalogify_solved_sql_challenges') || '[]');
-
-    const sections = ['Basics', 'Intermediate', 'Advanced'];
-    sections.forEach(sec => {
-      // Header for section
-      const header = document.createElement('div');
-      header.className = 'px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-[#0b0f19]/70 flex items-center justify-between border-y border-[#1e293b]/50 sticky top-0';
-      header.innerHTML = `
-        <span>${sec}</span>
-        <span id="sql-count-${sec.toLowerCase()}" class="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-full font-bold">0/0</span>
-      `;
-      container.appendChild(header);
-
-      const qs = QUESTIONS.filter(q => q.section === sec);
-      qs.forEach((q, index) => {
-        const btn = document.createElement('button');
-        btn.className = 'sql-q-item w-full text-left px-4 py-3 text-xs flex items-center gap-3 transition-colors hover:bg-[#1e293b]/20 border-l-4 border-transparent text-slate-400 cursor-pointer';
-        btn.dataset.id = q.id;
-        
-        const isSolved = solvedList.includes(q.id);
-        const dotClass = isSolved 
-          ? 'dot w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] flex-shrink-0'
-          : 'dot w-2 h-2 rounded-full bg-slate-700 flex-shrink-0';
-
-        btn.innerHTML = `
-          <span class="${dotClass}"></span>
-          <span class="font-mono text-slate-600 text-[10px] w-4">${index + 1}</span>
-          <span class="truncate flex-1">${escapeHtml(q.title)}</span>
-          <span class="text-[9px] font-bold uppercase tracking-wider">${q.difficulty}</span>
-        `;
-        
-        btn.addEventListener('click', () => selectQuestion(q.id));
-        container.appendChild(btn);
-      });
-    });
-  }
-
-  function updateGutter(linesCount: number) {
-    const gutter = document.getElementById('sql-gutter');
-    if (!gutter) return;
-    let html = '';
-    for (let i = 1; i <= linesCount; i++) {
-      html += `<span>${i}</span>`;
-    }
-    gutter.innerHTML = html;
-  }
-
-  // Initialize CodeJar SQL editor
-  function initEditor() {
-    const editorEl = document.getElementById('sql-editor');
-    if (!editorEl) return;
-
-    const highlight = (editor: HTMLElement) => {
-      const code = editor.textContent || '';
-      if ((window as any).Prism) {
-        editor.innerHTML = (window as any).Prism.highlight(code, (window as any).Prism.languages.sql, 'sql');
-      }
+    // Track challenges mappings
+    const challengeMappings = {
+      basics: ['sql-b1', 'sql-b2', 'sql-b3', 'sql-b4', 'sql-b5', 'sql-b6', 'sql-b7', 'sql-b8', 'sql-b9', 'sql-b10'],
+      intermediate: ['sql-i1', 'sql-i2', 'sql-i3', 'sql-i4', 'sql-i5'],
+      advanced: ['sql-a1', 'sql-a2', 'sql-a3', 'sql-a4']
     };
 
-    jar = CodeJar(editorEl, highlight);
-    jar.onUpdate((code: string) => {
-      const lines = code.split('\n').length;
-      updateGutter(lines);
-    });
-  }
-
-  // Page mount setups
-  document.addEventListener('astro:page-load', () => {
-    initEditor();
-
-    // Initialize sqlite
-    if (typeof (window as any).initSqlJs !== 'undefined') {
-      (window as any).initSqlJs({ locateFile: (file: string) => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` })
-        .then((lib: any) => {
-          SQLLib = lib;
-          const loadingEl = document.getElementById('sql-loading');
-          if (loadingEl) loadingEl.style.display = 'none';
-          
-          buildSidebar();
-          updateProgressCounters();
-
-          // Select question based on URL hash or default to b1
-          const qId = window.location.hash.replace('#', '') || 'b1';
-          selectQuestion(qId);
-        })
-        .catch((err: any) => {
-          console.error(err);
-          const loadingEl = document.getElementById('sql-loading');
-          if (loadingEl) {
-            loadingEl.innerHTML = `
-              <div class="text-red-400 font-mono text-sm max-w-md text-center p-4">
-                Failed to initialize SQLite Wasm: ${err.message}. Please reload.
-              </div>
-            `;
-          }
-        });
-    }
-
-    // Bind event buttons
-    const runBtn = document.getElementById('run-btn');
-    if (runBtn) runBtn.addEventListener('click', runQuery);
-
-    const checkBtn = document.getElementById('check-btn');
-    if (checkBtn) checkBtn.addEventListener('click', checkAnswer);
-
-    const resetBtn = document.getElementById('reset-btn');
-    if (resetBtn) {
-      resetBtn.addEventListener('click', () => {
-        if (jar) {
-          jar.updateCode('-- Write your SQLite queries below\n');
-          updateGutter(2);
-        }
-        const results = document.getElementById('results');
-        if (results) results.innerHTML = '<div class="text-slate-500">Run a query to see results here.</div>';
-        setStatus('');
-      });
-    }
-
-    // Ctrl+Enter run keyboard shortcut
-    document.addEventListener('keydown', (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        const active = document.activeElement;
-        if (active && active.id === 'sql-editor') {
-          e.preventDefault();
-          runQuery();
+    // Calculate solved counts for badges
+    Object.keys(challengeMappings).forEach(trackKey => {
+      const ids = challengeMappings[trackKey as keyof typeof challengeMappings];
+      const solvedInTrack = ids.filter(id => solvedList.includes(id)).length;
+      const totalInTrack = ids.length;
+      const countBadge = document.getElementById(`badge-count-${trackKey}`);
+      if (countBadge) {
+        countBadge.textContent = `${solvedInTrack}/${totalInTrack}`;
+        // Color badge based on completed
+        if (solvedInTrack === totalInTrack) {
+          countBadge.className = 'text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold';
+        } else if (solvedInTrack > 0) {
+          countBadge.className = 'text-[9px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold';
         }
       }
     });
+
+    // Update statuses for individual challenge cards
+    const statusBadges = document.querySelectorAll('[data-challenge-status]');
+    statusBadges.forEach((badge) => {
+      const challengeId = badge.getAttribute('data-challenge-status');
+      if (!challengeId) return;
+
+      if (solvedList.includes(challengeId)) {
+        badge.textContent = 'Solved';
+        badge.className = 'text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200';
+      } else if (progressList.includes(challengeId)) {
+        badge.textContent = 'In Progress';
+        badge.className = 'text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200';
+      }
+    });
+
+    // 2. Sidebar Track Selection Routing
+    const trackBtns = document.querySelectorAll('[data-track-btn]');
+    const activeBtnClass = 'text-indigo-650 bg-indigo-50/70 border-l-4 border-indigo-500 font-bold pl-2';
+    const inactiveBtnClass = 'text-slate-600 hover:bg-slate-50 border-l-4 border-transparent';
+
+    function selectTrack(trackName: string) {
+      trackBtns.forEach(btn => {
+        const name = btn.getAttribute('data-track-btn');
+        const panel = document.getElementById(`track-panel-${name}`);
+        if (panel) {
+          if (name === trackName) {
+            btn.className = `w-full text-left px-3 py-2.5 rounded-xl text-xs flex items-center justify-between transition-all ${activeBtnClass} cursor-pointer`;
+            panel.classList.remove('hidden');
+          } else {
+            btn.className = `w-full text-left px-3 py-2.5 rounded-xl text-xs flex items-center justify-between transition-all ${inactiveBtnClass} cursor-pointer`;
+            panel.classList.add('hidden');
+          }
+        }
+      });
+      // Save track selection in URL hash
+      window.location.hash = trackName;
+    }
+
+    // Initialize track selection from URL hash (default to basics)
+    const initialTrack = window.location.hash.replace('#', '') || 'basics';
+    selectTrack(initialTrack);
+
+    // Bind sidebar clicks
+    trackBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const trackName = btn.getAttribute('data-track-btn') || 'basics';
+        selectTrack(trackName);
+      });
+    });
+
+    // 3. Typewriter alternates "Python" vs "SQL"
+    const words = ['SQL', 'Python'];
+    let wordIdx = 0;
+    const typedTextEl = document.getElementById('typed-text');
+    
+    if (typedTextEl) {
+      let charIdx = words[wordIdx].length;
+      let isDeleting = true;
+      let typingSpeed = 150;
+      let timeoutId: any = null;
+
+      function typeEffect() {
+        const currentWord = words[wordIdx];
+        if (isDeleting) {
+          charIdx--;
+          typingSpeed = 80;
+        } else {
+          charIdx++;
+          typingSpeed = 150;
+        }
+
+        typedTextEl.textContent = currentWord.substring(0, charIdx);
+
+        if (!isDeleting && charIdx === currentWord.length) {
+          isDeleting = true;
+          typingSpeed = 2000; // Pause at full word
+        } else if (isDeleting && charIdx === 0) {
+          isDeleting = false;
+          wordIdx = (wordIdx + 1) % words.length;
+          typingSpeed = 500; // Pause before typing next word
+        }
+
+        timeoutId = setTimeout(typeEffect, typingSpeed);
+      }
+      
+      // Start typing loop
+      timeoutId = setTimeout(typeEffect, 1500);
+
+      // Clean up timeout on page unload to prevent memory leaks
+      document.addEventListener('astro:before-preparation', () => {
+        if (timeoutId) clearTimeout(timeoutId);
+      }, { once: true });
+    }
   });
 </script>
 
 <style>
-  /* Scoped layout styles to disable scrolling & hide footer */
-  :global(footer) {
-    display: none !important;
-  }
-  
-  :global(body) {
-    background-color: #090d16 !important;
-    overflow: hidden !important;
-    height: 100vh;
-  }
-
-  .sql-ide-container {
-    background-color: #090d16 !important;
-    color: #f1f5f9 !important;
-  }
-
-  /* Prism SQL keywords styles */
-  #sql-editor span.token.keyword {
-    color: #cc99cc !important;
-  }
-  #sql-editor span.token.string {
-    color: #7ec699 !important;
-  }
-  #sql-editor span.token.number {
-    color: #f8c555 !important;
-  }
-  #sql-editor span.token.comment {
-    color: #999999 !important;
-  }
-  #sql-editor span.token.function {
-    color: #f08d49 !important;
-  }
-  #sql-editor span.token.operator {
-    color: #67cdcc !important;
-  }
-
-  .tab-size-4 {
-    tab-size: 4;
-    -moz-tab-size: 4;
+  /* Typewriter blinking cursor helper */
+  .typewriter-cursor {
+    font-weight: 200;
   }
 </style>

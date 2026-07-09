@@ -1,0 +1,576 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { sqlChallenges } from '../../../data/sql-challenges';
+
+export async function getStaticPaths() {
+  return sqlChallenges.map((challenge) => ({
+    params: { slug: challenge.slug },
+    props: { challenge },
+  }));
+}
+
+const { challenge } = Astro.props;
+---
+
+<BaseLayout
+  title={`SQL Practice: ${challenge.title} | Datalogify`}
+  description={`Solve the ${challenge.title} database query challenge in SQL. Run query results directly in the browser and verify your solution.`}
+>
+  <!-- Load Prism Tomorrow theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+
+  <div class="ide-container flex flex-col lg:flex-row overflow-hidden" data-challenge-id={challenge.id}>
+    <!-- Left Panel: SQL Prompt & Schema Details -->
+    <div class="description-pane w-full lg:w-1/2 flex flex-col border-b lg:border-b-0 lg:border-r h-1/2 lg:h-full overflow-y-auto p-6 space-y-6">
+      <!-- Header section -->
+      <div>
+        <a href="/practice/sql/" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors mb-4">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to SQL Dashboard
+        </a>
+        <div class="flex items-center gap-3">
+          <h1 class="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            {challenge.title}
+          </h1>
+          <span class:list={[
+            'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border',
+            challenge.difficulty === 'basic' ? 'bg-emerald-950/50 text-emerald-400 border-emerald-800/60' : '',
+            challenge.difficulty === 'intermediate' ? 'bg-amber-950/50 text-amber-400 border-amber-800/60' : '',
+            challenge.difficulty === 'advanced' ? 'bg-red-950/50 text-red-400 border-red-800/60' : '',
+          ]}>
+            {challenge.difficulty}
+          </span>
+        </div>
+        <div class="text-[10px] font-mono text-slate-500 mt-1">{challenge.section.toUpperCase()} · {challenge.concept}</div>
+      </div>
+
+      <!-- Problem Prompt -->
+      <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+        <p class="whitespace-pre-line">{challenge.prompt}</p>
+      </div>
+
+      <!-- Table Schema Structure Card -->
+      <div class="pt-4 border-t border-slate-800">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-450 mb-2">Database Schema</h3>
+        <div class="bg-[#0b0f19] border border-slate-800/80 rounded-xl p-4">
+          <table class="w-full text-left font-mono text-xs text-indigo-300">
+            <tbody>
+              {challenge.schemaNote.split('\n').map(line => (
+                <tr>
+                  <td class="py-1 px-1 border-b border-slate-800/30">{line}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel: Code Editor, Action toolbar, Terminal outputs -->
+    <div class="editor-pane w-full lg:w-1/2 flex flex-col h-1/2 lg:h-full overflow-hidden">
+      <!-- Editor Header bar -->
+      <div class="editor-header flex items-center justify-between px-6 py-3 border-b">
+        <span class="text-xs font-semibold flex items-center gap-1.5 text-slate-400">
+          <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+          SQLite 3.x Sandbox (Interactive Query Editor)
+        </span>
+        <button 
+          id="btn-reset-query"
+          class="text-xs font-semibold text-slate-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
+          data-starter-code={challenge.starterCode}
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5" />
+          </svg>
+          Reset Query
+        </button>
+      </div>
+
+      <!-- CodeJar SQL Syntax Highlight Editor -->
+      <div class="flex-1 relative overflow-hidden flex min-h-[150px]">
+        <!-- Gutter line numbers -->
+        <div id="sql-gutter" class="gutter-lines w-12 border-r flex flex-col items-end pr-3 py-4 select-none font-mono text-xs leading-6 overflow-hidden">
+          <span>1</span>
+        </div>
+        <!-- Editor div -->
+        <div
+          id="sql-editor"
+          class="language-sql flex-1 h-full py-4 px-4 font-mono text-xs leading-6 focus:outline-none overflow-y-auto whitespace-pre tab-size-4"
+          spellcheck="false"
+        ></div>
+      </div>
+
+      <!-- Action toolbar & sandbox console -->
+      <div class="console-panel flex flex-col shrink-0">
+        <!-- Control buttons -->
+        <div class="console-header flex items-center justify-between px-6 py-3 border-b">
+          <div class="flex items-center gap-2">
+            <!-- SQLite Loader label -->
+            <span id="sqlite-status" class="text-xs text-slate-400 flex items-center gap-2 font-medium">
+              <svg class="w-4 h-4 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Starting SQLite Wasm...
+            </span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button
+              id="btn-run-query"
+              class="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              disabled
+            >
+              Run Query
+            </button>
+            <button
+              id="btn-submit-query"
+              class="px-4 py-1.5 rounded-lg text-xs font-bold bg-indigo-650 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              disabled
+            >
+              Submit Query
+            </button>
+          </div>
+        </div>
+
+        <!-- Terminal tabs navigation -->
+        <div class="console-tabs flex border-b text-[11px] font-semibold text-slate-400">
+          <button 
+            id="tab-tests-btn"
+            class="px-4 py-2 border-b-2 border-indigo-500 text-white focus:outline-none cursor-pointer"
+          >
+            Test Cases
+          </button>
+          <button 
+            id="tab-results-btn"
+            class="px-4 py-2 border-b-2 border-transparent hover:text-white focus:outline-none cursor-pointer"
+          >
+            Query Results
+          </button>
+          <button 
+            id="tab-errors-btn"
+            class="px-4 py-2 border-b-2 border-transparent hover:text-white focus:outline-none cursor-pointer"
+          >
+            Compiler Logs
+          </button>
+        </div>
+
+        <!-- Test cases and output terminal body -->
+        <div class="console-body p-5 h-48 overflow-y-auto font-mono text-xs leading-relaxed">
+          <!-- Test cases results panel -->
+          <div id="panel-tests" class="space-y-3">
+            <div class="text-slate-500 font-mono">Click "Run Query" or "Submit Query" to verify correctness.</div>
+          </div>
+          <!-- Query results table panel -->
+          <div id="panel-results" class="hidden overflow-x-auto text-slate-300">
+            No query results loaded yet.
+          </div>
+          <!-- Errors tab panel -->
+          <div id="panel-errors" class="hidden whitespace-pre overflow-x-auto text-red-400">
+            No compiler logs. Database queries running cleanly.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<!-- Load SQLite and Prism SQL assets -->
+<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+
+<!-- Server to client variables bridge -->
+<script is:inline define:vars={{ challenge }}>
+  window.challengeData = challenge;
+</script>
+
+<script>
+  import { CodeJar } from 'codejar';
+
+  const challenge = (window as any).challengeData;
+  let SQLLib: any = null;
+  let dbInstance: any = null;
+  let jar: any = null;
+
+  const FRAGMENTS: Record<string, string> = {
+    __SESSIONS__:`
+      CREATE TABLE sessions(session_id INTEGER, user_id INTEGER, app_name TEXT, minutes_played INTEGER, session_date TEXT);
+      INSERT INTO sessions VALUES
+      (1,101,'BeatWave',45,'2026-06-02'),
+      (2,102,'BeatWave',12,'2026-06-03'),
+      (3,101,'ClipStream',60,'2026-06-05'),
+      (4,103,'BeatWave',5,'2026-06-06'),
+      (5,104,NULL,25,'2026-06-07'),
+      (6,102,'ClipStream',80,'2026-06-08'),
+      (7,105,'BeatWave',33,'2026-06-10'),
+      (8,101,'BeatWave',20,'2026-06-11'),
+      (9,103,'ClipStream',50,'2026-06-15'),
+      (10,106,'BeatWave',15,'2026-07-01');
+    `,
+    __USERS__:`
+      CREATE TABLE users(user_id INTEGER, name TEXT, email TEXT);
+      INSERT INTO users VALUES
+      (101,'Aarav','aarav.k@mailbox.com'),
+      (102,'Diya','diya102@streammail.com'),
+      (103,'Kabir','kabir_c@mailbox.com'),
+      (104,'Isha','isha.p@quickmail.com'),
+      (105,'Neel','neel99@streammail.com'),
+      (106,'Riya','riya.b@mailbox.com');
+    `,
+    __USERS_FULL__:`
+      CREATE TABLE users(user_id INTEGER, name TEXT, email TEXT);
+      INSERT INTO users VALUES
+      (101,'Aarav','aarav.k@mailbox.com'),
+      (102,'Diya','diya102@streammail.com'),
+      (103,'Kabir','kabir_c@mailbox.com'),
+      (104,'Isha','isha.p@quickmail.com'),
+      (105,'Neel','neel99@streammail.com'),
+      (106,'Riya','riya.b@mailbox.com'),
+      (107,'Kavya','kavya.s@mailbox.com');
+    `
+  };
+
+  function resolveSetup(setup: string): string {
+    let out = setup;
+    Object.keys(FRAGMENTS).forEach(k => {
+      out = out.split(k).join(FRAGMENTS[k]);
+    });
+    return out;
+  }
+
+  // Initialize SQLite Wasm library
+  async function initSQLite() {
+    const statusLabel = document.getElementById('sqlite-status');
+    const runBtn = document.getElementById('btn-run-query');
+    const submitBtn = document.getElementById('btn-submit-query');
+
+    try {
+      if (typeof (window as any).initSqlJs === 'undefined') {
+        throw new Error('SQLite library script failed to load from CDN.');
+      }
+      
+      SQLLib = await (window as any).initSqlJs({ locateFile: (file: string) => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
+      
+      // Warm up initial SQLite database instance
+      dbInstance = new SQLLib.Database();
+      dbInstance.run(resolveSetup(challenge.setup));
+
+      if (statusLabel) {
+        statusLabel.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          Ready
+        `;
+      }
+      if (runBtn) runBtn.removeAttribute('disabled');
+      if (submitBtn) submitBtn.removeAttribute('disabled');
+    } catch (err: any) {
+      console.error(err);
+      if (statusLabel) {
+        statusLabel.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-red-500"></span>
+          Wasm error
+        `;
+      }
+    }
+  }
+
+  // CodeJar editor init
+  function initEditor() {
+    const editorEl = document.getElementById('sql-editor');
+    if (!editorEl) return;
+
+    const highlight = (editor: HTMLElement) => {
+      const code = editor.textContent || '';
+      if ((window as any).Prism) {
+        editor.innerHTML = (window as any).Prism.highlight(code, (window as any).Prism.languages.sql, 'sql');
+      }
+    };
+
+    jar = CodeJar(editorEl, highlight);
+    jar.updateCode(challenge.starterCode);
+    
+    jar.onUpdate((code: string) => {
+      updateLineNumbers(code);
+    });
+
+    updateLineNumbers(challenge.starterCode);
+  }
+
+  function updateLineNumbers(code: string) {
+    const gutter = document.getElementById('sql-gutter');
+    if (!gutter) return;
+
+    const lines = code.split('\n').length;
+    let numbersHtml = '';
+    for (let i = 1; i <= lines; i++) {
+      numbersHtml += `<span>${i}</span>`;
+    }
+    gutter.innerHTML = numbersHtml;
+  }
+
+  // Toggling Terminal Panels
+  function selectConsoleTab(tabName: string) {
+    const tabs = ['tests', 'results', 'errors'];
+    tabs.forEach(t => {
+      const btn = document.getElementById(`tab-${t}-btn`);
+      const panel = document.getElementById(`panel-${t}`);
+      if (btn && panel) {
+        if (t === tabName) {
+          btn.className = 'px-4 py-2 border-b-2 border-indigo-500 text-white focus:outline-none cursor-pointer';
+          panel.classList.remove('hidden');
+        } else {
+          btn.className = 'px-4 py-2 border-b-2 border-transparent hover:text-white focus:outline-none cursor-pointer';
+          panel.classList.add('hidden');
+        }
+      }
+    });
+  }
+
+  function execToRows(db: any, query: string) {
+    const res = db.exec(query);
+    if (res.length === 0) return { columns: [], rows: [] };
+    return { columns: res[0].columns, rows: res[0].values };
+  }
+
+  function renderTable(columns: string[], rows: any[][]) {
+    const panelResults = document.getElementById('panel-results');
+    if (!panelResults) return;
+
+    if (columns.length === 0) {
+      panelResults.innerHTML = '<div class="text-slate-500">Query executed successfully. Zero rows returned.</div>';
+      return;
+    }
+
+    let html = `<div class="text-[10px] text-slate-500 mb-2">${rows.length} row${rows.length !== 1 ? 's' : ''} returned</div>`;
+    html += '<table class="w-full border-collapse text-left text-slate-300 min-w-max">';
+    html += '<thead><tr class="border-b border-slate-800">';
+    columns.forEach(c => html += `<th class="pb-2 font-bold text-indigo-400 px-3">${escapeHtml(c)}</th>`);
+    html += '</tr></thead><tbody>';
+    rows.forEach(r => {
+      html += '<tr class="border-b border-slate-800/40 hover:bg-slate-800/10">' + r.map(v => `<td class="py-2 px-3">${v === null ? '<span class="text-slate-650">NULL</span>' : escapeHtml(String(v))}</td>`).join('') + '</tr>';
+    });
+    html += '</tbody></table>';
+    panelResults.innerHTML = html;
+  }
+
+  function escapeHtml(s: string) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function rowsSignature(columns: string[], rows: any[][], ordered: boolean) {
+    let r = rows.map(row => row.map(v => v === null ? '∅' : String(v)).join('\u0001'));
+    if (!ordered) r = r.slice().sort();
+    return columns.join('\u0002') + '||' + r.join('\u0003');
+  }
+
+  async function executeSQLQuery(submitMode = false) {
+    const testsPanel = document.getElementById('panel-tests');
+    const resultsPanel = document.getElementById('panel-results');
+    const errorsPanel = document.getElementById('panel-errors');
+    
+    if (!jar || !dbInstance || !testsPanel || !resultsPanel || !errorsPanel) return;
+
+    const userQuery = jar.toString().trim();
+    if (!userQuery) {
+      testsPanel.innerHTML = '<div class="text-red-400 font-mono">Write a SQL query first.</div>';
+      selectConsoleTab('tests');
+      return;
+    }
+
+    testsPanel.innerHTML = '<div class="text-indigo-400 animate-pulse">Running SQLite compiler...</div>';
+    resultsPanel.innerHTML = '';
+    errorsPanel.innerHTML = '';
+
+    // Mark as in-progress
+    const progressList = JSON.parse(localStorage.getItem('datalogify_in_progress_sql_challenges') || '[]');
+    if (!progressList.includes(challenge.id)) {
+      progressList.push(challenge.id);
+      localStorage.setItem('datalogify_in_progress_sql_challenges', JSON.stringify(progressList));
+    }
+
+    try {
+      // Execute user query
+      const userRes = execToRows(dbInstance, userQuery);
+      renderTable(userRes.columns, userRes.rows);
+
+      // Execute solution query to verify
+      const solutionRes = execToRows(dbInstance, challenge.solution);
+
+      const userSig = rowsSignature(userRes.columns, userRes.rows, challenge.orderMatters);
+      const solSig = rowsSignature(solutionRes.columns, solutionRes.rows, challenge.orderMatters);
+
+      if (userSig === solSig) {
+        testsPanel.innerHTML = `
+          <div class="border-l-2 border-emerald-500 pl-3 py-1 space-y-1">
+            <div class="text-emerald-400 font-bold">Passed ✅ — Solution Match</div>
+            <div class="text-[10px] text-slate-500">Correct column signatures, row counts, and sorting output returned.</div>
+          </div>
+        `;
+
+        if (submitMode) {
+          // Save solved status
+          const solvedList = JSON.parse(localStorage.getItem('datalogify_solved_sql_challenges') || '[]');
+          if (!solvedList.includes(challenge.id)) {
+            solvedList.push(challenge.id);
+            localStorage.setItem('datalogify_solved_sql_challenges', JSON.stringify(solvedList));
+          }
+
+          testsPanel.innerHTML += `
+            <div class="mt-4 p-3 bg-emerald-950/40 border border-emerald-800/40 rounded-xl text-emerald-400 font-semibold text-center animate-bounce">
+              Congratulations! Your SQL query is fully correct. Submission successful! 🚀
+            </div>
+          `;
+        }
+      } else {
+        testsPanel.innerHTML = `
+          <div class="border-l-2 border-red-500 pl-3 py-1 space-y-1">
+            <div class="text-red-400 font-bold">Incorrect Output ❌ — Table Mismatch</div>
+            <div class="text-[10px] text-slate-400">Expected: <span class="text-emerald-400">${solutionRes.rows.length} row(s)</span> | Got: <span class="text-red-400">${userRes.rows.length} row(s)</span></div>
+            <div class="text-[10px] text-slate-500">${challenge.orderMatters ? 'Note: Row order matters for this query.' : 'Row order does not matter.'}</div>
+          </div>
+        `;
+      }
+      selectConsoleTab('tests');
+    } catch (err: any) {
+      errorsPanel.textContent = err.message;
+      testsPanel.innerHTML = `
+        <div class="border-l-2 border-red-500 pl-3 py-1">
+          <div class="text-red-400 font-bold">SQLite Parser Error ⚠️</div>
+          <div class="text-[10px] text-slate-550">Check Compiler Logs for syntax details.</div>
+        </div>
+      `;
+      selectConsoleTab('errors');
+    }
+  }
+
+  // Page mount setups
+  document.addEventListener('astro:page-load', () => {
+    initEditor();
+
+    // Reset button click
+    const resetBtn = document.getElementById('btn-reset-query');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        const starter = resetBtn.getAttribute('data-starter-code');
+        if (jar && starter) {
+          jar.updateCode(starter);
+          updateLineNumbers(starter);
+        }
+      });
+    }
+
+    // Run buttons click
+    const runBtn = document.getElementById('btn-run-query');
+    if (runBtn) runBtn.addEventListener('click', () => executeSQLQuery(false));
+
+    const submitBtn = document.getElementById('btn-submit-query');
+    if (submitBtn) submitBtn.addEventListener('click', () => executeSQLQuery(true));
+
+    // Console tabs clicks
+    const tabs = ['tests', 'results', 'errors'];
+    tabs.forEach(t => {
+      const btn = document.getElementById(`tab-${t}-btn`);
+      if (btn) {
+        btn.addEventListener('click', () => selectConsoleTab(t));
+      }
+    });
+
+    // Start SQLite compilation
+    initSQLite();
+  });
+</script>
+
+<style>
+  /* Scoped layout styles to disable scrolling & hide footer */
+  :global(footer) {
+    display: none !important;
+  }
+  
+  :global(body) {
+    background-color: #090d16 !important;
+    overflow: hidden !important;
+    height: 100vh;
+  }
+
+  .ide-container {
+    background-color: #090d16 !important;
+    color: #f1f5f9 !important;
+    height: calc(100vh - 4rem);
+  }
+
+  .description-pane {
+    background-color: #0f172a !important;
+    border-color: #1e293b !important;
+    color: #cbd5e1 !important;
+  }
+
+  .editor-pane {
+    background-color: #090d16 !important;
+  }
+
+  .editor-header {
+    background-color: #0f172a !important;
+    border-color: #1e293b !important;
+  }
+
+  .gutter-lines {
+    background-color: #0b0f19 !important;
+    border-color: #1e293b !important;
+    color: #475569 !important;
+  }
+
+  #sql-editor {
+    background-color: #090d16 !important;
+    color: #f8fafc !important;
+    caret-color: #ffffff !important;
+    outline: none !important;
+  }
+
+  /* Prism SQL colors matching Python */
+  #sql-editor span.token.keyword {
+    color: #cc99cc !important;
+  }
+  #sql-editor span.token.string {
+    color: #7ec699 !important;
+  }
+  #sql-editor span.token.number {
+    color: #f8c555 !important;
+  }
+  #sql-editor span.token.comment {
+    color: #999999 !important;
+  }
+  #sql-editor span.token.function {
+    color: #f08d49 !important;
+  }
+  #sql-editor span.token.operator {
+    color: #67cdcc !important;
+  }
+
+  .console-panel {
+    background-color: #0f172a !important;
+    border-color: #1e293b !important;
+  }
+
+  .console-header {
+    background-color: #0f172a !important;
+    border-color: #1e293b !important;
+  }
+
+  .console-tabs {
+    background-color: #090d16 !important;
+    border-color: #1e293b !important;
+  }
+
+  .console-body {
+    background-color: #05080f !important;
+    color: #e2e8f0 !important;
+  }
+
+  .tab-size-4 {
+    tab-size: 4;
+    -moz-tab-size: 4;
+  }
+</style>
