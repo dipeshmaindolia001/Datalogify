@@ -47,19 +47,18 @@ const jsonLd = {
 
     <!-- Main Navigation Tabs (Python vs SQL) -->
     <div class="flex gap-4 border-b border-slate-200 pb-4 mb-8">
-      <button 
-        class="px-5 py-2.5 rounded-xl text-sm font-bold bg-indigo-650 text-white shadow-md shadow-indigo-500/15 focus:outline-none cursor-pointer flex items-center gap-2"
-        id="tab-py-btn"
+      <a 
+        href="/practice/"
+        class="px-5 py-2.5 rounded-xl text-sm font-bold bg-indigo-650 text-white shadow-md shadow-indigo-500/15 focus:outline-none flex items-center gap-2"
       >
         🐍 Python Practice
-      </button>
-      <button 
-        class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100 hover:text-slate-500 transition-colors focus:outline-none cursor-not-allowed flex items-center justify-between gap-3"
-        disabled
+      </a>
+      <a 
+        href="/practice/sql/"
+        class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-50 text-slate-500 border border-slate-100 hover:bg-slate-100 hover:text-slate-700 transition-colors focus:outline-none flex items-center gap-2"
       >
-        <span>🗃️ SQL Practice</span>
-        <span class="text-[9px] font-bold uppercase tracking-wider bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded">Soon</span>
-      </button>
+        🗃️ SQL Practice
+      </a>
     </div>
 
     <!-- Split Pane Layout: Sidebar + Challenge Cards -->
