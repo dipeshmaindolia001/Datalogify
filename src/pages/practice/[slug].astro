@@ -16,6 +16,9 @@ const { challenge } = Astro.props;
   title={`Practice: ${challenge.title} | Datalogify`}
   description={`Solve the ${challenge.title} challenge in Python. Run test cases directly in the browser and verify your solution.`}
 >
+  <!-- Load Prism dark theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+
   <div class="h-[calc(100vh-4rem)] flex flex-col lg:flex-row bg-slate-950 text-slate-100 overflow-hidden" data-challenge-id={challenge.id}>
     <!-- Left panel: Challenge description -->
     <div class="w-full lg:w-1/2 flex flex-col border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-900 h-1/2 lg:h-full overflow-y-auto">
@@ -97,11 +100,11 @@ const { challenge } = Astro.props;
       <div class="flex items-center justify-between px-6 py-3 border-b border-slate-800 bg-slate-900/60">
         <span class="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-          Python 3.x
+          Python 3.x (Interactive Editor)
         </span>
         <button 
           id="btn-reset-code"
-          class="text-xs font-semibold text-slate-400 hover:text-white transition-colors flex items-center gap-1"
+          class="text-xs font-semibold text-slate-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
           data-starter-code={challenge.starterCode}
         >
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,22 +114,22 @@ const { challenge } = Astro.props;
         </button>
       </div>
 
-      <!-- Code Editor Textarea -->
-      <div class="flex-1 relative overflow-hidden">
-        <!-- Lines numbers sidebar gutter -->
-        <div class="absolute left-0 top-0 bottom-0 w-12 bg-slate-900 border-r border-slate-800 flex flex-col items-center py-4 select-none text-slate-600 font-mono text-xs leading-6" id="line-gutter">
+      <!-- Real-time Syntax Highlight CodeEditor -->
+      <div class="flex-1 relative overflow-hidden flex bg-slate-950 min-h-[150px]">
+        <!-- Gutter for line numbers -->
+        <div id="line-gutter" class="w-12 bg-slate-900/40 border-r border-slate-800 flex flex-col items-end pr-3 py-4 select-none text-slate-600 font-mono text-xs leading-6 overflow-hidden">
           <span>1</span>
         </div>
-        <textarea
+        <!-- CodeJar Code element -->
+        <div
           id="editor"
-          class="w-full h-full pl-16 pr-6 py-4 bg-slate-950 text-slate-200 font-mono text-xs leading-6 resize-none focus:outline-none overflow-y-auto block whitespace-pre"
+          class="language-python flex-1 h-full py-4 px-4 bg-slate-950 text-slate-200 font-mono text-xs leading-6 focus:outline-none overflow-y-auto whitespace-pre tab-size-4"
           spellcheck="false"
-          data-challenge-id={challenge.id}
-        >{challenge.starterCode}</textarea>
+        ></div>
       </div>
 
-      <!-- Action Bar and test runner panel -->
-      <div class="border-t border-slate-800 bg-slate-900 flex flex-col">
+      <!-- Action Bar and test runner console -->
+      <div class="border-t border-slate-800 bg-slate-900 flex flex-col shrink-0">
         <!-- Control buttons -->
         <div class="flex items-center justify-between px-6 py-3 border-b border-slate-800/80">
           <div class="flex items-center gap-2">
@@ -143,14 +146,14 @@ const { challenge } = Astro.props;
           <div class="flex items-center gap-3">
             <button
               id="btn-run-code"
-              class="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               disabled
             >
               Run Code
             </button>
             <button
               id="btn-submit-code"
-              class="px-4 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-4 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               disabled
             >
               Submit Code
@@ -158,21 +161,97 @@ const { challenge } = Astro.props;
           </div>
         </div>
 
+        <!-- Terminal tabs -->
+        <div class="flex border-b border-slate-800 bg-slate-950/80 text-[11px] font-semibold text-slate-400">
+          <button 
+            id="tab-tests-btn"
+            class="px-4 py-2 border-b-2 border-indigo-500 text-white focus:outline-none cursor-pointer"
+          >
+            Test Cases
+          </button>
+          <button 
+            id="tab-output-btn"
+            class="px-4 py-2 border-b-2 border-transparent hover:text-white focus:outline-none cursor-pointer"
+          >
+            Console Output
+          </button>
+          <button 
+            id="tab-errors-btn"
+            class="px-4 py-2 border-b-2 border-transparent hover:text-white focus:outline-none cursor-pointer"
+          >
+            Compiler Logs
+          </button>
+        </div>
+
         <!-- Test cases display results console -->
-        <div class="p-5 max-h-48 overflow-y-auto space-y-3 font-mono text-xs bg-slate-950/70" id="runner-results">
-          <div class="text-slate-500">Click "Run Code" to compile and run example cases.</div>
+        <div class="p-5 h-40 overflow-y-auto font-mono text-xs bg-slate-950/90 leading-relaxed">
+          <!-- Tests tab panel -->
+          <div id="panel-tests" class="space-y-3">
+            <div class="text-slate-500">Click "Run Code" to compile and run example cases.</div>
+          </div>
+          <!-- Output tab panel -->
+          <div id="panel-output" class="hidden whitespace-pre overflow-x-auto text-slate-300">
+            No stdout generated yet. Run your code to see prints.
+          </div>
+          <!-- Errors tab panel -->
+          <div id="panel-errors" class="hidden whitespace-pre overflow-x-auto text-red-400">
+            No error logs. Code runs cleanly.
+          </div>
         </div>
       </div>
     </div>
   </div>
 </BaseLayout>
 
-<!-- Load Pyodide asynchronously -->
+<!-- Load Pyodide and Prism asynchronously -->
 <script is:inline src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
 
-<script define:vars={{ challenge }}>
+<script type="module" define:vars={{ challenge }}>
+  import { CodeJar } from 'https://cdn.jsdelivr.net/npm/codejar@1.1.0/codejar.min.js';
+
   let pyodideInstance = null;
   let isPyodideLoading = true;
+  let jar = null;
+
+  // Initialize CodeJar editor
+  function initEditor() {
+    const editorEl = document.getElementById('editor');
+    if (!editorEl) return;
+
+    // Syntax highlighting callback
+    const highlight = (editor) => {
+      // Clean up previous markup to avoid recursive styling
+      editor.textContent = editor.textContent;
+      if (window.Prism) {
+        window.Prism.highlightElement(editor);
+      }
+    };
+
+    jar = CodeJar(editorEl, highlight);
+    jar.updateCode(challenge.starterCode);
+    
+    // Wire up dynamic gutter line numbering
+    jar.onUpdate((code) => {
+      updateLineNumbers(code);
+    });
+
+    updateLineNumbers(challenge.starterCode);
+  }
+
+  // Update line number gutter
+  function updateLineNumbers(code) {
+    const gutter = document.getElementById('line-gutter');
+    if (!gutter) return;
+
+    const lines = code.split('\n').length;
+    let numbersHtml = '';
+    for (let i = 1; i <= lines; i++) {
+      numbersHtml += `<span>${i}</span>`;
+    }
+    gutter.innerHTML = numbersHtml;
+  }
 
   // Initialize Pyodide on page load
   async function initPyodide() {
@@ -207,27 +286,33 @@ const { challenge } = Astro.props;
     }
   }
 
-  // Set line numbers in editor gutter
-  function updateLineNumbers() {
-    const editor = document.getElementById('editor');
-    const gutter = document.getElementById('line-gutter');
-    if (!editor || !gutter) return;
-
-    const lines = editor.value.split('\n').length;
-    let numbersHtml = '';
-    for (let i = 1; i <= lines; i++) {
-      numbersHtml += `<span>${i}</span>`;
-    }
-    gutter.innerHTML = numbersHtml;
+  // Console Tabs toggling logic
+  function selectConsoleTab(tabName) {
+    const tabs = ['tests', 'output', 'errors'];
+    tabs.forEach(t => {
+      const btn = document.getElementById(`tab-${t}-btn`);
+      const panel = document.getElementById(`panel-${t}`);
+      if (btn && panel) {
+        if (t === tabName) {
+          btn.className = 'px-4 py-2 border-b-2 border-indigo-500 text-white focus:outline-none cursor-pointer';
+          panel.classList.remove('hidden');
+        } else {
+          btn.className = 'px-4 py-2 border-b-2 border-transparent hover:text-white focus:outline-none cursor-pointer';
+          panel.classList.add('hidden');
+        }
+      }
+    });
   }
 
-  // Handle runs
+  // Execute test cases
   async function executeTestCases(submitMode = false) {
-    const editor = document.getElementById('editor');
-    const resultsConsole = document.getElementById('runner-results');
-    const statusLabel = document.getElementById('pyodide-status');
+    const resultsConsole = document.getElementById('panel-tests');
+    const stdoutConsole = document.getElementById('panel-output');
+    const stderrConsole = document.getElementById('panel-errors');
 
-    if (!editor || !resultsConsole || !pyodideInstance) return;
+    if (!jar || !resultsConsole || !pyodideInstance) return;
+
+    const userCode = jar.toString();
 
     // Filter test cases based on run mode
     const casesToRun = submitMode 
@@ -235,6 +320,8 @@ const { challenge } = Astro.props;
       : challenge.testCases.filter(tc => tc.isExample);
 
     resultsConsole.innerHTML = '<div class="text-indigo-400 animate-pulse">Running test cases...</div>';
+    stdoutConsole.textContent = '';
+    stderrConsole.textContent = '';
     
     // Save state as in progress
     const progressList = JSON.parse(localStorage.getItem('datalogify_in_progress_challenges') || '[]');
@@ -245,19 +332,24 @@ const { challenge } = Astro.props;
 
     let allPassed = true;
     let consoleOutputHtml = '';
+    let globalStdoutBuffer = '';
+    let globalStderrBuffer = '';
 
     for (let i = 0; i < casesToRun.length; i++) {
       const tc = casesToRun[i];
       const caseLabel = tc.isExample ? `Example Test Case ${i + 1}` : `Test Case ${i + 1}`;
       
       let stdoutBuffer = '';
+      let stderrBuffer = '';
+
       pyodideInstance.setStdout({
         batched: (msg) => {
           stdoutBuffer += msg + '\n';
+          globalStdoutBuffer += `[${caseLabel}]\n` + msg + '\n';
         }
       });
 
-      // Python execution wrapper to mock stdin & redirect sys.stdin
+      // Python execution wrapper to mock stdin
       const wrapperScript = `
 import sys
 import io
@@ -278,10 +370,11 @@ builtins.input = input
 
 # User code execution
 try:
-    code = """${editor.value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'''/g, "\\'\\'\\'")}"""
+    code = """${userCode.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'''/g, "\\'\\'\\'")}"""
     exec(code, {})
 except Exception as e:
-    print(f"ERROR: {e}", file=sys.stderr)
+    import traceback
+    print(traceback.format_exc(), file=sys.stderr)
 `;
 
       try {
@@ -309,16 +402,19 @@ except Exception as e:
         }
       } catch (err) {
         allPassed = false;
+        globalStderrBuffer += `[${caseLabel}]\n` + err.message + '\n';
         consoleOutputHtml += `
           <div class="border-l-2 border-red-500 pl-3 py-1 space-y-1">
             <div class="text-red-400 font-bold">Runtime Error ⚠️ — ${caseLabel}</div>
-            <div class="text-[10px] text-slate-400">${err.message}</div>
+            <div class="text-[10px] text-slate-400">See Compiler Logs for stack trace.</div>
           </div>
         `;
       }
     }
 
     resultsConsole.innerHTML = consoleOutputHtml;
+    stdoutConsole.textContent = globalStdoutBuffer || 'No stdout generated.';
+    stderrConsole.textContent = globalStderrBuffer || 'No compiler errors.';
 
     if (submitMode && allPassed) {
       // Mark as solved
@@ -329,42 +425,33 @@ except Exception as e:
       }
       
       resultsConsole.innerHTML += `
-        <div class="mt-4 p-3 bg-emerald-950/40 border border-emerald-800/40 rounded-xl text-emerald-400 font-semibold text-center">
+        <div class="mt-4 p-3 bg-emerald-950/40 border border-emerald-800/40 rounded-xl text-emerald-400 font-semibold text-center animate-bounce">
           Congratulations! All test cases passed. Submission successful! 🎉
         </div>
       `;
+    }
+
+    // Automatically switch tabs if compile errors occurred
+    if (globalStderrBuffer) {
+      selectConsoleTab('errors');
+    } else {
+      selectConsoleTab('tests');
     }
   }
 
   // Page lifecycle events
   document.addEventListener('astro:page-load', () => {
-    // Initial gutter setup
-    updateLineNumbers();
+    // Initialize CodeJar editor
+    initEditor();
     
     // Wire up events
-    const editor = document.getElementById('editor');
-    if (editor) {
-      editor.addEventListener('input', updateLineNumbers);
-      editor.addEventListener('keydown', (e) => {
-        // Tab support inside editor
-        if (e.key === 'Tab') {
-          e.preventDefault();
-          const start = editor.selectionStart;
-          const end = editor.selectionEnd;
-          editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
-          editor.selectionStart = editor.selectionEnd = start + 4;
-          updateLineNumbers();
-        }
-      });
-    }
-
     const resetBtn = document.getElementById('btn-reset-code');
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
         const starter = resetBtn.getAttribute('data-starter-code');
-        if (editor && starter) {
-          editor.value = starter;
-          updateLineNumbers();
+        if (jar && starter) {
+          jar.updateCode(starter);
+          updateLineNumbers(starter);
         }
       });
     }
@@ -379,7 +466,29 @@ except Exception as e:
       submitBtn.addEventListener('click', () => executeTestCases(true));
     }
 
+    // Tabs clicks
+    const tabs = ['tests', 'output', 'errors'];
+    tabs.forEach(t => {
+      const btn = document.getElementById(`tab-${t}-btn`);
+      if (btn) {
+        btn.addEventListener('click', () => selectConsoleTab(t));
+      }
+    });
+
     // Launch Pyodide compilation
     initPyodide();
   });
 </script>
+
+<style>
+  /* Custom editor tab size */
+  .tab-size-4 {
+    tab-size: 4;
+    -moz-tab-size: 4;
+  }
+  
+  /* Reset editor content padding inside CodeJar to line up with numbers */
+  #editor {
+    outline: none;
+  }
+</style>
