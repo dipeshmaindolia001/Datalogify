@@ -201,17 +201,24 @@ const { challenge } = Astro.props;
   </div>
 </BaseLayout>
 
-<!-- Load Pyodide and Prism asynchronously -->
+<!-- Load Pyodide and Prism synchronously -->
 <script is:inline src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
 <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
 <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
 
-<script type="module" define:vars={{ challenge }}>
-  import { CodeJar } from 'https://cdn.jsdelivr.net/npm/codejar@1.1.0/codejar.min.js';
+<!-- Server to client variables bridge -->
+<script is:inline define:vars={{ challenge }}>
+  window.challengeData = challenge;
+</script>
 
-  let pyodideInstance = null;
+<!-- Main Vite-bundled script -->
+<script>
+  import { CodeJar } from 'codejar';
+
+  const challenge = (window as any).challengeData;
+  let pyodideInstance: any = null;
   let isPyodideLoading = true;
-  let jar = null;
+  let jar: any = null;
 
   // Initialize CodeJar editor
   function initEditor() {
@@ -219,10 +226,10 @@ const { challenge } = Astro.props;
     if (!editorEl) return;
 
     // Syntax highlighting callback
-    const highlight = (editor) => {
-      const code = editor.textContent;
-      if (window.Prism) {
-        editor.innerHTML = window.Prism.highlight(code, window.Prism.languages.python, 'python');
+    const highlight = (editor: HTMLElement) => {
+      const code = editor.textContent || '';
+      if ((window as any).Prism) {
+        editor.innerHTML = (window as any).Prism.highlight(code, (window as any).Prism.languages.python, 'python');
       }
     };
 
@@ -230,7 +237,7 @@ const { challenge } = Astro.props;
     jar.updateCode(challenge.starterCode);
     
     // Wire up dynamic gutter line numbering
-    jar.onUpdate((code) => {
+    jar.onUpdate((code: string) => {
       updateLineNumbers(code);
     });
 
@@ -238,7 +245,7 @@ const { challenge } = Astro.props;
   }
 
   // Update line number gutter
-  function updateLineNumbers(code) {
+  function updateLineNumbers(code: string) {
     const gutter = document.getElementById('line-gutter');
     if (!gutter) return;
 
@@ -257,11 +264,11 @@ const { challenge } = Astro.props;
     const submitBtn = document.getElementById('btn-submit-code');
 
     try {
-      if (typeof loadPyodide === 'undefined') {
+      if (typeof (window as any).loadPyodide === 'undefined') {
         throw new Error('Pyodide script failed to load from CDN.');
       }
       
-      pyodideInstance = await loadPyodide();
+      pyodideInstance = await (window as any).loadPyodide();
       isPyodideLoading = false;
 
       if (statusLabel) {
@@ -272,7 +279,7 @@ const { challenge } = Astro.props;
       }
       if (runBtn) runBtn.removeAttribute('disabled');
       if (submitBtn) submitBtn.removeAttribute('disabled');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       if (statusLabel) {
         statusLabel.innerHTML = `
@@ -284,7 +291,7 @@ const { challenge } = Astro.props;
   }
 
   // Console Tabs toggling logic
-  function selectConsoleTab(tabName) {
+  function selectConsoleTab(tabName: string) {
     const tabs = ['tests', 'output', 'errors'];
     tabs.forEach(t => {
       const btn = document.getElementById(`tab-${t}-btn`);
@@ -314,11 +321,11 @@ const { challenge } = Astro.props;
     // Filter test cases based on run mode
     const casesToRun = submitMode 
       ? challenge.testCases 
-      : challenge.testCases.filter(tc => tc.isExample);
+      : challenge.testCases.filter((tc: any) => tc.isExample);
 
     resultsConsole.innerHTML = '<div class="text-indigo-400 animate-pulse">Running test cases...</div>';
-    stdoutConsole.textContent = '';
-    stderrConsole.textContent = '';
+    if (stdoutConsole) stdoutConsole.textContent = '';
+    if (stderrConsole) stderrConsole.textContent = '';
     
     // Save state as in progress
     const progressList = JSON.parse(localStorage.getItem('datalogify_in_progress_challenges') || '[]');
@@ -337,10 +344,9 @@ const { challenge } = Astro.props;
       const caseLabel = tc.isExample ? `Example Test Case ${i + 1}` : `Test Case ${i + 1}`;
       
       let stdoutBuffer = '';
-      let stderrBuffer = '';
 
       pyodideInstance.setStdout({
-        batched: (msg) => {
+        batched: (msg: string) => {
           stdoutBuffer += msg + '\n';
           globalStdoutBuffer += `[${caseLabel}]\n` + msg + '\n';
         }
@@ -397,7 +403,7 @@ except Exception as e:
             </div>
           `;
         }
-      } catch (err) {
+      } catch (err: any) {
         allPassed = false;
         globalStderrBuffer += `[${caseLabel}]\n` + err.message + '\n';
         consoleOutputHtml += `
@@ -410,8 +416,8 @@ except Exception as e:
     }
 
     resultsConsole.innerHTML = consoleOutputHtml;
-    stdoutConsole.textContent = globalStdoutBuffer || 'No stdout generated.';
-    stderrConsole.textContent = globalStderrBuffer || 'No compiler errors.';
+    if (stdoutConsole) stdoutConsole.textContent = globalStdoutBuffer || 'No stdout generated.';
+    if (stderrConsole) stderrConsole.textContent = globalStderrBuffer || 'No compiler errors.';
 
     if (submitMode && allPassed) {
       // Mark as solved
