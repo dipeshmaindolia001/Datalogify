@@ -1,23 +1,139 @@
 ---
-import ComingSoonPage from '../../components/ComingSoonPage.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TopicSidebar from '../../components/TopicSidebar.astro';
+import { getCollection } from 'astro:content';
+
+const projectsLessons = (await getCollection('lessons', ({ data }) => data.category === 'projects'))
+  .sort((a, b) => a.data.order - b.data.order);
+
+function getSlug(id: string): string {
+  return id.replace(/^projects\//, '');
+}
+
+const beginnerLessons = projectsLessons.filter(l => l.data.order >= 1 && l.data.order <= 100);
+const intermediateLessons = projectsLessons.filter(l => l.data.order >= 101 && l.data.order <= 200);
+const advancedLessons = projectsLessons.filter(l => l.data.order >= 201 && l.data.order <= 300);
+const proLessons = projectsLessons.filter(l => l.data.order >= 301);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Course',
+  name: 'Portfolio Projects',
+  description: 'Apply your skills to real-world datasets. Build dashboard pipelines, customer churn studies, and marketing campaign assessments.',
+  provider: { '@type': 'Organization', name: 'Datalogify' },
+  numberOfLessons: projectsLessons.length,
+  hasCourseInstance: {
+    '@type': 'CourseInstance',
+    courseMode: 'online',
+    courseWorkload: 'PT30H',
+  },
+};
+
+interface LessonGroup {
+  label: string;
+  emoji: string;
+  desc: string;
+  color: string;
+  border: string;
+  items: typeof projectsLessons;
+}
+
+const groups: LessonGroup[] = [
+  { label: 'Basics', emoji: '🟢', desc: 'Data ingestion and cleaning campaigns.', color: 'from-violet-500 to-purple-500', border: 'border-violet-200 bg-violet-50/30', items: beginnerLessons },
+  { label: 'Intermediate', emoji: '🟡', desc: 'Dashboard builds and reporting models.', color: 'from-amber-500 to-yellow-500', border: 'border-amber-200 bg-amber-50/30', items: intermediateLessons },
+  { label: 'Advanced', emoji: '🟠', desc: 'Outlier detection and regression forecasting.', color: 'from-orange-500 to-red-500', border: 'border-orange-200 bg-orange-50/30', items: advancedLessons },
+  { label: 'Pro', emoji: '🔴', desc: 'A/B testing campaigns and business cases.', color: 'from-red-500 to-rose-500', border: 'border-red-200 bg-red-50/30', items: proLessons },
+].filter(g => g.items.length > 0);
 ---
 
-<ComingSoonPage
-  title="Portfolio Projects"
-  subtitle="Apply everything you've learned to real-world projects. Each one includes a dataset, problem statement, full solution, code, and insights."
-  phase={6}
-  icon="🚀"
-  gradientFrom="from-violet-500"
-  gradientTo="to-purple-500"
-  accentColor="bg-purple-100 text-purple-600"
-  topics={[
-    { name: 'Sales Dashboard Analysis', desc: 'Build a complete revenue analysis pipeline' },
-    { name: 'Customer Churn Analysis', desc: 'Identify why customers leave and predict risk' },
-    { name: 'Marketing Campaign Analysis', desc: 'Measure ROI and optimize ad spend' },
-    { name: 'Financial Data Analysis', desc: 'Analyze stock data and financial metrics' },
-    { name: 'Survey Data Analysis', desc: 'Clean, analyze, and visualize survey responses' },
-    { name: 'End-to-End Case Study', desc: 'A full portfolio-ready analytics project' },
-  ]}
-  prevPhase={{ name: 'Phase 5: Statistics', link: '/statistics/' }}
-  nextPhase={{ name: 'Phase 7: Interview Prep', link: '/interview-prep/' }}
-/>
+<BaseLayout
+  title="Data Analytics Portfolio Projects — Real Datasets & Walkthroughs"
+  description={`Apply your skills to ${projectsLessons.length} portfolio-ready projects — sales pipeline dashboards, churn predictions, and marketing campaign ROI.`}
+  jsonLd={jsonLd}
+>
+  <div class="max-w-[1400px] mx-auto px-4 sm:px-6 py-8 lg:py-12">
+    <div class="flex gap-8">
+      <!-- Left Sidebar -->
+      <aside class="hidden lg:block w-64 shrink-0">
+        <div class="sticky top-24">
+          <TopicSidebar category="projects" />
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="flex-1 min-w-0">
+        <!-- Header -->
+        <div class="mb-10 animate-slide-up">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 text-white text-2xl shadow-lg shadow-violet-200/50">🚀</span>
+            <div>
+              <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                Portfolio Projects
+              </h1>
+              <p class="text-sm text-slate-500">{projectsLessons.length} projects · Phase 6</p>
+            </div>
+          </div>
+          <p class="text-base text-slate-500 max-w-2xl leading-relaxed mt-3">
+            Apply everything you have learned to real-world projects. Each project includes a real raw dataset, a concrete business problem statement, step-by-step code files, clean visualization charts, and templates to add to your GitHub portfolio.
+          </p>
+        </div>
+
+        <!-- Lesson Groups -->
+        {groups.length > 0 ? (
+          groups.map((group) => (
+            <section class="mb-10">
+              <div class="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100">
+                <span class="text-xl">{group.emoji}</span>
+                <div>
+                  <h2 class="text-lg font-bold text-slate-800">{group.label}</h2>
+                  <p class="text-xs text-slate-400">{group.desc} · {group.items.length} projects</p>
+                </div>
+              </div>
+              <div class="grid sm:grid-cols-2 gap-3">
+                {group.items.map((lesson) => (
+                  <a
+                    href={`/projects/${getSlug(lesson.id)}/`}
+                    class="group flex items-start gap-3 bg-white rounded-xl p-4 border border-slate-100 hover:border-violet-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                  >
+                    <div class="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 text-white text-xs font-bold shadow-sm">
+                      {lesson.data.order}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-violet-600 transition-colors leading-snug">
+                        {lesson.data.title.replace(/\s*—.*$/, '')}
+                      </h3>
+                      <p class="text-xs text-slate-400 mt-1 line-clamp-1">{lesson.data.description}</p>
+                    </div>
+                    <svg class="w-4 h-4 text-slate-200 group-hover:text-violet-400 shrink-0 mt-1 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </a>
+                ))}
+              </div>
+            </section>
+          ))
+        ) : (
+          <div class="bg-slate-50 border border-slate-100 rounded-2xl p-8 text-center">
+            <p class="text-slate-500 text-sm">Projects are currently compiling. Check back shortly!</p>
+          </div>
+        )}
+
+        <!-- What's Next -->
+        <div class="mt-12 bg-gradient-to-br from-indigo-50 to-violet-50/30 rounded-2xl p-8 border border-indigo-100">
+          <div class="flex items-start gap-4">
+            <div class="shrink-0 w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-xl">💡</div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 mb-2">Finished Projects? Next up: Interview Prep</h3>
+              <p class="text-slate-500 text-sm leading-relaxed mb-4">
+                Now that you have built a powerful portfolio, learn to ace technical case studies, SQL coding tests, and behavioral questions.
+              </p>
+              <a href="/interview-prep/" class="inline-flex items-center gap-1.5 text-indigo-600 font-semibold text-sm hover:text-indigo-700 transition-colors">
+                Start Interview Prep →
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
