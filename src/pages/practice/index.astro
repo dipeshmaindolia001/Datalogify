@@ -62,70 +62,121 @@ const jsonLd = {
       </button>
     </div>
 
-    <!-- Tab Contents (Python Active) -->
-    <div id="python-practice-area" class="space-y-16">
-      <!-- Section 1: Language Foundations (Basics) -->
-      <div>
-        <div class="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
-          <span class="text-2xl">🌱</span>
-          <div>
-            <h2 class="font-bold text-slate-800 text-lg sm:text-xl">Language Foundations (Basics)</h2>
-            <p class="text-xs text-slate-400">Master core syntax, types, loops, collections, functions, OOP, and error handling</p>
-          </div>
+    <!-- Split Pane Layout: Sidebar + Challenge Cards -->
+    <div class="flex flex-col lg:flex-row gap-8">
+      <!-- Left Side: Sticky Navigation Sidebar -->
+      <aside class="w-full lg:w-1/4 shrink-0 lg:sticky lg:top-24 h-fit">
+        <div class="bg-white border border-slate-100 rounded-2xl p-4 space-y-1.5 shadow-sm">
+          <h3 class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-3 mb-2">Language</h3>
+          
+          <button 
+            data-track-btn="basics" 
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+          >
+            <span class="flex items-center gap-2">🌱 Language Basics</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-basics">0/29</span>
+          </button>
+
+          <div class="h-px bg-slate-100 my-2"></div>
+          <h3 class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-3 mb-2">Practice Libraries</h3>
+
+          <button 
+            data-track-btn="numpy" 
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+          >
+            <span class="flex items-center gap-2">🔢 NumPy Arrays</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-numpy">0/12</span>
+          </button>
+
+          <button 
+            data-track-btn="pandas" 
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+          >
+            <span class="flex items-center gap-2">🐼 Pandas DataFrames</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-pandas">0/13</span>
+          </button>
+
+          <button 
+            data-track-btn="matplotlib" 
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+          >
+            <span class="flex items-center gap-2">📊 Matplotlib Plots</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-matplotlib">0/8</span>
+          </button>
+
+          <button 
+            data-track-btn="seaborn" 
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+          >
+            <span class="flex items-center gap-2">🌊 Seaborn Statistics</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-seaborn">0/6</span>
+          </button>
+
+          <div class="h-px bg-slate-100 my-2"></div>
+          <h3 class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-3 mb-2">Problem Solving</h3>
+
+          <button 
+            data-track-btn="algorithms" 
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all hover:bg-slate-50 border-l-4 border-transparent cursor-pointer"
+          >
+            <span class="flex items-center gap-2">🧠 Algorithms</span>
+            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold" id="badge-count-algorithms">0/5</span>
+          </button>
         </div>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {basicsChallenges.map((challenge) => (
-            <a
-              href={`/practice/${challenge.slug}/`}
-              class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
-            >
-              <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="text-xs font-bold text-slate-350">#{challenge.order}</span>
-                    <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
-                      {challenge.title}
-                    </h3>
+      </aside>
+
+      <!-- Right Side: Challenge cards list matching selection -->
+      <main class="flex-1 min-w-0">
+        <!-- Section: Language Foundations (Basics) -->
+        <div id="track-panel-basics" class="space-y-6 hidden">
+          <div class="pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🌱 Language Foundations (Basics)</h2>
+            <p class="text-xs text-slate-450 mt-1">Master core syntax, types, collections, functions, OOP, and error handling</p>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6">
+            {basicsChallenges.map((challenge) => (
+              <a
+                href={`/practice/${challenge.slug}/`}
+                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold text-slate-350">#{challenge.order}</span>
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
+                        {challenge.title}
+                      </h3>
+                    </div>
+                    <p class="text-xs text-slate-450 line-clamp-2">{challenge.description}</p>
                   </div>
-                  <p class="text-xs text-slate-450 line-clamp-2">{challenge.description}</p>
                 </div>
-              </div>
-              <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
-                <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">
-                  {challenge.difficulty}
-                </span>
-                <span 
-                  data-challenge-status={challenge.id}
-                  class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
-                >
-                  Not Started
-                </span>
-              </div>
-            </a>
-          ))}
-        </div>
-      </div>
-
-      <!-- Section 2: Data Libraries Practice -->
-      <div class="space-y-12">
-        <div class="flex items-center gap-3 mb-2 pb-2 border-b border-slate-100">
-          <span class="text-2xl">📚</span>
-          <div>
-            <h2 class="font-bold text-slate-800 text-lg sm:text-xl">Practice Libraries</h2>
-            <p class="text-xs text-slate-400">Master NumPy, Pandas, Matplotlib, and Seaborn from basic to advanced levels</p>
+                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">
+                    {challenge.difficulty}
+                  </span>
+                  <span 
+                    data-challenge-status={challenge.id}
+                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                  >
+                    Not Started
+                  </span>
+                </div>
+              </a>
+            ))}
           </div>
         </div>
 
-        <!-- NumPy subcategory -->
-        <div class="pl-0 sm:pl-4 space-y-4">
-          <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2 border-l-4 border-indigo-500 pl-3">
-            🔢 NumPy Arrays & Operations
-          </h3>
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Section: NumPy -->
+        <div id="track-panel-numpy" class="space-y-6 hidden">
+          <div class="pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🔢 NumPy Arrays & Operations</h2>
+            <p class="text-xs text-slate-450 mt-1">Practice array manipulation, calculations, indexing, and linear algebra</p>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6">
             {numpyChallenges.map((challenge) => (
               <a
                 href={`/practice/${challenge.slug}/`}
-                class="group block bg-white border border-slate-105 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
               >
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
@@ -154,16 +205,17 @@ const jsonLd = {
           </div>
         </div>
 
-        <!-- Pandas subcategory -->
-        <div class="pl-0 sm:pl-4 space-y-4">
-          <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2 border-l-4 border-indigo-500 pl-3">
-            🐼 Pandas DataFrames & Analysis
-          </h3>
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Section: Pandas -->
+        <div id="track-panel-pandas" class="space-y-6 hidden">
+          <div class="pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🐼 Pandas DataFrames & Analysis</h2>
+            <p class="text-xs text-slate-450 mt-1">Analyze tabular data, pivot tables, missing values, and date columns</p>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6">
             {pandasChallenges.map((challenge) => (
               <a
                 href={`/practice/${challenge.slug}/`}
-                class="group block bg-white border border-slate-105 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
               >
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
@@ -192,16 +244,17 @@ const jsonLd = {
           </div>
         </div>
 
-        <!-- Matplotlib subcategory -->
-        <div class="pl-0 sm:pl-4 space-y-4">
-          <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2 border-l-4 border-indigo-500 pl-3">
-            📊 Matplotlib Plots & Customization
-          </h3>
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Section: Matplotlib -->
+        <div id="track-panel-matplotlib" class="space-y-6 hidden">
+          <div class="pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">📊 Matplotlib Plots & Customization</h2>
+            <p class="text-xs text-slate-450 mt-1">Plot line charts, subplots, customize styles, and save figures</p>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6">
             {matplotlibChallenges.map((challenge) => (
               <a
                 href={`/practice/${challenge.slug}/`}
-                class="group block bg-white border border-slate-105 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
               >
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
@@ -230,16 +283,17 @@ const jsonLd = {
           </div>
         </div>
 
-        <!-- Seaborn subcategory -->
-        <div class="pl-0 sm:pl-4 space-y-4">
-          <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2 border-l-4 border-indigo-500 pl-3">
-            🌊 Seaborn Statistics Visualization
-          </h3>
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Section: Seaborn -->
+        <div id="track-panel-seaborn" class="space-y-6 hidden">
+          <div class="pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🌊 Seaborn Statistics Visualization</h2>
+            <p class="text-xs text-slate-450 mt-1">Master boxplots, countplots, correlation heatmaps, and pairplots</p>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6">
             {seabornChallenges.map((challenge) => (
               <a
                 href={`/practice/${challenge.slug}/`}
-                class="group block bg-white border border-slate-105 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
               >
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
@@ -267,60 +321,85 @@ const jsonLd = {
             ))}
           </div>
         </div>
-      </div>
 
-      <!-- Section 3: Algorithms & Problem Solving -->
-      <div>
-        <div class="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
-          <span class="text-2xl">🧠</span>
-          <div>
-            <h2 class="font-bold text-slate-800 text-lg sm:text-xl">Intermediate & Advanced Algorithms</h2>
-            <p class="text-xs text-slate-400">Solve algorithmic problems, recursion, and string patterns</p>
+        <!-- Section: Algorithms -->
+        <div id="track-panel-algorithms" class="space-y-6 hidden">
+          <div class="pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl flex items-center gap-2">🧠 Algorithms & Problem Solving</h2>
+            <p class="text-xs text-slate-450 mt-1">Practice sequences, anagram groupings, and string pattern lookups</p>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6">
+            {algorithmsChallenges.map((challenge) => (
+              <a
+                href={`/practice/${challenge.slug}/`}
+                class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold text-slate-355">#{challenge.order}</span>
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-660 transition-colors truncate">
+                        {challenge.title}
+                      </h3>
+                    </div>
+                    <p class="text-xs text-slate-450 line-clamp-2">{challenge.description}</p>
+                  </div>
+                </div>
+                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-red-50 text-red-600 border border-red-100">
+                    {challenge.difficulty}
+                  </span>
+                  <span 
+                    data-challenge-status={challenge.id}
+                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                  >
+                    Not Started
+                  </span>
+                </div>
+              </a>
+            ))}
           </div>
         </div>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {algorithmsChallenges.map((challenge) => (
-            <a
-              href={`/practice/${challenge.slug}/`}
-              class="group block bg-white border border-slate-105 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
-            >
-              <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="text-xs font-bold text-slate-355">#{challenge.order}</span>
-                    <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-660 transition-colors truncate">
-                      {challenge.title}
-                    </h3>
-                  </div>
-                  <p class="text-xs text-slate-450 line-clamp-2">{challenge.description}</p>
-                </div>
-              </div>
-              <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
-                <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-red-50 text-red-600 border border-red-100">
-                  {challenge.difficulty}
-                </span>
-                <span 
-                  data-challenge-status={challenge.id}
-                  class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
-                >
-                  Not Started
-                </span>
-              </div>
-            </a>
-          ))}
-        </div>
-      </div>
+      </main>
     </div>
   </div>
 </BaseLayout>
 
 <script>
-  // Dynamically load states and start typewriter heading on page mount
+  // Page load setups
   document.addEventListener('astro:page-load', () => {
-    // 1. LocalStorage Challenge Badges
+    // 1. LocalStorage Challenge Badges & Sidebar Solved Counts
     const solvedList = JSON.parse(localStorage.getItem('datalogify_solved_challenges') || '[]');
     const progressList = JSON.parse(localStorage.getItem('datalogify_in_progress_challenges') || '[]');
 
+    // Track challenges mappings
+    const challengeMappings = {
+      basics: ['py-basics-1', 'py-basics-2', 'py-basics-3', 'py-basics-4', 'py-basics-5', 'py-basics-6', 'py-basics-7', 'py-basics-8', 'py-basics-9', 'py-basics-10', 'py-basics-11', 'py-basics-12', 'py-basics-13', 'py-basics-14', 'py-basics-15', 'py-basics-16', 'py-basics-17', 'py-basics-18', 'py-basics-19', 'py-basics-20', 'py-basics-21', 'py-basics-22', 'py-basics-23', 'py-basics-24', 'py-basics-25', 'py-basics-26', 'py-basics-27', 'py-basics-28', 'py-basics-29'],
+      numpy: ['py-numpy-1', 'py-numpy-2', 'py-numpy-3', 'py-numpy-4', 'py-numpy-5', 'py-numpy-6', 'py-numpy-7', 'py-numpy-8', 'py-numpy-9', 'py-numpy-10', 'py-numpy-11', 'py-numpy-12'],
+      pandas: ['py-pandas-1', 'py-pandas-2', 'py-pandas-3', 'py-pandas-4', 'py-pandas-5', 'py-pandas-6', 'py-pandas-7', 'py-pandas-8', 'py-pandas-9', 'py-pandas-10', 'py-pandas-11', 'py-pandas-12', 'py-pandas-13'],
+      matplotlib: ['py-matplotlib-1', 'py-matplotlib-2', 'py-matplotlib-3', 'py-matplotlib-4', 'py-matplotlib-5', 'py-matplotlib-6', 'py-matplotlib-7', 'py-matplotlib-8'],
+      seaborn: ['py-seaborn-1', 'py-seaborn-2', 'py-seaborn-3', 'py-seaborn-4', 'py-seaborn-5', 'py-seaborn-6'],
+      algorithms: ['py-second-largest', 'py-missing-number', 'py-group-anagrams', 'py-regex-phone', 'py-fibonacci']
+    };
+
+    // Calculate solved counts for badges
+    Object.keys(challengeMappings).forEach(trackKey => {
+      const ids = challengeMappings[trackKey as keyof typeof challengeMappings];
+      const solvedInTrack = ids.filter(id => solvedList.includes(id)).length;
+      const totalInTrack = ids.length;
+      const countBadge = document.getElementById(`badge-count-${trackKey}`);
+      if (countBadge) {
+        countBadge.textContent = `${solvedInTrack}/${totalInTrack}`;
+        // Color badge based on completed
+        if (solvedInTrack === totalInTrack) {
+          countBadge.className = 'text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold';
+        } else if (solvedInTrack > 0) {
+          countBadge.className = 'text-[9px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold';
+        }
+      }
+    });
+
+    // Update statuses for individual challenge cards
     const statusBadges = document.querySelectorAll('[data-challenge-status]');
     statusBadges.forEach((badge) => {
       const challengeId = badge.getAttribute('data-challenge-status');
@@ -335,7 +414,42 @@ const jsonLd = {
       }
     });
 
-    // 2. Typewriter alternates "Python" vs "SQL"
+    // 2. Sidebar Track Selection Routing
+    const trackBtns = document.querySelectorAll('[data-track-btn]');
+    const activeBtnClass = 'text-indigo-600 bg-indigo-50/70 border-l-4 border-indigo-500 font-bold pl-2';
+    const inactiveBtnClass = 'text-slate-600 hover:bg-slate-50 border-l-4 border-transparent';
+
+    function selectTrack(trackName: string) {
+      trackBtns.forEach(btn => {
+        const name = btn.getAttribute('data-track-btn');
+        const panel = document.getElementById(`track-panel-${name}`);
+        if (panel) {
+          if (name === trackName) {
+            btn.className = `w-full text-left px-3 py-2.5 rounded-xl text-xs flex items-center justify-between transition-all ${activeBtnClass} cursor-pointer`;
+            panel.classList.remove('hidden');
+          } else {
+            btn.className = `w-full text-left px-3 py-2.5 rounded-xl text-xs flex items-center justify-between transition-all ${inactiveBtnClass} cursor-pointer`;
+            panel.classList.add('hidden');
+          }
+        }
+      });
+      // Save track selection in URL hash
+      window.location.hash = trackName;
+    }
+
+    // Initialize track selection from URL hash (default to basics)
+    const initialTrack = window.location.hash.replace('#', '') || 'basics';
+    selectTrack(initialTrack);
+
+    // Bind sidebar clicks
+    trackBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const trackName = btn.getAttribute('data-track-btn') || 'basics';
+        selectTrack(trackName);
+      });
+    });
+
+    // 3. Typewriter alternates "Python" vs "SQL"
     const words = ['Python', 'SQL'];
     let wordIdx = 0;
     const typedTextEl = document.getElementById('typed-text');
@@ -385,10 +499,5 @@ const jsonLd = {
   /* Typewriter blinking cursor helper */
   .typewriter-cursor {
     font-weight: 200;
-  }
-  
-  /* Slate/Purple button highlights */
-  .bg-indigo-555 {
-    background-color: #6366f1;
   }
 </style>
