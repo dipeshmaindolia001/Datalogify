@@ -3,7 +3,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { challenges } from '../../data/practice-challenges';
 
 const basicsChallenges = challenges.filter(c => c.section === 'basics');
-const librariesChallenges = challenges.filter(c => c.section === 'libraries');
+const numpyChallenges = challenges.filter(c => c.section === 'libraries' && c.subCategory === 'numpy');
+const pandasChallenges = challenges.filter(c => c.section === 'libraries' && c.subCategory === 'pandas');
+const matplotlibChallenges = challenges.filter(c => c.section === 'libraries' && c.subCategory === 'matplotlib');
+const seabornChallenges = challenges.filter(c => c.section === 'libraries' && c.subCategory === 'seaborn');
 const algorithmsChallenges = challenges.filter(c => c.section === 'algorithms');
 
 const jsonLd = {
@@ -45,7 +48,7 @@ const jsonLd = {
     <!-- Main Navigation Tabs (Python vs SQL) -->
     <div class="flex gap-4 border-b border-slate-200 pb-4 mb-8">
       <button 
-        class="px-5 py-2.5 rounded-xl text-sm font-bold bg-indigo-550 text-white shadow-md shadow-indigo-500/15 focus:outline-none cursor-pointer flex items-center gap-2"
+        class="px-5 py-2.5 rounded-xl text-sm font-bold bg-indigo-650 text-white shadow-md shadow-indigo-500/15 focus:outline-none cursor-pointer flex items-center gap-2"
         id="tab-py-btn"
       >
         🐍 Python Practice
@@ -60,14 +63,14 @@ const jsonLd = {
     </div>
 
     <!-- Tab Contents (Python Active) -->
-    <div id="python-practice-area" class="space-y-12">
+    <div id="python-practice-area" class="space-y-16">
       <!-- Section 1: Language Foundations (Basics) -->
       <div>
         <div class="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
           <span class="text-2xl">🌱</span>
           <div>
             <h2 class="font-bold text-slate-800 text-lg sm:text-xl">Language Foundations (Basics)</h2>
-            <p class="text-xs text-slate-400">Master core syntax, types, loops, lists, sets, and error handling</p>
+            <p class="text-xs text-slate-400">Master core syntax, types, loops, collections, functions, OOP, and error handling</p>
           </div>
         </div>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -79,15 +82,15 @@ const jsonLd = {
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 mb-1">
-                    <span class="text-xs font-bold text-slate-305">#{challenge.order}</span>
+                    <span class="text-xs font-bold text-slate-350">#{challenge.order}</span>
                     <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
                       {challenge.title}
                     </h3>
                   </div>
-                  <p class="text-xs text-slate-400 line-clamp-2">{challenge.description}</p>
+                  <p class="text-xs text-slate-450 line-clamp-2">{challenge.description}</p>
                 </div>
               </div>
-              <div class="mt-4 flex items-center justify-between border-t border-slate-50 pt-3">
+              <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
                 <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">
                   {challenge.difficulty}
                 </span>
@@ -103,45 +106,166 @@ const jsonLd = {
         </div>
       </div>
 
-      <!-- Section 2: Data Libraries Practice (NumPy & Pandas) -->
-      <div>
-        <div class="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
-          <span class="text-2xl">📊</span>
+      <!-- Section 2: Data Libraries Practice -->
+      <div class="space-y-12">
+        <div class="flex items-center gap-3 mb-2 pb-2 border-b border-slate-100">
+          <span class="text-2xl">📚</span>
           <div>
-            <h2 class="font-bold text-slate-800 text-lg sm:text-xl">Data Science Libraries (NumPy & Pandas)</h2>
-            <p class="text-xs text-slate-400">Filter, query, mask, and aggregate tabular arrays and dataframes</p>
+            <h2 class="font-bold text-slate-800 text-lg sm:text-xl">Practice Libraries</h2>
+            <p class="text-xs text-slate-400">Master NumPy, Pandas, Matplotlib, and Seaborn from basic to advanced levels</p>
           </div>
         </div>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {librariesChallenges.map((challenge) => (
-            <a
-              href={`/practice/${challenge.slug}/`}
-              class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
-            >
-              <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="text-xs font-bold text-slate-305">#{challenge.order}</span>
-                    <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-655 transition-colors truncate">
-                      {challenge.title}
-                    </h3>
+
+        <!-- NumPy subcategory -->
+        <div class="pl-0 sm:pl-4 space-y-4">
+          <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2 border-l-4 border-indigo-500 pl-3">
+            🔢 NumPy Arrays & Operations
+          </h3>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {numpyChallenges.map((challenge) => (
+              <a
+                href={`/practice/${challenge.slug}/`}
+                class="group block bg-white border border-slate-105 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold text-slate-350">#{challenge.order}</span>
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
+                        {challenge.title}
+                      </h3>
+                    </div>
+                    <p class="text-xs text-slate-450 line-clamp-2">{challenge.description}</p>
                   </div>
-                  <p class="text-xs text-slate-400 line-clamp-2">{challenge.description}</p>
                 </div>
-              </div>
-              <div class="mt-4 flex items-center justify-between border-t border-slate-50 pt-3">
-                <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100">
-                  {challenge.difficulty}
-                </span>
-                <span 
-                  data-challenge-status={challenge.id}
-                  class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
-                >
-                  Not Started
-                </span>
-              </div>
-            </a>
-          ))}
+                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    {challenge.difficulty}
+                  </span>
+                  <span 
+                    data-challenge-status={challenge.id}
+                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                  >
+                    Not Started
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <!-- Pandas subcategory -->
+        <div class="pl-0 sm:pl-4 space-y-4">
+          <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2 border-l-4 border-indigo-500 pl-3">
+            🐼 Pandas DataFrames & Analysis
+          </h3>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {pandasChallenges.map((challenge) => (
+              <a
+                href={`/practice/${challenge.slug}/`}
+                class="group block bg-white border border-slate-105 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold text-slate-350">#{challenge.order}</span>
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
+                        {challenge.title}
+                      </h3>
+                    </div>
+                    <p class="text-xs text-slate-450 line-clamp-2">{challenge.description}</p>
+                  </div>
+                </div>
+                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    {challenge.difficulty}
+                  </span>
+                  <span 
+                    data-challenge-status={challenge.id}
+                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                  >
+                    Not Started
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <!-- Matplotlib subcategory -->
+        <div class="pl-0 sm:pl-4 space-y-4">
+          <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2 border-l-4 border-indigo-500 pl-3">
+            📊 Matplotlib Plots & Customization
+          </h3>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {matplotlibChallenges.map((challenge) => (
+              <a
+                href={`/practice/${challenge.slug}/`}
+                class="group block bg-white border border-slate-105 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold text-slate-350">#{challenge.order}</span>
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
+                        {challenge.title}
+                      </h3>
+                    </div>
+                    <p class="text-xs text-slate-450 line-clamp-2">{challenge.description}</p>
+                  </div>
+                </div>
+                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    {challenge.difficulty}
+                  </span>
+                  <span 
+                    data-challenge-status={challenge.id}
+                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                  >
+                    Not Started
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <!-- Seaborn subcategory -->
+        <div class="pl-0 sm:pl-4 space-y-4">
+          <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2 border-l-4 border-indigo-500 pl-3">
+            🌊 Seaborn Statistics Visualization
+          </h3>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {seabornChallenges.map((challenge) => (
+              <a
+                href={`/practice/${challenge.slug}/`}
+                class="group block bg-white border border-slate-105 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold text-slate-350">#{challenge.order}</span>
+                      <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-650 transition-colors truncate">
+                        {challenge.title}
+                      </h3>
+                    </div>
+                    <p class="text-xs text-slate-450 line-clamp-2">{challenge.description}</p>
+                  </div>
+                </div>
+                <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
+                  <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    {challenge.difficulty}
+                  </span>
+                  <span 
+                    data-challenge-status={challenge.id}
+                    class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100"
+                  >
+                    Not Started
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -151,27 +275,27 @@ const jsonLd = {
           <span class="text-2xl">🧠</span>
           <div>
             <h2 class="font-bold text-slate-800 text-lg sm:text-xl">Intermediate & Advanced Algorithms</h2>
-            <p class="text-xs text-slate-400">Solve advanced coding challenges, recursion, regex, and sequences</p>
+            <p class="text-xs text-slate-400">Solve algorithmic problems, recursion, and string patterns</p>
           </div>
         </div>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {algorithmsChallenges.map((challenge) => (
             <a
               href={`/practice/${challenge.slug}/`}
-              class="group block bg-white border border-slate-100 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+              class="group block bg-white border border-slate-105 rounded-2xl p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
             >
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 mb-1">
-                    <span class="text-xs font-bold text-slate-305">#{challenge.order}</span>
+                    <span class="text-xs font-bold text-slate-355">#{challenge.order}</span>
                     <h3 class="text-sm font-semibold text-slate-800 group-hover:text-indigo-660 transition-colors truncate">
                       {challenge.title}
                     </h3>
                   </div>
-                  <p class="text-xs text-slate-400 line-clamp-2">{challenge.description}</p>
+                  <p class="text-xs text-slate-450 line-clamp-2">{challenge.description}</p>
                 </div>
               </div>
-              <div class="mt-4 flex items-center justify-between border-t border-slate-50 pt-3">
+              <div class="mt-4 flex items-center justify-between border-t border-slate-55 pt-3">
                 <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-red-50 text-red-600 border border-red-100">
                   {challenge.difficulty}
                 </span>

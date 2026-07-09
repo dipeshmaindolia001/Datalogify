@@ -319,7 +319,7 @@ const { challenge } = Astro.props;
 
     const userCode = jar.toString();
 
-    // Dynamically load NumPy or Pandas if user code imports them!
+    // Dynamically load NumPy, Pandas, Matplotlib, or Seaborn if user code imports them!
     if (userCode.includes('import numpy') || userCode.includes('np.')) {
       if (statusLabel) {
         statusLabel.innerHTML = `
@@ -346,11 +346,119 @@ const { challenge } = Astro.props;
       await pyodideInstance.loadPackage('pandas');
     }
 
+    if (userCode.includes('import matplotlib') || userCode.includes('plt.')) {
+      if (statusLabel) {
+        statusLabel.innerHTML = `
+          <svg class="w-4 h-4 text-amber-500 animate-spin mr-1 inline-block" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Loading Matplotlib...
+        `;
+      }
+      await pyodideInstance.loadPackage('matplotlib');
+    }
+
+    if (userCode.includes('import seaborn') || userCode.includes('sns.')) {
+      if (statusLabel) {
+        statusLabel.innerHTML = `
+          <svg class="w-4 h-4 text-amber-500 animate-spin mr-1 inline-block" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Loading Seaborn...
+        `;
+      }
+      await pyodideInstance.loadPackage('seaborn');
+    }
+
     if (statusLabel) {
       statusLabel.innerHTML = `
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
         Running code...
       `;
+    }
+
+    // Determine custom programmatic validation for Matplotlib and Seaborn plotting
+    let validationCode = '';
+    if (challenge.subCategory === 'matplotlib' || challenge.subCategory === 'seaborn') {
+      const slug = challenge.slug;
+      if (slug === 'your-first-line-plot') {
+        validationCode = `
+import matplotlib.pyplot as plt
+fig = plt.gcf()
+ax = plt.gca()
+assert ax.get_title() != ""
+assert ax.get_xlabel() != ""
+assert ax.get_ylabel() != ""
+assert len(ax.lines) > 0
+print("PLOT_OK")
+`;
+      } else if (slug === 'bar-chart-from-data') {
+        validationCode = `
+import matplotlib.pyplot as plt
+fig = plt.gcf()
+ax = plt.gca()
+assert ax.get_title() != ""
+assert len(ax.containers) > 0 or len(ax.patches) > 0
+print("PLOT_OK")
+`;
+      } else if (slug === 'scatter-plot-with-colors') {
+        validationCode = `
+import matplotlib.pyplot as plt
+fig = plt.gcf()
+ax = plt.gca()
+assert len(ax.collections) > 0
+print("PLOT_OK")
+`;
+      } else if (slug === 'multiple-series-on-one-plot') {
+        validationCode = `
+import matplotlib.pyplot as plt
+fig = plt.gcf()
+ax = plt.gca()
+assert len(ax.lines) >= 2
+assert ax.get_legend() is not None
+print("PLOT_OK")
+`;
+      } else if (slug === 'subplots-grid') {
+        validationCode = `
+import matplotlib.pyplot as plt
+fig = plt.gcf()
+assert len(fig.axes) == 4
+print("PLOT_OK")
+`;
+      } else if (slug === 'customizing-styles') {
+        validationCode = `
+import matplotlib.pyplot as plt
+fig = plt.gcf()
+ax = plt.gca()
+assert len(ax.lines) > 0
+print("PLOT_OK")
+`;
+      } else if (slug === 'saving-figures-to-file') {
+        validationCode = `
+import os
+assert os.path.exists("plot.png")
+print("PLOT_OK")
+`;
+      } else if (slug === 'histogram-distribution') {
+        validationCode = `
+import matplotlib.pyplot as plt
+fig = plt.gcf()
+ax = plt.gca()
+assert len(ax.patches) > 0
+print("PLOT_OK")
+`;
+      } else {
+        // Default validation for Seaborn plots
+        validationCode = `
+import matplotlib.pyplot as plt
+fig = plt.gcf()
+ax = plt.gca()
+assert len(ax.collections) > 0 or len(ax.patches) > 0 or len(fig.axes) > 0
+print("PLOT_OK")
+`;
+      }
     }
 
     // Filter test cases based on run mode
@@ -410,6 +518,11 @@ builtins.input = input
 try:
     code = """${userCode.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'''/g, "\\'\\'\\'")}"""
     exec(code, {})
+    
+    # Run validation code if defined
+    validation = """${validationCode.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'''/g, "\\'\\'\\'")}"""
+    if len(validation) > 0:
+        exec(validation, {})
 except Exception as e:
     import traceback
     print(traceback.format_exc(), file=sys.stderr)
