@@ -6,7 +6,7 @@ function isActive(href: string): boolean {
   return currentPath.startsWith(href);
 }
 
-const learnPaths = ['/python/', '/sql/', '/excel/', '/eda/', '/statistics/'];
+const learnPaths = ['/python/', '/python-libraries/', '/sql/', '/excel/', '/eda/', '/statistics/'];
 const isLearnActive = learnPaths.some(path => currentPath.startsWith(path));
 ---
 
@@ -88,6 +88,17 @@ const isLearnActive = learnPaths.some(path => currentPath.startsWith(path));
               ]}
             >
               🐍 Python
+            </a>
+            <a
+              href="/python-libraries/"
+              class:list={[
+                'flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors font-medium',
+                isActive('/python-libraries/')
+                  ? 'text-indigo-600 bg-indigo-50/50'
+                  : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900',
+              ]}
+            >
+              📚 Python Libraries
             </a>
             <a
               href="/sql/"

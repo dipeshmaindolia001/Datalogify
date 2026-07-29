@@ -6,7 +6,7 @@ const lessons = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string(),
-    category: z.enum(['python', 'sql', 'excel', 'eda', 'statistics', 'projects', 'interview-prep', 'blog']),
+    category: z.enum(['python', 'sql', 'excel', 'eda', 'statistics', 'projects', 'interview-prep', 'blog', 'python-libraries']),
     order: z.number(),
     phase: z.number().min(1).max(7),
     tags: z.array(z.string()),

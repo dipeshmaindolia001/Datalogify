@@ -45,50 +45,112 @@ const { challenge } = Astro.props;
         </div>
       </div>
 
-      <!-- Problem Statement -->
-      <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
-        <p class="whitespace-pre-line">{challenge.description}</p>
+      <!-- Left panel tabs: Description / Solutions -->
+      <div class="desc-tabs flex border-b border-slate-800 text-[11px] font-semibold text-slate-400 -mx-6 px-6">
+        <button
+          id="desc-tab-problem-btn"
+          class="px-4 py-2 border-b-2 border-indigo-500 text-white focus:outline-none cursor-pointer"
+        >
+          Problem
+        </button>
+        <button
+          id="desc-tab-solutions-btn"
+          class="px-4 py-2 border-b-2 border-transparent hover:text-white focus:outline-none cursor-pointer flex items-center gap-1.5"
+        >
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347A3.5 3.5 0 0111.5 18H9a3.5 3.5 0 01-3.5-3.5v-.1a3.5 3.5 0 011.018-2.45z" /></svg>
+          Solutions
+        </button>
       </div>
 
-      <!-- Format details -->
-      <div class="grid sm:grid-cols-2 gap-4 pt-4 border-t border-slate-800">
-        <div>
-          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-450 mb-1">Input Format</h3>
-          <p class="text-xs text-slate-300 whitespace-pre-line">{challenge.inputFormat}</p>
+      <!-- Problem panel -->
+      <div id="desc-panel-problem">
+        <!-- Problem Statement -->
+        <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+          <p class="whitespace-pre-line">{challenge.description}</p>
         </div>
-        <div>
-          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-450 mb-1">Output Format</h3>
-          <p class="text-xs text-slate-300 whitespace-pre-line">{challenge.outputFormat}</p>
+
+        <!-- Format details -->
+        <div class="grid sm:grid-cols-2 gap-4 pt-4 border-t border-slate-800 mt-4">
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-450 mb-1">Input Format</h3>
+            <p class="text-xs text-slate-300 whitespace-pre-line">{challenge.inputFormat}</p>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-450 mb-1">Output Format</h3>
+            <p class="text-xs text-slate-300 whitespace-pre-line">{challenge.outputFormat}</p>
+          </div>
         </div>
-      </div>
 
-      <!-- Constraints -->
-      <div class="pt-4 border-t border-slate-800">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-455 mb-1">Constraints</h3>
-        <code class="text-xs font-mono bg-slate-950 px-2 py-1 rounded text-slate-300 border border-slate-800/50 inline-block">
-          {challenge.constraints}
-        </code>
-      </div>
+        <!-- Constraints -->
+        <div class="pt-4 border-t border-slate-800">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-455 mb-1">Constraints</h3>
+          <code class="text-xs font-mono bg-slate-950 px-2 py-1 rounded text-slate-300 border border-slate-800/50 inline-block">
+            {challenge.constraints}
+          </code>
+        </div>
 
-      <!-- Sample test cases -->
-      <div class="space-y-4 pt-4 border-t border-slate-800">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Example Test Cases</h3>
-        
-        {challenge.testCases.filter(tc => tc.isExample).map((tc, idx) => (
-          <div class="space-y-2 dark-card border rounded-xl p-4">
-            <div class="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Example {idx + 1}</div>
-            <div class="grid sm:grid-cols-2 gap-3">
-              <div>
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Input</span>
-                <pre class="dark-pre font-mono text-xs p-2 rounded border overflow-x-auto">{tc.input}</pre>
-              </div>
-              <div>
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Expected Output</span>
-                <pre class="dark-pre font-mono text-xs p-2 rounded border overflow-x-auto text-emerald-450">{tc.expectedOutput}</pre>
+        <!-- Sample test cases -->
+        <div class="space-y-4 pt-4 border-t border-slate-800">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Example Test Cases</h3>
+          
+          {challenge.testCases.filter(tc => tc.isExample).map((tc, idx) => (
+            <div class="space-y-2 dark-card border rounded-xl p-4">
+              <div class="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Example {idx + 1}</div>
+              <div class="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Input</span>
+                  <pre class="dark-pre font-mono text-xs p-2 rounded border overflow-x-auto">{tc.input}</pre>
+                </div>
+                <div>
+                  <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Expected Output</span>
+                  <pre class="dark-pre font-mono text-xs p-2 rounded border overflow-x-auto text-emerald-450">{tc.expectedOutput}</pre>
+                </div>
               </div>
             </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Solutions panel (hidden by default) -->
+      <div id="desc-panel-solutions" class="hidden space-y-4">
+        {challenge.solutions && challenge.solutions.length > 0 ? (
+          <>
+            <div class="flex items-start gap-2 p-3 bg-amber-950/30 border border-amber-800/40 rounded-xl">
+              <svg class="w-4 h-4 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              <p class="text-xs text-amber-300/90">Try solving it yourself first! Solutions are here when you need a hint or want to compare approaches.</p>
+            </div>
+            {challenge.solutions.map((sol, idx) => (
+              <div class="solution-card border border-slate-800 rounded-xl overflow-hidden">
+                <button
+                  class="sol-toggle w-full flex items-center justify-between px-4 py-3 text-left bg-slate-900/80 hover:bg-slate-800/80 transition-colors cursor-pointer"
+                  data-sol-idx={idx}
+                >
+                  <div>
+                    <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Solution {idx + 1}</span>
+                    <div class="text-sm font-semibold text-white mt-0.5">{sol.title}</div>
+                    <p class="text-xs text-slate-400 mt-0.5">{sol.explanation}</p>
+                  </div>
+                  <svg class="sol-chevron w-4 h-4 text-slate-500 shrink-0 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                <div class="sol-body hidden bg-slate-950">
+                  <pre class="solution-pre font-mono text-xs p-4 overflow-x-auto text-slate-200 leading-relaxed language-python">{sol.code}</pre>
+                  <div class="px-4 pb-3 flex gap-2">
+                    <button class="sol-try-btn text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer flex items-center gap-1" data-sol-code={sol.code}>
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      Load into Editor
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </>
+        ) : (
+          <div class="text-center py-12 text-slate-500">
+            <svg class="w-10 h-10 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347A3.5 3.5 0 0111.5 18H9a3.5 3.5 0 01-3.5-3.5v-.1a3.5 3.5 0 011.018-2.45z" /></svg>
+            <p class="text-sm font-medium">Solutions coming soon</p>
+            <p class="text-xs mt-1">This challenge's editorial is being written.</p>
           </div>
-        ))}
+        )}
       </div>
     </div>
 
@@ -220,12 +282,25 @@ const { challenge } = Astro.props;
   let isPyodideLoading = true;
   let jar: any = null;
 
+  // ─────────────────────────────────────────────────────────────
+  // Output normalization helper — used on BOTH sides of comparison
+  // Strips CRLF, removes leading/trailing blank lines and spaces.
+  // ─────────────────────────────────────────────────────────────
+  function normalizeOutput(s: string): string {
+    return s
+      .replace(/\r\n/g, '\n')   // Windows line endings → Unix
+      .replace(/\r/g, '\n')     // stray CR → LF
+      .split('\n')
+      .map((line: string) => line.trimEnd())   // trailing spaces per line
+      .join('\n')
+      .trim();                  // leading/trailing blank lines
+  }
+
   // Initialize CodeJar editor
   function initEditor() {
     const editorEl = document.getElementById('editor');
     if (!editorEl) return;
 
-    // Syntax highlighting callback
     const highlight = (editor: HTMLElement) => {
       const code = editor.textContent || '';
       if ((window as any).Prism) {
@@ -234,9 +309,9 @@ const { challenge } = Astro.props;
     };
 
     jar = CodeJar(editorEl, highlight);
+    (window as any).__codeJar = jar;
     jar.updateCode(challenge.starterCode);
     
-    // Wire up dynamic gutter line numbering
     jar.onUpdate((code: string) => {
       updateLineNumbers(code);
     });
@@ -244,11 +319,9 @@ const { challenge } = Astro.props;
     updateLineNumbers(challenge.starterCode);
   }
 
-  // Update line number gutter
   function updateLineNumbers(code: string) {
     const gutter = document.getElementById('line-gutter');
     if (!gutter) return;
-
     const lines = code.split('\n').length;
     let numbersHtml = '';
     for (let i = 1; i <= lines; i++) {
@@ -308,7 +381,42 @@ const { challenge } = Astro.props;
     });
   }
 
-  // Execute test cases
+  // Left panel: Description / Solutions tab toggling
+  function selectDescTab(tabName: string) {
+    const problemBtn = document.getElementById('desc-tab-problem-btn');
+    const solutionsBtn = document.getElementById('desc-tab-solutions-btn');
+    const problemPanel = document.getElementById('desc-panel-problem');
+    const solutionsPanel = document.getElementById('desc-panel-solutions');
+
+    const activeClass = 'px-4 py-2 border-b-2 border-indigo-500 text-white focus:outline-none cursor-pointer flex items-center gap-1.5';
+    const inactiveClass = 'px-4 py-2 border-b-2 border-transparent hover:text-white focus:outline-none cursor-pointer flex items-center gap-1.5';
+    const activeClassSimple = 'px-4 py-2 border-b-2 border-indigo-500 text-white focus:outline-none cursor-pointer';
+    const inactiveClassSimple = 'px-4 py-2 border-b-2 border-transparent hover:text-white focus:outline-none cursor-pointer';
+
+    if (tabName === 'problem') {
+      if (problemBtn) problemBtn.className = activeClassSimple;
+      if (solutionsBtn) solutionsBtn.className = activeClass;
+      if (problemPanel) problemPanel.classList.remove('hidden');
+      if (solutionsPanel) solutionsPanel.classList.add('hidden');
+      // Fix: revert solutions button to inactive
+      if (solutionsBtn) solutionsBtn.className = inactiveClass;
+    } else {
+      if (problemBtn) problemBtn.className = inactiveClassSimple;
+      if (solutionsBtn) solutionsBtn.className = activeClass;
+      if (problemPanel) problemPanel.classList.add('hidden');
+      if (solutionsPanel) solutionsPanel.classList.remove('hidden');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Execute test cases — FIXED version
+  // Fixes:
+  //  1. Normalized output comparison (trimEnd on both sides)
+  //  2. Shared exec_globals between user_code and validation_code
+  //  3. builtins.input patched correctly inside exec context
+  //  4. stdout buffer properly accumulated for Console Output tab
+  //  5. Package loading with try/catch to not crash on already-loaded
+  // ─────────────────────────────────────────────────────────────
   async function executeTestCases(submitMode = false) {
     const resultsConsole = document.getElementById('panel-tests');
     const stdoutConsole = document.getElementById('panel-output');
@@ -317,59 +425,44 @@ const { challenge } = Astro.props;
 
     if (!jar || !resultsConsole || !pyodideInstance) return;
 
-    const userCode = jar.toString();
+    const editorEl = document.getElementById('editor');
+    const userCode = (jar && typeof jar.toString === 'function'
+      ? jar.toString()
+      : (editorEl?.textContent || ''))
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n');
+    (window as any).__lastUserCode = userCode;
 
-    // Dynamically load NumPy, Pandas, Matplotlib, or Seaborn if user code imports them!
-    if (userCode.includes('import numpy') || userCode.includes('np.')) {
-      if (statusLabel) {
-        statusLabel.innerHTML = `
-          <svg class="w-4 h-4 text-amber-500 animate-spin mr-1 inline-block" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          Loading NumPy...
-        `;
-      }
-      await pyodideInstance.loadPackage('numpy');
+    // Load packages if needed (guarded with try/catch for already-loaded)
+    const packagesToLoad: string[] = [];
+    if (userCode.includes('import numpy') || userCode.includes('from numpy') || userCode.includes('np.')) {
+      packagesToLoad.push('numpy');
+    }
+    if (userCode.includes('import pandas') || userCode.includes('from pandas') || userCode.includes('pd.')) {
+      packagesToLoad.push('pandas');
+    }
+    if (userCode.includes('import matplotlib') || userCode.includes('from matplotlib') || userCode.includes('plt.')) {
+      packagesToLoad.push('matplotlib');
+    }
+    if (userCode.includes('import seaborn') || userCode.includes('from seaborn') || userCode.includes('sns.')) {
+      packagesToLoad.push('seaborn');
     }
 
-    if (userCode.includes('import pandas') || userCode.includes('pd.')) {
+    for (const pkg of packagesToLoad) {
       if (statusLabel) {
         statusLabel.innerHTML = `
           <svg class="w-4 h-4 text-amber-500 animate-spin mr-1 inline-block" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          Loading Pandas...
+          Loading ${pkg}...
         `;
       }
-      await pyodideInstance.loadPackage('pandas');
-    }
-
-    if (userCode.includes('import matplotlib') || userCode.includes('plt.')) {
-      if (statusLabel) {
-        statusLabel.innerHTML = `
-          <svg class="w-4 h-4 text-amber-500 animate-spin mr-1 inline-block" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          Loading Matplotlib...
-        `;
+      try {
+        await pyodideInstance.loadPackage(pkg);
+      } catch (_) {
+        // Package may already be loaded — that's fine
       }
-      await pyodideInstance.loadPackage('matplotlib');
-    }
-
-    if (userCode.includes('import seaborn') || userCode.includes('sns.')) {
-      if (statusLabel) {
-        statusLabel.innerHTML = `
-          <svg class="w-4 h-4 text-amber-500 animate-spin mr-1 inline-block" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          Loading Seaborn...
-        `;
-      }
-      await pyodideInstance.loadPackage('seaborn');
     }
 
     if (statusLabel) {
@@ -379,7 +472,7 @@ const { challenge } = Astro.props;
       `;
     }
 
-    // Determine custom programmatic validation for Matplotlib and Seaborn plotting
+    // Determine validation code for plot-type challenges
     let validationCode = '';
     if (challenge.subCategory === 'matplotlib' || challenge.subCategory === 'seaborn') {
       const slug = challenge.slug;
@@ -450,7 +543,6 @@ assert len(ax.patches) > 0
 print("PLOT_OK")
 `;
       } else {
-        // Default validation for Seaborn plots
         validationCode = `
 import matplotlib.pyplot as plt
 fig = plt.gcf()
@@ -470,7 +562,7 @@ print("PLOT_OK")
     if (stdoutConsole) stdoutConsole.textContent = '';
     if (stderrConsole) stderrConsole.textContent = '';
     
-    // Save state as in progress
+    // Mark as in progress
     const progressList = JSON.parse(localStorage.getItem('datalogify_in_progress_challenges') || '[]');
     if (!progressList.includes(challenge.id)) {
       progressList.push(challenge.id);
@@ -486,74 +578,119 @@ print("PLOT_OK")
       const tc = casesToRun[i];
       const caseLabel = tc.isExample ? `Example Test Case ${i + 1}` : `Test Case ${i + 1}`;
       
-      let stdoutBuffer = '';
+      // Pass code and stdin into Pyodide globals safely (no brittle string interpolation)
+      pyodideInstance.globals.set('user_code', userCode);
+      pyodideInstance.globals.set('validation_code', validationCode);
+      pyodideInstance.globals.set('stdin_text', tc.input || '');
 
-      pyodideInstance.setStdout({
-        batched: (msg: string) => {
-          stdoutBuffer += msg + '\n';
-          globalStdoutBuffer += `[${caseLabel}]\n` + msg + '\n';
-        }
-      });
-
-      // Python execution wrapper to mock stdin
+      // ─── FIXED wrapper script ───────────────────────────────────────
+      // Key fixes vs old version:
+      //  - shared exec_globals dict so imports flow into validation_code
+      //  - builtins.input patched at module level BEFORE exec, not inside dict
+      //  - readline strips both \r\n and \n for Windows compatibility
+      // ────────────────────────────────────────────────────────────────
       const wrapperScript = `
 import sys
 import io
+import builtins
+import traceback
 
-# Mock stdin
-sys.stdin = io.StringIO("""${tc.input}""")
+# Set up stdin from the test case input string
+sys.stdin = io.StringIO(stdin_text)
 
-# Mock input() to prevent infinite blocking read calls
-def input(prompt=""):
+# Redirect stdout and stderr
+stdout_buffer = io.StringIO()
+stderr_buffer = io.StringIO()
+old_stdout = sys.stdout
+old_stderr = sys.stderr
+sys.stdout = stdout_buffer
+sys.stderr = stderr_buffer
+
+# Patch builtins.input so it reads from our mocked stdin
+# This is applied globally so it works inside user functions too
+_real_input = builtins.input
+def _mock_input(prompt=""):
     line = sys.stdin.readline()
     if not line:
-        raise EOFError("EOF when reading input")
+        raise EOFError("No more input (EOF)")
     return line.rstrip("\\r\\n")
 
-# Inject input wrapper into built-ins namespace
-import builtins
-builtins.input = input
+builtins.input = _mock_input
 
-# User code execution
+# Shared namespace for user code + validation code
+# This allows 'import numpy as np' in user_code to be visible in validation_code
+exec_globals = {"__builtins__": builtins}
+execution_error = None
+
 try:
-    code = """${userCode.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'''/g, "\\'\\'\\'")}"""
-    exec(code, {})
-    
-    # Run validation code if defined
-    validation = """${validationCode.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'''/g, "\\'\\'\\'")}"""
-    if len(validation) > 0:
-        exec(validation, {})
+    exec(compile(user_code, "<user_code>", "exec"), exec_globals)
+    if validation_code:
+        exec(compile(validation_code, "<validation>", "exec"), exec_globals)
 except Exception as e:
-    import traceback
-    print(traceback.format_exc(), file=sys.stderr)
+    execution_error = traceback.format_exc()
+
+finally:
+    # Always restore real stdout/stderr and input
+    sys.stdout = old_stdout
+    sys.stderr = old_stderr
+    builtins.input = _real_input
+
+if execution_error:
+    stderr_buffer.write(execution_error)
+
+captured_stdout = stdout_buffer.getvalue()
+captured_stderr = stderr_buffer.getvalue()
 `;
+
+      (window as any).__lastWrapper = wrapperScript;
 
       try {
         await pyodideInstance.runPythonAsync(wrapperScript);
-        
-        const actualOutput = stdoutBuffer.trim().replace(/\r\n/g, '\n');
-        const expectedOutput = tc.expectedOutput.trim().replace(/\r\n/g, '\n');
+
+        const capturedStdout = (pyodideInstance.globals.get('captured_stdout') || '') as string;
+        const capturedStderr = (pyodideInstance.globals.get('captured_stderr') || '') as string;
+        const executionError = (pyodideInstance.globals.get('execution_error') || null);
+
+        // Accumulate stdout for Console Output tab
+        if (capturedStdout) {
+          globalStdoutBuffer += `[${caseLabel}]\n${capturedStdout}\n`;
+        }
+
+        if (capturedStderr) {
+          globalStderrBuffer += `[${caseLabel}]\n${capturedStderr.trim()}\n\n`;
+        }
+        if (executionError) {
+          globalStderrBuffer += `[${caseLabel}]\n${String(executionError).trim()}\n\n`;
+        }
+
+        // ── NORMALIZED comparison (key bug fix) ──────────────────────
+        const actualOutput   = normalizeOutput(capturedStdout);
+        const expectedOutput = normalizeOutput(tc.expectedOutput);
+        // ────────────────────────────────────────────────────────────
 
         if (actualOutput === expectedOutput) {
           consoleOutputHtml += `
             <div class="border-l-2 border-emerald-500 pl-3 py-1 space-y-1">
               <div class="text-emerald-400 font-bold">Passed ✅ — ${caseLabel}</div>
-              <div class="text-[10px] text-slate-500">Input: ${tc.input.replace(/\n/g, ' ')}</div>
+              <div class="text-[10px] text-slate-500">Input: ${tc.input.replace(/\n/g, ' | ')}</div>
             </div>
           `;
         } else {
           allPassed = false;
+          const displayActual = actualOutput || '(empty output)';
+          const displayExpected = expectedOutput;
           consoleOutputHtml += `
             <div class="border-l-2 border-red-500 pl-3 py-1 space-y-1">
               <div class="text-red-400 font-bold">Failed ❌ — ${caseLabel}</div>
-              <div class="text-[10px] text-slate-500">Input: ${tc.input.replace(/\n/g, ' ')}</div>
-              <div class="text-[10px] text-slate-400">Expected: <span class="text-emerald-400">${expectedOutput}</span> | Got: <span class="text-red-400">${actualOutput || '(Empty)'}</span></div>
+              <div class="text-[10px] text-slate-500">Input: ${tc.input.replace(/\n/g, ' | ')}</div>
+              <div class="text-[10px] text-slate-400">Expected: <span class="text-emerald-400 font-mono">${displayExpected}</span></div>
+              <div class="text-[10px] text-slate-400">Got:      <span class="text-red-400 font-mono">${displayActual}</span></div>
             </div>
           `;
         }
       } catch (err: any) {
         allPassed = false;
-        globalStderrBuffer += `[${caseLabel}]\n` + err.message + '\n';
+        globalStderrBuffer += `[${caseLabel}]\n${err.message}\n\n`;
         consoleOutputHtml += `
           <div class="border-l-2 border-red-500 pl-3 py-1 space-y-1">
             <div class="text-red-400 font-bold">Runtime Error ⚠️ — ${caseLabel}</div>
@@ -568,7 +705,7 @@ except Exception as e:
     if (stderrConsole) stderrConsole.textContent = globalStderrBuffer || 'No compiler errors.';
 
     if (submitMode && allPassed) {
-      // Mark as solved
+      // Mark as solved in localStorage
       const solvedList = JSON.parse(localStorage.getItem('datalogify_solved_challenges') || '[]');
       if (!solvedList.includes(challenge.id)) {
         solvedList.push(challenge.id);
@@ -576,8 +713,14 @@ except Exception as e:
       }
       
       resultsConsole.innerHTML += `
-        <div class="mt-4 p-3 bg-emerald-950/40 border border-emerald-800/40 rounded-xl text-emerald-400 font-semibold text-center animate-bounce">
-          Congratulations! All test cases passed. Submission successful! 🎉
+        <div class="mt-4 p-3 bg-emerald-950/40 border border-emerald-800/40 rounded-xl text-emerald-400 font-semibold text-center">
+          🎉 All test cases passed — Submission Accepted!
+        </div>
+      `;
+    } else if (submitMode && !allPassed) {
+      resultsConsole.innerHTML += `
+        <div class="mt-4 p-3 bg-red-950/30 border border-red-800/40 rounded-xl text-red-400 text-xs text-center">
+          Some test cases failed. Review the output above and try again.
         </div>
       `;
     }
@@ -590,8 +733,8 @@ except Exception as e:
       `;
     }
 
-    // Automatically switch tabs if compile errors occurred
-    if (globalStderrBuffer) {
+    // Auto-switch tabs
+    if (globalStderrBuffer && !allPassed) {
       selectConsoleTab('errors');
     } else {
       selectConsoleTab('tests');
@@ -603,7 +746,7 @@ except Exception as e:
     // Initialize CodeJar editor
     initEditor();
     
-    // Wire up events
+    // Wire up reset button
     const resetBtn = document.getElementById('btn-reset-code');
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
@@ -625,13 +768,61 @@ except Exception as e:
       submitBtn.addEventListener('click', () => executeTestCases(true));
     }
 
-    // Tabs clicks
+    // Console tab clicks
     const tabs = ['tests', 'output', 'errors'];
     tabs.forEach(t => {
       const btn = document.getElementById(`tab-${t}-btn`);
       if (btn) {
         btn.addEventListener('click', () => selectConsoleTab(t));
       }
+    });
+
+    // Left panel (Problem / Solutions) tab clicks
+    const problemTabBtn = document.getElementById('desc-tab-problem-btn');
+    const solutionsTabBtn = document.getElementById('desc-tab-solutions-btn');
+    if (problemTabBtn) {
+      problemTabBtn.addEventListener('click', () => selectDescTab('problem'));
+    }
+    if (solutionsTabBtn) {
+      solutionsTabBtn.addEventListener('click', () => selectDescTab('solutions'));
+    }
+
+    // Solution accordion toggles
+    document.querySelectorAll('.sol-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = btn.getAttribute('data-sol-idx');
+        const body = btn.nextElementSibling as HTMLElement | null;
+        const chevron = btn.querySelector('.sol-chevron') as HTMLElement | null;
+        if (body) {
+          body.classList.toggle('hidden');
+          if (chevron) {
+            chevron.style.transform = body.classList.contains('hidden') ? '' : 'rotate(180deg)';
+          }
+          // Syntax highlight the solution code
+          if (!body.classList.contains('hidden')) {
+            const pre = body.querySelector('.solution-pre') as HTMLElement | null;
+            if (pre && (window as any).Prism) {
+              const raw = pre.textContent || '';
+              pre.innerHTML = (window as any).Prism.highlight(raw, (window as any).Prism.languages.python, 'python');
+            }
+          }
+        }
+      });
+    });
+
+    // "Load into Editor" buttons
+    document.querySelectorAll('.sol-try-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const code = btn.getAttribute('data-sol-code') || '';
+        if (jar && code) {
+          jar.updateCode(code);
+          updateLineNumbers(code);
+          // Switch to Problem tab so user can run it
+          selectDescTab('problem');
+          // Scroll to top of editor
+          document.getElementById('editor')?.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
     });
 
     // Launch Pyodide compilation
@@ -743,5 +934,30 @@ except Exception as e:
   .tab-size-4 {
     tab-size: 4;
     -moz-tab-size: 4;
+  }
+
+  /* Left panel tabs */
+  .desc-tabs {
+    border-color: #1e293b !important;
+    margin-top: 0 !important;
+  }
+
+  /* Solution code block */
+  .solution-pre {
+    background-color: #090d16 !important;
+    border-top: 1px solid #1e293b;
+  }
+
+  /* Solution card */
+  .solution-card {
+    border-color: #1e293b !important;
+  }
+
+  .sol-toggle {
+    cursor: pointer;
+  }
+
+  .sol-chevron {
+    transition: transform 0.2s ease;
   }
 </style>

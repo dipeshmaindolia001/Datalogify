@@ -22,10 +22,7 @@ export interface Challenge {
 }
 
 export const challenges: Challenge[] = [
-  // ==========================================
-  // TIER 1 — SYNTAX & I/O (Q1–8)
-  // ==========================================
-  {
+{
     id: 'py-basics-1',
     title: 'Say Hello, Python',
     slug: 'say-hello-python',
@@ -41,8 +38,23 @@ export const challenges: Challenge[] = [
 # Write printing code below
 `,
     testCases: [{ input: 'Alice', expectedOutput: 'Hello, Alice!', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Using f-strings",
+        explanation: "Use an f-string to format the input name into the greeting string.",
+        code: `name = input()
+print(f"Hello, {name}!")`
+      },
+      {
+        title: "String Concatenation",
+        explanation: "Concatenate \"Hello, \", the name variable, and \"!\" together.",
+        code: `name = input()
+print("Hello, " + name + "!")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-2',
     title: 'Print With sep and end',
     slug: 'print-with-sep-and-end',
@@ -60,8 +72,19 @@ val3 = input()
 # Print using sep and end parameters
 `,
     testCases: [{ input: 'apple\nbanana\ncherry', expectedOutput: 'apple,banana,cherry', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Using sep and end parameters",
+        explanation: "Pass sep=\",\" to separate arguments with a comma, and end=\"\" to suppress the trailing newline.",
+        code: `val1 = input()
+val2 = input()
+val3 = input()
+print(val1, val2, val3, sep=',', end='')`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-3',
     title: 'Comments & Docstrings',
     slug: 'comments-and-docstrings',
@@ -80,8 +103,20 @@ val3 = input()
 # Print docstring below
 `,
     testCases: [{ input: 'run', expectedOutput: 'Returns a greeting', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Docstring and __doc__ Attribute",
+        explanation: "Define the docstring inside the function using triple quotes, and access it via the __doc__ attribute.",
+        code: `def greet():
+    """Returns a greeting"""
+    pass
+
+print(greet.__doc__)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-4',
     title: 'f-string Basics',
     slug: 'f-string-basics',
@@ -99,8 +134,19 @@ price = float(input())
 # Print using f-string
 `,
     testCases: [{ input: 'apple\n5\n10.50', expectedOutput: 'We bought 5 apples for $10.5 total.', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "f-string Formatting",
+        explanation: "Substitute the variables directly into the formatted string.",
+        code: `product = input()
+qty = int(input())
+price = float(input())
+print(f"We bought {qty} {product}s for \\\${price} total.")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-5',
     title: 'Basic Input Parsing',
     slug: 'basic-input-parsing',
@@ -115,8 +161,17 @@ price = float(input())
     starterCode: `# Read space-separated values, parse to integers, print sum
 `,
     testCases: [{ input: '5 7', expectedOutput: '12', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Using split() and map()",
+        explanation: "Split the input line by spaces, convert each to int, and print their sum.",
+        code: `a, b = map(int, input().split())
+print(a + b)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-6',
     title: 'Formatting Numbers',
     slug: 'formatting-numbers',
@@ -132,8 +187,17 @@ price = float(input())
 # Print formatted float
 `,
     testCases: [{ input: '3.14159', expectedOutput: '3.14', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Floating point formatting",
+        explanation: "Use the :.2f format specifier to round and display exactly two decimal places.",
+        code: `val = float(input())
+print(f"{val:.2f}")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-7',
     title: 'Multi-line Strings',
     slug: 'multi-line-strings',
@@ -148,8 +212,18 @@ price = float(input())
     starterCode: `# Print triple-quoted string literal below
 `,
     testCases: [{ input: 'run', expectedOutput: 'Line 1\nLine 2\nLine 3', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Triple-quoted multi-line string",
+        explanation: "Write a single string literal spanning multiple lines using triple double quotes.",
+        code: `print("""Line 1
+Line 2
+Line 3""")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-8',
     title: 'Swap Two Variables',
     slug: 'swap-two-variables',
@@ -166,12 +240,19 @@ b = input()
 # Swap values in a single statement, then print
 `,
     testCases: [{ input: 'hello\nworld', expectedOutput: 'world hello', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Multiple Assignment Tuple Unpacking",
+        explanation: "Assign a, b = b, a in a single statement. Python evaluates the right side first into a tuple and then unpacks it.",
+        code: `a = input()
+b = input()
+a, b = b, a
+print(a, b)`
+      }
+    ]
   },
-
-  // ==========================================
-  // TIER 2 — VARIABLES, TYPES & OPERATORS (Q9–18)
-  // ==========================================
-  {
+{
     id: 'py-basics-9',
     title: 'Type Checking',
     slug: 'type-checking',
@@ -186,8 +267,17 @@ b = input()
     starterCode: `# Print type names
 `,
     testCases: [{ input: 'run', expectedOutput: 'int\nfloat\nstr\nlist\nbool', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Using type().__name__",
+        explanation: "Iterate through values, checking the type of each, and print the __name__ attribute of the type.",
+        code: `for val in [10, 3.14, "hello", [1, 2], True]:
+    print(type(val).__name__)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-10',
     title: 'Type Conversion',
     slug: 'type-conversion',
@@ -203,8 +293,22 @@ b = input()
 # Attempt conversion, handle ValueError
 `,
     testCases: [{ input: '12', expectedOutput: '12 12.0', isExample: true }, { input: 'abc', expectedOutput: 'Invalid conversion' }]
+  ,
+    solutions: [
+      {
+        title: "Try-except handling ValueError",
+        explanation: "Convert to int and float inside a try block. If a ValueError is raised, catch it and print the error message.",
+        code: `s = input()
+try:
+    val_int = int(s)
+    val_float = float(s)
+    print(f"{val_int} {val_float}")
+except ValueError:
+    print("Invalid conversion")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-11',
     title: 'Arithmetic Operators',
     slug: 'arithmetic-operators',
@@ -221,8 +325,24 @@ b = int(input())
 # Print arithmetic operations
 `,
     testCases: [{ input: '5\n2', expectedOutput: '7\n3\n10\n2.5\n2\n1\n25', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Standard Arithmetic Operators",
+        explanation: "Print the results of standard addition, subtraction, multiplication, division, floor division, modulo, and exponentiation.",
+        code: `a = int(input())
+b = int(input())
+print(a + b)
+print(a - b)
+print(a * b)
+print(a / b)
+print(a // b)
+print(a % b)
+print(a ** b)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-12',
     title: 'Comparison Operators',
     slug: 'comparison-operators',
@@ -239,8 +359,23 @@ b = int(input())
 # Print comparisons
 `,
     testCases: [{ input: '5\n2', expectedOutput: 'False\nTrue\nTrue\nFalse\nTrue\nFalse', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Comparison Operators",
+        explanation: "Perform equality, inequality, and ordering comparisons on the integers.",
+        code: `a = int(input())
+b = int(input())
+print(a == b)
+print(a != b)
+print(a > b)
+print(a < b)
+print(a >= b)
+print(a <= b)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-13',
     title: 'Logical Operators',
     slug: 'logical-operators',
@@ -258,8 +393,19 @@ c = input() == 'True'
 # Print logical result
 `,
     testCases: [{ input: 'True\nFalse\nFalse', expectedOutput: 'True', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Logical Precedence",
+        explanation: "Evaluate the expression (a and b) or not c. The \"not\" operator has the highest precedence, followed by \"and\", and then \"or\".",
+        code: `a = input() == 'True'
+b = input() == 'True'
+c = input() == 'True'
+print((a and b) or not c)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-14',
     title: 'Bitwise Operators',
     slug: 'bitwise-operators',
@@ -276,8 +422,22 @@ b = int(input())
 # Print bitwise results
 `,
     testCases: [{ input: '5\n3', expectedOutput: '1\n7\n6\n10\n1', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Bitwise operations",
+        explanation: "Use standard bitwise operators: &, |, ^, <<, and >>.",
+        code: `a = int(input())
+b = int(input())
+print(a & b)
+print(a | b)
+print(a ^ b)
+print(a << 1)
+print(b >> 1)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-15',
     title: 'Chained Comparisons',
     slug: 'chained-comparisons',
@@ -295,8 +455,19 @@ b = int(input())
 # Print chained comparison result
 `,
     testCases: [{ input: '5\n10\n15', expectedOutput: 'True', isExample: true }, { input: '5\n3\n10', expectedOutput: 'False' }]
+  ,
+    solutions: [
+      {
+        title: "Chained comparison operators",
+        explanation: "Write a chained comparison a < x < b which is equivalent to a < x and x < b but cleaner and evaluated once.",
+        code: `a = int(input())
+x = int(input())
+b = int(input())
+print(a < x < b)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-16',
     title: 'Ternary Expression',
     slug: 'ternary-expression',
@@ -312,8 +483,17 @@ b = int(input())
 # Print result using ternary expression
 `,
     testCases: [{ input: '75', expectedOutput: 'Pass', isExample: true }, { input: '40', expectedOutput: 'Fail' }]
+  ,
+    solutions: [
+      {
+        title: "Ternary inline conditional expression",
+        explanation: "Use the syntax: true_value if condition else false_value.",
+        code: `score = int(input())
+print("Pass" if score >= 50 else "Fail")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-17',
     title: 'Multiple Assignment',
     slug: 'multiple-assignment',
@@ -328,8 +508,19 @@ b = int(input())
     starterCode: `# Perform multiple assignments and unpacking, print outputs
 `,
     testCases: [{ input: 'run', expectedOutput: '1 2 3\n10 20', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Unpacking tuples and multiple assignment",
+        explanation: "Assign three variables at once, then unpack a two-element tuple into two variables.",
+        code: `a, b, c = 1, 2, 3
+print(f"{a} {b} {c}")
+x, y = (10, 20)
+print(f"{x} {y}")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-18',
     title: 'is vs ==',
     slug: 'is-vs-equals',
@@ -344,12 +535,19 @@ b = int(input())
     starterCode: `# Demonstrate equals vs identity
 `,
     testCases: [{ input: 'run', expectedOutput: 'True\nFalse', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Equality vs Identity",
+        explanation: "Use == to check if values are identical, and \"is\" to check if the objects point to the same memory location.",
+        code: `x = [1, 2]
+y = [1, 2]
+print(x == y)
+print(x is y)`
+      }
+    ]
   },
-
-  // ==========================================
-  // TIER 3 — CONTROL FLOW (Q19–28)
-  // ==========================================
-  {
+{
     id: 'py-basics-19',
     title: 'Even or Odd Number',
     slug: 'even-or-odd-number',
@@ -365,8 +563,20 @@ b = int(input())
 # Write logic below
 `,
     testCases: [{ input: '4', expectedOutput: 'Even', isExample: true }, { input: '7', expectedOutput: 'Odd' }]
+  ,
+    solutions: [
+      {
+        title: "Modulo operator check",
+        explanation: "Use n % 2 == 0 to check if the remainder when dividing by 2 is zero.",
+        code: `n = int(input())
+if n % 2 == 0:
+    print("Even")
+else:
+    print("Odd")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-20',
     title: 'Leap Year Calculator',
     slug: 'leap-year-calculator',
@@ -382,8 +592,18 @@ b = int(input())
 # Write logic below
 `,
     testCases: [{ input: '2024', expectedOutput: 'True', isExample: true }, { input: '1900', expectedOutput: 'False' }]
+  ,
+    solutions: [
+      {
+        title: "Leap year calculation logic",
+        explanation: "A year is a leap year if it is divisible by 4 but not by 100, unless it is also divisible by 400.",
+        code: `year = int(input())
+is_leap = (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+print(is_leap)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-21',
     title: 'The Classic FizzBuzz',
     slug: 'classic-fizzbuzz',
@@ -399,8 +619,25 @@ b = int(input())
 # Write loop below
 `,
     testCases: [{ input: '5', expectedOutput: '1\n2\nFizz\n4\nBuzz', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "FizzBuzz Loop",
+        explanation: "Iterate from 1 to n. Check if divisibility applies first for both 3 and 5 (FizzBuzz), then for 3 (Fizz), then for 5 (Buzz).",
+        code: `n = int(input())
+for i in range(1, n + 1):
+    if i % 3 == 0 and i % 5 == 0:
+        print("FizzBuzz")
+    elif i % 3 == 0:
+        print("Fizz")
+    elif i % 5 == 0:
+        print("Buzz")
+    else:
+        print(i)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-22',
     title: 'Grade Calculator',
     slug: 'grade-calculator',
@@ -416,8 +653,26 @@ b = int(input())
 # Print letter grade
 `,
     testCases: [{ input: '85', expectedOutput: 'B', isExample: true }, { input: '55', expectedOutput: 'F' }]
+  ,
+    solutions: [
+      {
+        title: "If-Elif-Else Chain",
+        explanation: "Check range thresholds in descending order to assign the correct letter grade.",
+        code: `score = int(input())
+if score >= 90:
+    print("A")
+elif score >= 80:
+    print("B")
+elif score >= 70:
+    print("C")
+elif score >= 60:
+    print("D")
+else:
+    print("F")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-23',
     title: 'Guess-the-Number Loop',
     slug: 'guess-the-number-loop',
@@ -433,8 +688,23 @@ b = int(input())
 # Loop inputs until guess matches target, print count of attempts
 `,
     testCases: [{ input: '1\n5\n7', expectedOutput: '3', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "While Loop with input",
+        explanation: "Loop indefinitely, reading guesses and incrementing the attempt counter, until guess matches the target.",
+        code: `target = 7
+attempts = 0
+while True:
+    guess = int(input())
+    attempts += 1
+    if guess == target:
+        break
+print(attempts)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-24',
     title: 'Loop-Else Clause',
     slug: 'loop-else-clause',
@@ -450,8 +720,22 @@ b = int(input())
 # Write for...else loop
 `,
     testCases: [{ input: '3', expectedOutput: 'Found', isExample: true }, { input: '10', expectedOutput: 'Not Found' }]
+  ,
+    solutions: [
+      {
+        title: "For-Else syntax",
+        explanation: "Use a for loop to scan range 1 to 5. Break if target matches. The else block runs if no break occurred.",
+        code: `target = int(input())
+for i in range(1, 6):
+    if i == target:
+        print("Found")
+        break
+else:
+    print("Not Found")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-25',
     title: 'Multiplication Table',
     slug: 'multiplication-table',
@@ -467,8 +751,17 @@ b = int(input())
 # Print table values
 `,
     testCases: [{ input: '3', expectedOutput: '3 6 9 12 15', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "String Join with comprehension",
+        explanation: "Generate the first 5 multiples of n using a list comprehension and join them with spaces.",
+        code: `n = int(input())
+print(" ".join(str(n * i) for i in range(1, 6)))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-26',
     title: 'break and continue',
     slug: 'break-and-continue',
@@ -483,8 +776,23 @@ b = int(input())
     starterCode: `# break and continue loop
 `,
     testCases: [{ input: 'run', expectedOutput: '1 2 4 5 7 8 10 11 13 14 16 17', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Loop control with break and continue",
+        explanation: "Iterate from 1 to 20, continue to skip multiples of 3, and break to stop when 18 is reached.",
+        code: `res = []
+for i in range(1, 21):
+    if i == 18:
+        break
+    if i % 3 == 0:
+        continue
+    res.append(str(i))
+print(" ".join(res))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-27',
     title: 'Right-Triangle Pattern',
     slug: 'right-triangle-pattern',
@@ -500,8 +808,18 @@ b = int(input())
 # Print star pattern
 `,
     testCases: [{ input: '3', expectedOutput: '*\n**\n***', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Nested replication of character",
+        explanation: "Loop from 1 to n, repeating the star character i times for each line.",
+        code: `n = int(input())
+for i in range(1, n + 1):
+    print("*" * i)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-28',
     title: 'Simple State Machine',
     slug: 'simple-state-machine',
@@ -516,12 +834,30 @@ b = int(input())
     starterCode: `# Loop commands, modify state, print final state
 `,
     testCases: [{ input: 'ON\ntoggle\nquit', expectedOutput: 'OFF', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "State machine event loop",
+        explanation: "Define state variable. Loop over commands, update state, and print state on quit.",
+        code: `state = "OFF"
+while True:
+    try:
+        cmd = input()
+    except EOFError:
+        break
+    if cmd == "quit":
+        break
+    elif cmd == "ON":
+        state = "ON"
+    elif cmd == "OFF":
+        state = "OFF"
+    elif cmd == "toggle":
+        state = "OFF" if state == "ON" else "ON"
+print(state)`
+      }
+    ]
   },
-
-  // ==========================================
-  // TIER 4 — STRINGS (Q29–38)
-  // ==========================================
-  {
+{
     id: 'py-basics-29',
     title: 'Indexing & Slicing',
     slug: 'indexing-slicing-strings',
@@ -537,8 +873,19 @@ b = int(input())
 # Print slices
 `,
     testCases: [{ input: 'datalogify', expectedOutput: 'dat\nify\nl', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Slicing indices",
+        explanation: "Get first 3 characters with [:3], last 3 with [-3:], and middle character using len(word) // 2.",
+        code: `word = input()
+print(word[:3])
+print(word[-3:])
+print(word[len(word) // 2])`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-30',
     title: 'Reverse a String',
     slug: 'reverse-a-string',
@@ -554,8 +901,17 @@ b = int(input())
 # Reverse and print
 `,
     testCases: [{ input: 'python', expectedOutput: 'nohtyp', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "String slice reversal",
+        explanation: "Use the stride parameter -1 in slice syntax to reverse the string.",
+        code: `s = input()
+print(s[::-1])`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-31',
     title: 'Palindrome Checker',
     slug: 'palindrome-checker',
@@ -571,8 +927,18 @@ b = int(input())
 # Palindrome checking
 `,
     testCases: [{ input: 'A man a plan a canal Panama', expectedOutput: 'True', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Palindrome checker",
+        explanation: "Convert string to lower case, remove spaces, and compare with its reversed version.",
+        code: `s = input()
+cleaned = "".join(s.lower().split())
+print(cleaned == cleaned[::-1])`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-32',
     title: 'Count Vowels',
     slug: 'count-vowels',
@@ -588,8 +954,17 @@ b = int(input())
 # Count vowels
 `,
     testCases: [{ input: 'Hello World', expectedOutput: '3', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Sum generator expression",
+        explanation: "Sum 1 for each character that exists in the lowercase representation of vowels.",
+        code: `s = input()
+print(sum(1 for char in s.lower() if char in "aeiou"))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-33',
     title: 'Case Methods',
     slug: 'case-methods',
@@ -605,8 +980,19 @@ b = int(input())
 # Print case conversions
 `,
     testCases: [{ input: 'pyTHon PrActiCe', expectedOutput: 'Python Practice\nPython practice\nPYthON pRaCTIcE', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "String case methods",
+        explanation: "Print using string methods: .title(), .capitalize(), and .swapcase().",
+        code: `s = input()
+print(s.title())
+print(s.capitalize())
+print(s.swapcase())`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-34',
     title: 'Split and Join',
     slug: 'split-and-join',
@@ -622,8 +1008,17 @@ b = int(input())
 # Split and join
 `,
     testCases: [{ input: 'Split this sentence', expectedOutput: 'Split-this-sentence', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Split and join methods",
+        explanation: "Use split() to split words by spaces, and join() to combine them using hyphens.",
+        code: `s = input()
+print("-".join(s.split()))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-35',
     title: '.format() Method',
     slug: 'format-method',
@@ -640,8 +1035,18 @@ item = input()
 # Format and print
 `,
     testCases: [{ input: 'Bob\norder', expectedOutput: 'Hello Bob, your order is ready.', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "String format method",
+        explanation: "Use standard brackets {} as placeholders and format them using named parameters or positional args.",
+        code: `name = input()
+item = input()
+print("Hello {}, your {} is ready.".format(name, item))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-36',
     title: 'Anagram Checker',
     slug: 'anagram-checker',
@@ -657,8 +1062,17 @@ item = input()
 # Anagram checking
 `,
     testCases: [{ input: 'listen silent', expectedOutput: 'True', isExample: true }, { input: 'hello world', expectedOutput: 'False' }]
+  ,
+    solutions: [
+      {
+        title: "Sorted characters comparison",
+        explanation: "If two words are anagrams, their sorted characters must be identical.",
+        code: `w1, w2 = input().split()
+print(sorted(w1) == sorted(w2))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-37',
     title: 'Longest Word in a Sentence',
     slug: 'longest-word-in-sentence',
@@ -674,8 +1088,23 @@ item = input()
 # Find longest word
 `,
     testCases: [{ input: 'Learning Python is absolutely amazing', expectedOutput: 'absolutely', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Max length word check",
+        explanation: "Split the sentence by spaces, strip punctuation, and find the word with the maximum length.",
+        code: `s = input()
+words = s.split()
+longest = ""
+for word in words:
+    clean_word = "".join(char for char in word if char.isalnum())
+    if len(clean_word) > len(longest):
+        longest = clean_word
+print(longest)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-38',
     title: 'Character Frequency Sorter',
     slug: 'character-frequency-sorter',
@@ -691,12 +1120,22 @@ item = input()
 # Count, sort, and print
 `,
     testCases: [{ input: 'banana', expectedOutput: 'a:3\nn:2\nb:1', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Frequency counter and custom sort",
+        explanation: "Count letters using a dict, then sort items by frequency descending and character ascending.",
+        code: `s = input()
+freq = {}
+for char in s:
+    freq[char] = freq.get(char, 0) + 1
+sorted_chars = sorted(freq.items(), key=lambda item: (-item[1], item[0]))
+for char, count in sorted_chars:
+    print(f"{char}:{count}")`
+      }
+    ]
   },
-
-  // ==========================================
-  // TIER 5 — LISTS & TUPLES (Q39–48)
-  // ==========================================
-  {
+{
     id: 'py-basics-39',
     title: 'Append, Insert, Remove',
     slug: 'append-insert-remove',
@@ -714,8 +1153,24 @@ val3 = input()
 # Perform append, insert, remove
 `,
     testCases: [{ input: 'apple\nbanana\napple', expectedOutput: "['banana']", isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "List modification",
+        explanation: "Append, insert at index 0, and remove if present in list.",
+        code: `val1 = input()
+val2 = input()
+val3 = input()
+lst = []
+lst.append(val1)
+lst.insert(0, val2)
+if val3 in lst:
+    lst.remove(val3)
+print(lst)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-40',
     title: 'List Slicing Drills',
     slug: 'list-slicing-drills',
@@ -731,8 +1186,19 @@ val3 = input()
 # Print slices
 `,
     testCases: [{ input: 'run', expectedOutput: '[10, 20, 30]\n[50, 60]\n[10, 30, 50]', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "List slicing",
+        explanation: "Slice first 3 with [:3], last 2 with [-2:], and every 2nd element with [::2].",
+        code: `lst = [10, 20, 30, 40, 50, 60]
+print(lst[:3])
+print(lst[-2:])
+print(lst[::2])`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-41',
     title: 'List Sum and Average',
     slug: 'list-sum-and-average',
@@ -748,8 +1214,19 @@ val3 = input()
 # Calculate sum, average and print
 `,
     testCases: [{ input: '10.5 20.0 30.5', expectedOutput: '61.0 20.33', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Sum and Average",
+        explanation: "Calculate sum and round average to 2 decimal places using float formatting.",
+        code: `nums = [float(x) for x in input().split()]
+s = sum(nums)
+avg = s / len(nums) if nums else 0.0
+print(f"{s} {avg:.2f}")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-42',
     title: 'Max/Min Without Built-ins',
     slug: 'max-min-without-built-ins',
@@ -765,8 +1242,27 @@ val3 = input()
 # Loop and find max and min
 `,
     testCases: [{ input: '5 3 9 1 7', expectedOutput: '9 1', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Manual min and max loop",
+        explanation: "Scan list elements starting from second item, updating min and max tracker variables.",
+        code: `nums = [int(x) for x in input().split()]
+if not nums:
+    print("None None")
+else:
+    maximum = nums[0]
+    minimum = nums[0]
+    for n in nums[1:]:
+        if n > maximum:
+            maximum = n
+        if n < minimum:
+            minimum = n
+    print(f"{maximum} {minimum}")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-43',
     title: 'Remove Duplicates, Keep Order',
     slug: 'remove-duplicates-keep-order',
@@ -782,8 +1278,23 @@ val3 = input()
 # Remove duplicates preserving order
 `,
     testCases: [{ input: '3 1 3 2 1', expectedOutput: '3 1 2', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Ordered set filtering",
+        explanation: "Use a seen set to track visited values while appending unique items to a new list to preserve order.",
+        code: `nums = [int(x) for x in input().split()]
+seen = set()
+res = []
+for n in nums:
+    if n not in seen:
+        seen.add(n)
+        res.append(n)
+print(" ".join(map(str, res)))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-44',
     title: 'Flatten a Nested List',
     slug: 'flatten-nested-list',
@@ -801,8 +1312,25 @@ def flatten(l):
     pass
 `,
     testCases: [{ input: '[1, [2, [3, 4]], 5]', expectedOutput: '1 2 3 4 5', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Recursive flattening function",
+        explanation: "Scan elements; if item is list, recursively call flatten, otherwise append to final list.",
+        code: `lst = eval(input())
+def flatten(l):
+    res = []
+    for item in l:
+        if isinstance(item, list):
+            res.extend(flatten(item))
+        else:
+            res.append(item)
+    return res
+print(" ".join(map(str, flatten(lst))))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-45',
     title: 'Second Largest Number',
     slug: 'second-largest-number-basics',
@@ -818,8 +1346,22 @@ def flatten(l):
 # Find second largest
 `,
     testCases: [{ input: '2 3 6 6 5', expectedOutput: '5', isExample: true }, { input: '10 10', expectedOutput: 'None' }]
+  ,
+    solutions: [
+      {
+        title: "Second largest number",
+        explanation: "Remove duplicates by casting to a set, sort the unique elements, and return the second from the end.",
+        code: `nums = [int(x) for x in input().split()]
+unique_nums = list(set(nums))
+if len(unique_nums) < 2:
+    print("None")
+else:
+    unique_nums.sort()
+    print(unique_nums[-2])`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-46',
     title: 'Rotate a List',
     slug: 'rotate-a-list',
@@ -836,8 +1378,23 @@ lst = [int(x) for x in input().split()]
 # Rotate and print
 `,
     testCases: [{ input: '2\n1 2 3 4 5', expectedOutput: '4 5 1 2 3', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Rotation using modulo slice",
+        explanation: "Wrap rotation limit k using length of list, and slice elements to shift right.",
+        code: `k = int(input())
+lst = [int(x) for x in input().split()]
+if not lst:
+    print("")
+else:
+    k = k % len(lst)
+    rotated = lst[-k:] + lst[:-k]
+    print(" ".join(map(str, rotated)))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-47',
     title: 'Tuple Unpacking',
     slug: 'tuple-unpacking',
@@ -853,8 +1410,20 @@ lst = [int(x) for x in input().split()]
 # Unpack values and print
 `,
     testCases: [{ input: 'apple banana cherry', expectedOutput: 'apple\nbanana\ncherry', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Tuple unpacking assignments",
+        explanation: "Assign split strings directly to three variables and print them on new lines.",
+        code: `vals = input().split()
+a, b, c = vals
+print(a)
+print(b)
+print(c)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-48',
     title: 'Zip Two Lists',
     slug: 'zip-two-lists',
@@ -871,12 +1440,19 @@ scores = input().split()
 # Zip and print
 `,
     testCases: [{ input: 'Alice Bob\n95 88', expectedOutput: 'Alice:95\nBob:88', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Zip function iteration",
+        explanation: "Zip names and scores to iterate simultaneously over both collections.",
+        code: `names = input().split()
+scores = input().split()
+for name, score in zip(names, scores):
+    print(f"{name}:{score}")`
+      }
+    ]
   },
-
-  // ==========================================
-  // TIER 6 — SETS & DICTIONARIES (Q49–56)
-  // ==========================================
-  {
+{
     id: 'py-basics-49',
     title: 'Set Operations Explorer',
     slug: 'set-operations-explorer',
@@ -893,8 +1469,21 @@ s2 = set(int(x) for x in input().split())
 # Compute set operations and print
 `,
     testCases: [{ input: '1 2 3\n3 4 5', expectedOutput: '[1, 2, 3, 4, 5]\n[3]\n[1, 2]\n[1, 2, 4, 5]', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Set operations",
+        explanation: "Compute union (|), intersection (&), difference (-), and symmetric difference (^) of sets.",
+        code: `s1 = set(int(x) for x in input().split())
+s2 = set(int(x) for x in input().split())
+print(sorted(list(s1 | s2)))
+print(sorted(list(s1 & s2)))
+print(sorted(list(s1 - s2)))
+print(sorted(list(s1 ^ s2)))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-50',
     title: 'Common Elements via Sets',
     slug: 'common-elements-via-sets',
@@ -911,8 +1500,19 @@ l2 = [int(x) for x in input().split()]
 # Print common elements
 `,
     testCases: [{ input: '1 2 3 4\n3 4 5 6', expectedOutput: '3 4', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Set intersection",
+        explanation: "Use the set intersection operator & to find common values, then sort and print.",
+        code: `l1 = [int(x) for x in input().split()]
+l2 = [int(x) for x in input().split()]
+common = sorted(list(set(l1) & set(l2)))
+print(" ".join(map(str, common)))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-51',
     title: 'Dictionary Word Counter',
     slug: 'dictionary-word-counter',
@@ -928,8 +1528,21 @@ l2 = [int(x) for x in input().split()]
 # Count and print sorted
 `,
     testCases: [{ input: 'apple banana apple', expectedOutput: 'apple:2\nbanana:1', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Word count mapping",
+        explanation: "Count elements using a dictionary and iterate over sorted dictionary keys.",
+        code: `words = input().split()
+counts = {}
+for w in words:
+    counts[w] = counts.get(w, 0) + 1
+for w in sorted(counts.keys()):
+    print(f"{w}:{counts[w]}")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-52',
     title: 'Nested Dictionary Lookup',
     slug: 'nested-dictionary-lookup',
@@ -945,8 +1558,20 @@ l2 = [int(x) for x in input().split()]
 # Print student averages
 `,
     testCases: [{ input: "{'Alice': {'Math': 90, 'Science': 80}, 'Bob': {'Math': 70}}", expectedOutput: 'Alice:85.0\nBob:70.0', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Nested dict iteration",
+        explanation: "Iterate student names in sorted order, retrieve subjects dictionary, and calculate average score.",
+        code: `data = eval(input())
+for name in sorted(data.keys()):
+    marks = data[name].values()
+    avg = sum(marks) / len(marks) if marks else 0.0
+    print(f"{name}:{avg:.1f}")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-53',
     title: 'Merge Two Dictionaries',
     slug: 'merge-two-dictionaries',
@@ -963,8 +1588,20 @@ d2 = eval(input())
 # Merge and print sorted
 `,
     testCases: [{ input: "{'a': 1, 'b': 2}\n{'b': 3, 'c': 4}", expectedOutput: "{'a': 1, 'b': 3, 'c': 4}", isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Merge dict using unpacking operator",
+        explanation: "Merge two dictionaries with {**d1, **d2} and rebuild key-sorted representation.",
+        code: `d1 = eval(input())
+d2 = eval(input())
+merged = {**d1, **d2}
+sorted_merged = {k: merged[k] for k in sorted(merged.keys())}
+print(sorted_merged)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-54',
     title: 'Invert a Dictionary',
     slug: 'invert-a-dictionary',
@@ -980,8 +1617,19 @@ d2 = eval(input())
 # Invert and print
 `,
     testCases: [{ input: "{'a': 'x', 'b': 'y'}", expectedOutput: "{'x': 'a', 'y': 'b'}", isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Dictionary inversion",
+        explanation: "Swap key and value using a dict comprehension, then print sorted by key.",
+        code: `d = eval(input())
+inverted = {v: k for k, v in d.items()}
+sorted_inverted = {k: inverted[k] for k in sorted(inverted.keys())}
+print(sorted_inverted)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-55',
     title: 'Dictionary Comprehension',
     slug: 'dictionary-comprehension',
@@ -998,8 +1646,20 @@ vals = input().split()
 # Create dictionary using comprehension, print sorted
 `,
     testCases: [{ input: 'a b\n1 2', expectedOutput: "{'a': '1', 'b': '2'}", isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Zip and dictionary comprehension",
+        explanation: "Zip keys and values, construct a dictionary with key-value pairs, and sort by key.",
+        code: `keys = input().split()
+vals = input().split()
+d = {k: v for k, v in zip(keys, vals)}
+sorted_d = {k: d[k] for k in sorted(d.keys())}
+print(sorted_d)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-56',
     title: 'Missing Number via Sets',
     slug: 'missing-number-via-sets',
@@ -1015,12 +1675,21 @@ vals = input().split()
 # Find missing number
 `,
     testCases: [{ input: '3 0 1', expectedOutput: '2', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Set difference missing number",
+        explanation: "Create a full set of numbers in range(0, n+1) and subtract the actual set of numbers.",
+        code: `nums = [int(x) for x in input().split()]
+n = len(nums)
+expected_set = set(range(n + 1))
+actual_set = set(nums)
+missing = (expected_set - actual_set).pop()
+print(missing)`
+      }
+    ]
   },
-
-  // ==========================================
-  // TIER 7 — FUNCTIONS & SCOPE (Q57–66)
-  // ==========================================
-  {
+{
     id: 'py-basics-57',
     title: 'Define & Call a Function',
     slug: 'define-call-function',
@@ -1040,8 +1709,20 @@ val = int(input())
 print(square(val))
 `,
     testCases: [{ input: '4', expectedOutput: '16', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Simple function return",
+        explanation: "Define square(n) returning n * n. Call it on parsed integer input.",
+        code: `def square(n):
+    return n * n
+
+val = int(input())
+print(square(val))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-58',
     title: 'Default & Keyword Args',
     slug: 'default-keyword-args',
@@ -1062,8 +1743,21 @@ greeting = input()
 print(greet(name, greeting))
 `,
     testCases: [{ input: 'Alice\nHi', expectedOutput: 'Hi, Alice!', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Default parameter argument value",
+        explanation: "Define greeting parameter with default value \"Hello\". Call greet passing name and greeting.",
+        code: `def greet(name, greeting="Hello"):
+    return f"{greeting}, {name}!"
+
+name = input()
+greeting = input()
+print(greet(name, greeting))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-59',
     title: '*args and **kwargs',
     slug: 'args-and-kwargs',
@@ -1085,8 +1779,22 @@ def process_data(*args, **kwargs):
 print(process_data(*args, **kwargs))
 `,
     testCases: [{ input: '1 2\n{"x": 3, "y": 4}', expectedOutput: '10', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Args and Kwargs parameter unpacking",
+        explanation: "Calculate sum of args and sum of values inside kwargs.",
+        code: `args = [int(x) for x in input().split()]
+kwargs = eval(input())
+
+def process_data(*args, **kwargs):
+    return sum(args) + sum(kwargs.values())
+
+print(process_data(*args, **kwargs))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-60',
     title: 'Return Multiple Values',
     slug: 'return-multiple-values',
@@ -1107,8 +1815,23 @@ def stats(lst):
 print(" ".join(str(x) for x in stats(nums)))
 `,
     testCases: [{ input: '10 20 30', expectedOutput: '10 30 20.0', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Tuple return matching multiple metrics",
+        explanation: "Return min, max, and average of list as a tuple.",
+        code: `nums = [int(x) for x in input().split()]
+
+def stats(lst):
+    if not lst:
+        return (0, 0, 0.0)
+    return (min(lst), max(lst), sum(lst) / len(lst))
+
+print(" ".join(str(x) for x in stats(nums)))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-61',
     title: 'Local vs Global Scope',
     slug: 'local-vs-global-scope',
@@ -1131,8 +1854,24 @@ increment()
 print(counter)
 `,
     testCases: [{ input: 'run', expectedOutput: '0\n1', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Global keyword scope modification",
+        explanation: "Use the global keyword to tell Python that counter refers to the variable defined in outer module scope.",
+        code: `counter = 0
+
+def increment():
+    global counter
+    counter += 1
+
+print(counter)
+increment()
+print(counter)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-62',
     title: 'Recursive Factorial',
     slug: 'recursive-factorial',
@@ -1153,8 +1892,23 @@ def factorial(n):
 print(factorial(n))
 `,
     testCases: [{ input: '5', expectedOutput: '120', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Recursive function execution",
+        explanation: "Multiply n by recursive call of factorial(n - 1), returning 1 if n is 1 or less.",
+        code: `n = int(input())
+
+def factorial(n):
+    if n <= 1:
+        return 1
+    return n * factorial(n - 1)
+
+print(factorial(n))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-63',
     title: 'Recursive Fibonacci',
     slug: 'recursive-fibonacci',
@@ -1175,8 +1929,25 @@ def fib(n):
 print(fib(n))
 `,
     testCases: [{ input: '6', expectedOutput: '8', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Recursive fibonacci sequence step",
+        explanation: "Return fib(n-1) + fib(n-2) with base cases for n=0 and n=1.",
+        code: `n = int(input())
+
+def fib(n):
+    if n == 0:
+        return 0
+    if n == 1:
+        return 1
+    return fib(n - 1) + fib(n - 2)
+
+print(fib(n))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-64',
     title: 'Recursion: Sum of Digits',
     slug: 'recursion-sum-of-digits-basics',
@@ -1197,8 +1968,24 @@ def sum_digits(n):
 print(sum_digits(n))
 `,
     testCases: [{ input: '9875', expectedOutput: '2', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Recursive digit sum reduction",
+        explanation: "Sum digits, and if the sum has multiple digits, recursively call sum_digits.",
+        code: `n = int(input())
+
+def sum_digits(n):
+    s = sum(int(d) for d in str(n))
+    if s < 10:
+        return s
+    return sum_digits(s)
+
+print(sum_digits(n))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-65',
     title: 'Higher-Order Functions',
     slug: 'higher-order-functions',
@@ -1222,8 +2009,24 @@ def apply_func(func, lst):
 print(" ".join(str(x) for x in apply_func(double, nums)))
 `,
     testCases: [{ input: '1 2 3', expectedOutput: '2 4 6', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Higher order apply implementation",
+        explanation: "Use list comprehension to apply the passed function parameter over every item in list.",
+        code: `nums = [int(x) for x in input().split()]
+
+def double(x):
+    return x * 2
+
+def apply_func(func, lst):
+    return [func(x) for x in lst]
+
+print(" ".join(str(x) for x in apply_func(double, nums)))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-66',
     title: 'Lambda With sorted()',
     slug: 'lambda-with-sorted',
@@ -1239,12 +2042,18 @@ print(" ".join(str(x) for x in apply_func(double, nums)))
 # Sort list using lambda key and print
 `,
     testCases: [{ input: "[('A', 10), ('B', 5)]", expectedOutput: "[('B', 5), ('A', 10)]", isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Lambda custom sorting keys",
+        explanation: "Sort key-value list of tuples by second element using custom lambda function key=lambda x: x[1].",
+        code: `lst = eval(input())
+sorted_lst = sorted(lst, key=lambda x: x[1])
+print(sorted_lst)`
+      }
+    ]
   },
-
-  // ==========================================
-  // TIER 8 — COMPREHENSIONS & FUNCTIONAL TOOLS (Q67–72)
-  // ==========================================
-  {
+{
     id: 'py-basics-67',
     title: 'List Comprehension Drills',
     slug: 'list-comprehension-drills-basics',
@@ -1260,8 +2069,18 @@ print(" ".join(str(x) for x in apply_func(double, nums)))
 # List comprehension output
 `,
     testCases: [{ input: '1 2 3 4 5', expectedOutput: '4 16', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Filtered list comprehension",
+        explanation: "Square elements using list comprehension while checking if element is even inside if filter.",
+        code: `nums = [int(x) for x in input().split()]
+evens_squared = [x * x for x in nums if x % 2 == 0]
+print(" ".join(map(str, evens_squared)))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-68',
     title: 'Set & Dict Comprehensions',
     slug: 'set-dict-comprehensions-basics',
@@ -1277,8 +2096,21 @@ print(" ".join(str(x) for x in apply_func(double, nums)))
 # Set and Dict comprehensions
 `,
     testCases: [{ input: 'apple boy cat', expectedOutput: '[3, 5]\n{"apple": 5, "boy": 3, "cat": 3}', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Comprehensions for set and dict",
+        explanation: "Build set and dict using comprehensions. Format dict output using json.dumps to match exact JSON.",
+        code: `words = input().split()
+s = sorted(list({len(w) for w in words}))
+d = {w: len(w) for w in sorted(words)}
+import json
+print(s)
+print(json.dumps(d))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-69',
     title: 'map() and filter()',
     slug: 'map-and-filter',
@@ -1294,8 +2126,19 @@ print(" ".join(str(x) for x in apply_func(double, nums)))
 # Use map and filter
 `,
     testCases: [{ input: '1 2 3 4', expectedOutput: '2 4 6 8', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Map and filter functions",
+        explanation: "Double numbers using map(), filter even numbers using filter(), and print list output.",
+        code: `nums = [int(x) for x in input().split()]
+mapped = map(lambda x: x * 2, nums)
+filtered = filter(lambda x: x % 2 == 0, mapped)
+print(" ".join(map(str, filtered)))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-70',
     title: 'reduce() from functools',
     slug: 'reduce-from-functools-basics',
@@ -1312,8 +2155,19 @@ nums = [int(x) for x in input().split()]
 # Use reduce
 `,
     testCases: [{ input: '1 2 3 4', expectedOutput: '24', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Reduce cumulative computation",
+        explanation: "Import reduce and multiply values sequentially.",
+        code: `from functools import reduce
+nums = [int(x) for x in input().split()]
+product = reduce(lambda x, y: x * y, nums)
+print(product)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-71',
     title: 'Nested Comprehensions',
     slug: 'nested-comprehensions',
@@ -1329,8 +2183,18 @@ nums = [int(x) for x in input().split()]
 # Flatten and print
 `,
     testCases: [{ input: '[[1, 2], [3, 4]]', expectedOutput: '1 2 3 4', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Flatten 2D array matrix",
+        explanation: "Nested list comprehension: [item for row in matrix for item in row].",
+        code: `matrix = eval(input())
+flat = [x for row in matrix for x in row]
+print(" ".join(map(str, flat)))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-72',
     title: 'Conditional Comprehension',
     slug: 'conditional-comprehension',
@@ -1346,12 +2210,18 @@ nums = [int(x) for x in input().split()]
 # Conditional comprehension
 `,
     testCases: [{ input: '1 2 3', expectedOutput: 'odd even odd', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Inline conditional expression comprehension",
+        explanation: "Use basic comprehension: [\"even\" if x % 2 == 0 else \"odd\" for x in nums].",
+        code: `nums = [int(x) for x in input().split()]
+labels = ["even" if x % 2 == 0 else "odd" for x in nums]
+print(" ".join(labels))`
+      }
+    ]
   },
-
-  // ==========================================
-  // TIER 9 — OBJECT-ORIENTED PROGRAMMING (Q73–80)
-  // ==========================================
-  {
+{
     id: 'py-basics-73',
     title: 'Classes & Objects 101',
     slug: 'oop-classes-objects',
@@ -1367,8 +2237,24 @@ nums = [int(x) for x in input().split()]
 # Define User class and print greeting
 `,
     testCases: [{ input: 'Alice', expectedOutput: 'Hello Alice', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "User class definition",
+        explanation: "Define User class, constructor __init__, and a custom greet method.",
+        code: `name = input()
+class User:
+    def __init__(self, name):
+        self.name = name
+    def greet(self):
+        return f"Hello {self.name}"
+
+u = User(name)
+print(u.greet())`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-74',
     title: 'Instance vs Class Attributes',
     slug: 'instance-vs-class-attributes',
@@ -1383,8 +2269,24 @@ nums = [int(x) for x in input().split()]
     starterCode: `# Define Counter class and create instances
 `,
     testCases: [{ input: 'run', expectedOutput: '2', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Class attribute counter tracker",
+        explanation: "Increment class counter tracker every time constructor is invoked.",
+        code: `class Counter:
+    count = 0
+    def __init__(self, name):
+        self.name = name
+        Counter.count += 1
+
+c1 = Counter("A")
+c2 = Counter("B")
+print(Counter.count)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-75',
     title: 'Inheritance & Override',
     slug: 'oop-inheritance-override',
@@ -1399,8 +2301,26 @@ nums = [int(x) for x in input().split()]
     starterCode: `# Inheritance overrides
 `,
     testCases: [{ input: 'run', expectedOutput: 'Shape\nCircle', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Subclass method overriding",
+        explanation: "Subclass Circle overrides shape draw() method to return customized text.",
+        code: `class Shape:
+    def draw(self):
+        return "Shape"
+class Circle(Shape):
+    def draw(self):
+        return "Circle"
+
+s = Shape()
+c = Circle()
+print(s.draw())
+print(c.draw())`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-76',
     title: 'super() Usage',
     slug: 'oop-super-usage',
@@ -1417,8 +2337,29 @@ color = input()
 # Define Parent and Subclass calling super
 `,
     testCases: [{ input: 'Dog\nBlack', expectedOutput: 'Dog is Black', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Super constructor call",
+        explanation: "Subclass Dog calls super().__init__(name) to delegate base property assignment.",
+        code: `name = input()
+color = input()
+class Animal:
+    def __init__(self, name):
+        self.name = name
+class Dog(Animal):
+    def __init__(self, name, color):
+        super().__init__(name)
+        self.color = color
+    def __str__(self):
+        return f"{self.name} is {self.color}"
+
+d = Dog(name, color)
+print(d)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-77',
     title: 'Properties (@property)',
     slug: 'oop-properties',
@@ -1434,8 +2375,25 @@ color = input()
 # Define Square with area property
 `,
     testCases: [{ input: '4', expectedOutput: '16', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Property getter decorator",
+        explanation: "Expose property getter by adding @property decorator above area calculation.",
+        code: `side = int(input())
+class Square:
+    def __init__(self, side):
+        self.side = side
+    @property
+    def area(self):
+        return self.side * self.side
+
+sq = Square(side)
+print(sq.area)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-78',
     title: 'Magic Methods',
     slug: 'magic-methods',
@@ -1452,8 +2410,26 @@ author = input()
 # Implement Book class with __str__
 `,
     testCases: [{ input: 'Hamlet\nShakespeare', expectedOutput: 'Hamlet by Shakespeare', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "String magic representation override",
+        explanation: "Override __str__ magic function to control custom display of print(book).",
+        code: `title = input()
+author = input()
+class Book:
+    def __init__(self, title, author):
+        self.title = title
+        self.author = author
+    def __str__(self):
+        return f"{self.title} by {self.author}"
+
+b = Book(title, author)
+print(b)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-79',
     title: 'Operator Overloading',
     slug: 'operator-overloading',
@@ -1470,8 +2446,29 @@ x2, y2 = [int(i) for i in input().split()]
 # Implement Vector class overloading __add__
 `,
     testCases: [{ input: '1 2\n3 4', expectedOutput: '(4, 6)', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Addition operator overloading override",
+        explanation: "Define custom add magic method returning new coordinate Vector object.",
+        code: `x1, y1 = [int(i) for i in input().split()]
+x2, y2 = [int(i) for i in input().split()]
+class Vector:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+    def __add__(self, other):
+        return Vector(self.x + other.x, self.y + other.y)
+    def __str__(self):
+        return f"({self.x}, {self.y})"
+
+v1 = Vector(x1, y1)
+v2 = Vector(x2, y2)
+print(v1 + v2)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-80',
     title: 'Polymorphism in Practice',
     slug: 'oop-polymorphism',
@@ -1486,12 +2483,25 @@ x2, y2 = [int(i) for i in input().split()]
     starterCode: `# Polymorphism speak loop
 `,
     testCases: [{ input: 'run', expectedOutput: 'Woof\nMeow', isExample: true }]
-  },
+  ,
+    solutions: [
+      {
+        title: "Polymorphism uniform loop call",
+        explanation: "Loop animal objects uniformly, calling their common interface speak method.",
+        code: `class Dog:
+    def speak(self):
+        return "Woof"
+class Cat:
+    def speak(self):
+        return "Meow"
 
-  // ==========================================
-  // TIER 10 — ERRORS, FILES & MODULES (Q81–86)
-  // ==========================================
-  {
+animals = [Dog(), Cat()]
+for animal in animals:
+    print(animal.speak())`
+      }
+    ]
+  },
+{
     id: 'py-basics-81',
     title: 'Exception Handling Basics',
     slug: 'exception-handling-basics-101',
@@ -1512,8 +2522,23 @@ except Exception as e:
     pass
 `,
     testCases: [{ input: '10\n0', expectedOutput: 'ZeroDivisionError', isExample: true }, { input: 'abc\n2', expectedOutput: 'ValueError' }]
+  ,
+    solutions: [
+      {
+        title: "Handling exception hierarchy",
+        explanation: "Catch specific ZeroDivisionError and ValueError exceptions.",
+        code: `try:
+    a = float(input())
+    b = float(input())
+    print(a / b)
+except ZeroDivisionError:
+    print("ZeroDivisionError")
+except ValueError:
+    print("ValueError")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-82',
     title: 'Multiple Except + finally',
     slug: 'multiple-except-finally',
@@ -1529,8 +2554,23 @@ except Exception as e:
 # Exception and finally blocks
 `,
     testCases: [{ input: 'abc', expectedOutput: 'ValueError\nDone', isExample: true }, { input: '10', expectedOutput: '10\nDone' }]
+  ,
+    solutions: [
+      {
+        title: "Try except finally validation",
+        explanation: "Execute finally block regardless of whether exception was caught.",
+        code: `s = input()
+try:
+    val = int(s)
+    print(val)
+except ValueError:
+    print("ValueError")
+finally:
+    print("Done")`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-83',
     title: 'Custom Exceptions',
     slug: 'custom-exceptions-custom',
@@ -1548,8 +2588,25 @@ except Exception as e:
 # Read integer, raise and catch NegativeNumberError
 `,
     testCases: [{ input: '-5', expectedOutput: 'Negative input not allowed', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Raising custom exception subclass",
+        explanation: "Declare subclass and raise exception if input check triggers validation rule.",
+        code: `class NegativeNumberError(Exception):
+    pass
+
+try:
+    n = int(input())
+    if n < 0:
+        raise NegativeNumberError("Negative input not allowed")
+    print(n)
+except NegativeNumberError as e:
+    print(e)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-84',
     title: 'File Read & Write',
     slug: 'file-read-and-write',
@@ -1565,8 +2622,22 @@ except Exception as e:
 # File read and write, print line count
 `,
     testCases: [{ input: 'Line1\nLine2', expectedOutput: '2', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "With block file context managers",
+        explanation: "Using with block automatically closes files upon exiting block scope.",
+        code: `import sys
+text = sys.stdin.read()
+with open("temp.txt", "w") as f:
+    f.write(text)
+with open("temp.txt", "r") as f:
+    lines = f.readlines()
+print(len(lines))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-85',
     title: 'Working with CSV Files',
     slug: 'working-with-csv-files',
@@ -1582,8 +2653,20 @@ except Exception as e:
 # Parse csv and print
 `,
     testCases: [{ input: 'apple,banana,cherry', expectedOutput: 'apple\nbanana\ncherry', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "CSV module parser DictReader/Reader",
+        explanation: "Parse comma-separated data cleanly with csv.reader.",
+        code: `import csv
+reader = csv.reader([input()])
+for row in reader:
+    for field in row:
+        print(field)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-86',
     title: 'Modules & Imports',
     slug: 'modules-and-imports-basics',
@@ -1598,12 +2681,17 @@ except Exception as e:
     starterCode: `# Import modules
 `,
     testCases: [{ input: 'run', expectedOutput: '4', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Standard math module root function",
+        explanation: "Import math module and evaluate sqrt function.",
+        code: `import math
+print(int(math.sqrt(16)))`
+      }
+    ]
   },
-
-  // ==========================================
-  // TIER 11 — ITERATORS, GENERATORS, DECORATORS, REGEX (Q87–90)
-  // ==========================================
-  {
+{
     id: 'py-basics-87',
     title: 'Custom Iterator Class',
     slug: 'custom-iterator-class',
@@ -1619,8 +2707,31 @@ except Exception as e:
 # Custom iterator Range3
 `,
     testCases: [{ input: '10', expectedOutput: '3 6 9', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Custom iterator class __next__ protocol",
+        explanation: "Implement constructor, __iter__, and __next__ protocols on custom class.",
+        code: `n = int(input())
+class Range3:
+    def __init__(self, limit):
+        self.limit = limit
+        self.current = 3
+    def __iter__(self):
+        return self
+    def __next__(self):
+        if self.current > self.limit:
+            raise StopIteration
+        val = self.current
+        self.current += 3
+        return val
+
+r = Range3(n)
+print(" ".join(map(str, r)))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-88',
     title: 'Generators with yield',
     slug: 'generators-with-yield',
@@ -1636,8 +2747,21 @@ except Exception as e:
 # Generator squares
 `,
     testCases: [{ input: '5', expectedOutput: '1 4 9 16 25', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Yield keyword custom generators",
+        explanation: "Yield values incrementally to save memory state.",
+        code: `n = int(input())
+def squares(limit):
+    for i in range(1, limit + 1):
+        yield i * i
+
+print(" ".join(map(str, squares(n))))`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-89',
     title: 'Decorators: Timing',
     slug: 'decorators-timing',
@@ -1653,8 +2777,29 @@ except Exception as e:
 # Timing / verify decorator
 `,
     testCases: [{ input: '-10', expectedOutput: 'Invalid', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Decorator wrapper closures",
+        explanation: "Wrap function execution with conditional validation logic.",
+        code: `n = int(input())
+def verify(func):
+    def wrapper(val):
+        if val < 0:
+            print("Invalid")
+            return
+        return func(val)
+    return wrapper
+
+@verify
+def test_func(x):
+    print(x)
+
+test_func(n)`
+      }
+    ]
   },
-  {
+{
     id: 'py-basics-90',
     title: 'Regex Validation',
     slug: 'regex-email-validation',
@@ -1670,14 +2815,19 @@ except Exception as e:
 # Regex email verification
 `,
     testCases: [{ input: 'test@datalogify.com', expectedOutput: 'True', isExample: true }, { input: 'invalid-email', expectedOutput: 'False' }]
+  ,
+    solutions: [
+      {
+        title: "Regex pattern matching validation rules",
+        explanation: "Verify matches using pattern rules compiled under re module.",
+        code: `import re
+email = input()
+pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$"
+print(bool(re.match(pattern, email)))`
+      }
+    ]
   },
-
-  // ==========================================
-  // SECTION 2: 📚 PRACTICE LIBRARIES (TIERS 12-14)
-  // ==========================================
-
-  // NUMPY TIERS
-  {
+{
     id: 'py-numpy-1',
     title: 'NumPy Array Analysis',
     slug: 'numpy-array-analysis',
@@ -1696,7 +2846,7 @@ arr = np.array([float(x) for x in input().split()])
 `,
     testCases: [{ input: '10.0 20.0 30.0 40.0 50.0', expectedOutput: '30.0 14.14', isExample: true }]
   },
-  {
+{
     id: 'py-numpy-2',
     title: 'NumPy Boolean Masking',
     slug: 'numpy-boolean-masking',
@@ -1716,7 +2866,7 @@ arr = np.array([float(x) for x in input().split()])
 `,
     testCases: [{ input: '25.0\n10 20 30 40 50', expectedOutput: '900.0 1600.0 2500.0', isExample: true }]
   },
-  {
+{
     id: 'py-numpy-3',
     title: 'Array Indexing & Slicing',
     slug: 'array-indexing-slicing',
@@ -1737,7 +2887,7 @@ matrix = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 `,
     testCases: [{ input: 'run', expectedOutput: '2 3\n5 6', isExample: true }]
   },
-  {
+{
     id: 'py-numpy-4',
     title: 'Broadcasting Basics',
     slug: 'broadcasting-basics',
@@ -1758,7 +2908,7 @@ add_vector = np.array([1, 2, 3])
 `,
     testCases: [{ input: 'run', expectedOutput: '11 22 33\n41 52 63\n71 82 93', isExample: true }]
   },
-  {
+{
     id: 'py-numpy-5',
     title: 'Array Reshaping & Flattening',
     slug: 'array-reshaping-flattening',
@@ -1778,7 +2928,7 @@ arr = np.array([1, 2, 3, 4, 5, 6])
 `,
     testCases: [{ input: 'run', expectedOutput: '(2, 3)', isExample: true }]
   },
-  {
+{
     id: 'py-numpy-6',
     title: 'Stacking & Splitting Arrays',
     slug: 'stacking-splitting-arrays',
@@ -1799,7 +2949,7 @@ b = np.array([3, 4])
 `,
     testCases: [{ input: 'run', expectedOutput: '(2, 2)', isExample: true }]
   },
-  {
+{
     id: 'py-numpy-7',
     title: 'Element-wise Math Operations',
     slug: 'element-wise-math-operations',
@@ -1819,7 +2969,7 @@ arr = np.array([4.0, 9.0, 16.0])
 `,
     testCases: [{ input: 'run', expectedOutput: '2.0 3.0 4.0', isExample: true }]
   },
-  {
+{
     id: 'py-numpy-8',
     title: 'Aggregations by Axis',
     slug: 'aggregations-by-axis',
@@ -1839,7 +2989,7 @@ arr = np.array([[1, 2], [3, 4]])
 `,
     testCases: [{ input: 'run', expectedOutput: '4 6', isExample: true }]
   },
-  {
+{
     id: 'py-numpy-9',
     title: 'Sorting & Argsort',
     slug: 'sorting-argsort',
@@ -1859,7 +3009,7 @@ arr = np.array([30, 10, 20])
 `,
     testCases: [{ input: 'run', expectedOutput: '1 2 0', isExample: true }]
   },
-  {
+{
     id: 'py-numpy-10',
     title: 'Random Number Generation',
     slug: 'random-number-generation',
@@ -1878,7 +3028,7 @@ _ = input()
 `,
     testCases: [{ input: 'run', expectedOutput: '52 93 15', isExample: true }]
   },
-  {
+{
     id: 'py-numpy-11',
     title: 'Linear Algebra Basics',
     slug: 'linear-algebra-basics',
@@ -1899,7 +3049,7 @@ b = np.array([[2, 0], [1, 2]])
 `,
     testCases: [{ input: 'run', expectedOutput: '4 4\n10 8', isExample: true }]
   },
-  {
+{
     id: 'py-numpy-12',
     title: 'Handling NaN in Arrays',
     slug: 'handling-nan-arrays',
@@ -1918,9 +3068,7 @@ _ = input()
 `,
     testCases: [{ input: 'run', expectedOutput: '1.0 2.0 3.0', isExample: true }]
   },
-
-  // PANDAS TIERS
-  {
+{
     id: 'py-pandas-1',
     title: 'Pandas DataFrame Querying',
     slug: 'pandas-dataframe-querying',
@@ -1943,8 +3091,25 @@ df = pd.DataFrame(data)
 # Filter and print names
 `,
     testCases: [{ input: '70000', expectedOutput: 'Bob\nCharlie', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Boolean Indexing Query",
+        explanation: "Use boolean masking on the DataFrame with df[df[\"Salary\"] > threshold].",
+        code: `import pandas as pd
+threshold = int(input())
+data = {
+    'Employee': ['Alice', 'Bob', 'Charlie', 'David'],
+    'Salary': [50000, 80000, 95000, 60000]
+}
+df = pd.DataFrame(data)
+filtered_df = df[df['Salary'] > threshold]
+for emp in filtered_df['Employee']:
+    print(emp)`
+      }
+    ]
   },
-  {
+{
     id: 'py-pandas-2',
     title: 'Pandas GroupBy Aggregation',
     slug: 'pandas-groupby-aggregation',
@@ -1967,8 +3132,26 @@ df = pd.DataFrame(data)
 # GroupBy sum and print
 `,
     testCases: [{ input: 'run', expectedOutput: 'Electronics 350.75\nFurniture 470.0\nOffice Supplies 45.75', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "GroupBy Sum Aggregation",
+        explanation: "Group sales by the Category column, calculate aggregate sum, and reset the index to sort.",
+        code: `import pandas as pd
+_ = input()
+data = {
+    'Category': ['Electronics', 'Furniture', 'Electronics', 'Furniture', 'Office Supplies'],
+    'Sales': [200.50, 350.00, 150.25, 120.00, 45.75]
+}
+df = pd.DataFrame(data)
+grouped = df.groupby('Category')['Sales'].sum().reset_index()
+grouped = grouped.sort_values('Category')
+for idx, row in grouped.iterrows():
+    print(f"{row['Category']} {row['Sales']}")`
+      }
+    ]
   },
-  {
+{
     id: 'py-pandas-3',
     title: 'Series & DataFrame Creation',
     slug: 'series-dataframe-creation',
@@ -1986,8 +3169,19 @@ _ = input()
 # Create df and print shape
 `,
     testCases: [{ input: 'run', expectedOutput: '(2, 2)', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Pandas DataFrame constructor",
+        explanation: "Pass dictionary data directly to pd.DataFrame() constructor and access its .shape attribute.",
+        code: `import pandas as pd
+_ = input()
+df = pd.DataFrame({"A": [1, 2], "B": [3, 4]})
+print(df.shape)`
+      }
+    ]
   },
-  {
+{
     id: 'py-pandas-4',
     title: 'Reading CSV & Basic Inspection',
     slug: 'reading-csv-basic-inspection',
@@ -2006,8 +3200,21 @@ csv_data = input()
 # Load via StringIO and print shape
 `,
     testCases: [{ input: 'Col1,Col2\n1,2\n3,4\n5,6', expectedOutput: '(3, 2)', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Using io.StringIO and pd.read_csv",
+        explanation: "Wrap the CSV string inside io.StringIO to act as a file pointer, then load it with pd.read_csv.",
+        code: `import io
+import sys
+import pandas as pd
+csv_data = sys.stdin.read()
+df = pd.read_csv(io.StringIO(csv_data))
+print(df.shape)`
+      }
+    ]
   },
-  {
+{
     id: 'py-pandas-5',
     title: 'loc vs iloc Drills',
     slug: 'loc-vs-iloc-drills',
@@ -2026,8 +3233,19 @@ df = pd.DataFrame({'Name': ['Alice', 'Bob', 'Charlie'], 'Age': [25, 30, 35]})
 # Select Bob and print
 `,
     testCases: [{ input: 'run', expectedOutput: 'Bob', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Integer-based indexing using .iloc",
+        explanation: "Select row at index 1 and column Name using iloc[1][\"Name\"].",
+        code: `import pandas as pd
+_ = input()
+df = pd.DataFrame({'Name': ['Alice', 'Bob', 'Charlie'], 'Age': [25, 30, 35]})
+print(df.iloc[1]['Name'])`
+      }
+    ]
   },
-  {
+{
     id: 'py-pandas-6',
     title: 'Handling Missing Data',
     slug: 'handling-missing-data',
@@ -2047,8 +3265,22 @@ df = pd.DataFrame({'Salary': [10.0, np.nan, 30.0]})
 # Fill NaN with mean and print column values space-separated
 `,
     testCases: [{ input: 'run', expectedOutput: '10.0 20.0 30.0', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Fillna column average replacement",
+        explanation: "Calculate average using df.mean(), then replace missing values with fillna().",
+        code: `import pandas as pd
+import numpy as np
+_ = input()
+df = pd.DataFrame({'Salary': [10.0, np.nan, 30.0]})
+mean_val = df['Salary'].mean()
+df['Salary'] = df['Salary'].fillna(mean_val)
+print(" ".join(map(str, df['Salary'])))`
+      }
+    ]
   },
-  {
+{
     id: 'py-pandas-7',
     title: 'Sorting & Ranking',
     slug: 'sorting-ranking',
@@ -2067,8 +3299,20 @@ df = pd.DataFrame({'Name': ['Alice', 'Bob', 'Charlie'], 'Salary': [50, 90, 70]})
 # Sort and print names
 `,
     testCases: [{ input: 'run', expectedOutput: 'Bob Charlie Alice', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Sorting using sort_values",
+        explanation: "Sort by column Salary passing ascending=False, and print Name column values.",
+        code: `import pandas as pd
+_ = input()
+df = pd.DataFrame({'Name': ['Alice', 'Bob', 'Charlie'], 'Salary': [50, 90, 70]})
+df_sorted = df.sort_values(by='Salary', ascending=False)
+print(" ".join(df_sorted['Name']))`
+      }
+    ]
   },
-  {
+{
     id: 'py-pandas-8',
     title: 'Apply & Lambda on Columns',
     slug: 'apply-lambda-columns',
@@ -2087,8 +3331,20 @@ df = pd.DataFrame({'Salary': [10, 20, 30]})
 # Double values and print
 `,
     testCases: [{ input: 'run', expectedOutput: '20 40 60', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Apply method with lambda",
+        explanation: "Double the column elements using df.apply(lambda x: x * 2).",
+        code: `import pandas as pd
+_ = input()
+df = pd.DataFrame({'Salary': [10, 20, 30]})
+df['Salary'] = df['Salary'].apply(lambda x: x * 2)
+print(" ".join(map(str, df['Salary'])))`
+      }
+    ]
   },
-  {
+{
     id: 'py-pandas-9',
     title: 'Merging & Joining DataFrames',
     slug: 'merging-joining-dataframes',
@@ -2108,8 +3364,23 @@ df2 = pd.DataFrame({'EmpID': [2, 3, 4], 'Salary': [80, 90, 100]})
 # Merge and print names
 `,
     testCases: [{ input: 'run', expectedOutput: 'Bob\nCharlie', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Inner join using pd.merge",
+        explanation: "Merge df1 and df2 on key EmpID using inner join, sort the result alphabetically by name, and print.",
+        code: `import pandas as pd
+_ = input()
+df1 = pd.DataFrame({'EmpID': [1, 2, 3], 'Name': ['Alice', 'Bob', 'Charlie']})
+df2 = pd.DataFrame({'EmpID': [2, 3, 4], 'Salary': [80, 90, 100]})
+merged = pd.merge(df1, df2, on='EmpID', how='inner')
+merged = merged.sort_values(by='Name')
+for name in merged['Name']:
+    print(name)`
+      }
+    ]
   },
-  {
+{
     id: 'py-pandas-10',
     title: 'Pivot Tables',
     slug: 'pivot-tables',
@@ -2133,8 +3404,25 @@ df = pd.DataFrame(data)
 # Pivot table, extract and print A, West sales
 `,
     testCases: [{ input: 'run', expectedOutput: '250.0', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Pivot table extraction",
+        explanation: "Build pivot table indexed by Product with Region as columns, then access cell location via pivot.loc[\"A\", \"West\"].",
+        code: `import pandas as pd
+_ = input()
+data = {
+    'Product': ['A', 'A', 'B', 'B'],
+    'Region': ['East', 'West', 'East', 'West'],
+    'Sales': [100.0, 250.0, 300.0, 400.0]
+}
+df = pd.DataFrame(data)
+pivot = df.pivot_table(index='Product', columns='Region', values='Sales', aggfunc='sum')
+print(pivot.loc['A', 'West'])`
+      }
+    ]
   },
-  {
+{
     id: 'py-pandas-11',
     title: 'String Methods on Columns',
     slug: 'string-methods-columns',
@@ -2153,8 +3441,20 @@ df = pd.DataFrame({'Name': [' alice ', ' bob  ', 'charlie']})
 # Clean and print
 `,
     testCases: [{ input: 'run', expectedOutput: 'ALICE BOB CHARLIE', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Vectorized string operations using .str accessor",
+        explanation: "Clean column name elements using str.strip().str.upper().",
+        code: `import pandas as pd
+_ = input()
+df = pd.DataFrame({'Name': [' alice ', ' bob  ', 'charlie']})
+df['Name'] = df['Name'].str.strip().str.upper()
+print(" ".join(df['Name']))`
+      }
+    ]
   },
-  {
+{
     id: 'py-pandas-12',
     title: 'DateTime Handling',
     slug: 'datetime-handling',
@@ -2173,8 +3473,21 @@ df = pd.DataFrame({'Date': ['2023-01-01', '2024-05-12', '2023-08-20']})
 # Parse datetime, extract years and print unique sorted years
 `,
     testCases: [{ input: 'run', expectedOutput: '2023 2024', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Parsing datetimes and extracting components",
+        explanation: "Convert column using pd.to_datetime(), access year using dt.year, and extract unique years.",
+        code: `import pandas as pd
+_ = input()
+df = pd.DataFrame({'Date': ['2023-01-01', '2024-05-12', '2023-08-20']})
+df['Date'] = pd.to_datetime(df['Date'])
+years = sorted(df['Date'].dt.year.unique())
+print(" ".join(map(str, years)))`
+      }
+    ]
   },
-  {
+{
     id: 'py-pandas-13',
     title: 'Multi-column GroupBy + Agg',
     slug: 'multi-column-groupby-agg',
@@ -2198,10 +3511,25 @@ df = pd.DataFrame(data)
 # GroupBy Region and Category, sum sales, print East, Electronics aggregate
 `,
     testCases: [{ input: 'run', expectedOutput: '400', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Multi-column GroupBy sum aggregate",
+        explanation: "Group by Region and Category, sum Sales, and locate the coordinate tuple (\"East\", \"Electronics\").",
+        code: `import pandas as pd
+_ = input()
+data = {
+    'Region': ['East', 'East', 'West', 'East'],
+    'Category': ['Electronics', 'Furniture', 'Electronics', 'Electronics'],
+    'Sales': [100, 200, 150, 300]
+}
+df = pd.DataFrame(data)
+grouped = df.groupby(['Region', 'Category'])['Sales'].sum()
+print(grouped.loc[('East', 'Electronics')])`
+      }
+    ]
   },
-
-  // MATPLOTLIB TIERS
-  {
+{
     id: 'py-matplotlib-1',
     title: 'Your First Line Plot',
     slug: 'your-first-line-plot',
@@ -2222,8 +3550,23 @@ y = [10, 20, 30]
 # Write plotting code below
 `,
     testCases: [{ input: 'run', expectedOutput: 'PLOT_OK', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Line plot configuration",
+        explanation: "Call plt.plot() and set title, xlabel, and ylabel accordingly.",
+        code: `import matplotlib.pyplot as plt
+_ = input()
+x = [1, 2, 3]
+y = [10, 20, 30]
+plt.plot(x, y)
+plt.title("Growth")
+plt.xlabel("Time")
+plt.ylabel("Value")`
+      }
+    ]
   },
-  {
+{
     id: 'py-matplotlib-2',
     title: 'Bar Chart from Data',
     slug: 'bar-chart-from-data',
@@ -2244,8 +3587,21 @@ values = [10, 25, 15]
 # Write plotting code below
 `,
     testCases: [{ input: 'run', expectedOutput: 'PLOT_OK', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Bar chart configuration",
+        explanation: "Call plt.bar() passing categories and values, then set title.",
+        code: `import matplotlib.pyplot as plt
+_ = input()
+categories = ['A', 'B', 'C']
+values = [10, 25, 15]
+plt.bar(categories, values)
+plt.title("Categories")`
+      }
+    ]
   },
-  {
+{
     id: 'py-matplotlib-3',
     title: 'Scatter Plot with Colors',
     slug: 'scatter-plot-with-colors',
@@ -2266,8 +3622,20 @@ y = [5, 7, 8, 10]
 # Write plotting code below
 `,
     testCases: [{ input: 'run', expectedOutput: 'PLOT_OK', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Scatter plot configuration",
+        explanation: "Call plt.scatter() passing coordinates x and y.",
+        code: `import matplotlib.pyplot as plt
+_ = input()
+x = [1, 2, 3, 4]
+y = [5, 7, 8, 10]
+plt.scatter(x, y)`
+      }
+    ]
   },
-  {
+{
     id: 'py-matplotlib-4',
     title: 'Multiple Series on One Plot',
     slug: 'multiple-series-on-one-plot',
@@ -2289,8 +3657,23 @@ y2 = [15, 25, 35]
 # Write plotting code below
 `,
     testCases: [{ input: 'run', expectedOutput: 'PLOT_OK', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Multiple series plots",
+        explanation: "Plot two series by calling plt.plot() twice, providing label strings and invoking plt.legend().",
+        code: `import matplotlib.pyplot as plt
+_ = input()
+x = [1, 2, 3]
+y1 = [10, 20, 30]
+y2 = [15, 25, 35]
+plt.plot(x, y1, label="Series 1")
+plt.plot(x, y2, label="Series 2")
+plt.legend()`
+      }
+    ]
   },
-  {
+{
     id: 'py-matplotlib-5',
     title: 'Subplots Grid',
     slug: 'subplots-grid',
@@ -2309,8 +3692,18 @@ _ = input()
 # Create subplots grid below
 `,
     testCases: [{ input: 'run', expectedOutput: 'PLOT_OK', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Subplots grid creation",
+        explanation: "Generate subplots grid passing row and column size to plt.subplots.",
+        code: `import matplotlib.pyplot as plt
+_ = input()
+fig, axes = plt.subplots(2, 2)`
+      }
+    ]
   },
-  {
+{
     id: 'py-matplotlib-6',
     title: 'Customizing Styles',
     slug: 'customizing-styles',
@@ -2331,8 +3724,20 @@ y = [4, 5, 6]
 # Write custom styled plotting below
 `,
     testCases: [{ input: 'run', expectedOutput: 'PLOT_OK', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Line styling overrides",
+        explanation: "Provide color, linestyle, and marker arguments inside plot call.",
+        code: `import matplotlib.pyplot as plt
+_ = input()
+x = [1, 2, 3]
+y = [4, 5, 6]
+plt.plot(x, y, color="red", linestyle="--", marker="o")`
+      }
+    ]
   },
-  {
+{
     id: 'py-matplotlib-7',
     title: 'Saving Figures to File',
     slug: 'saving-figures-to-file',
@@ -2353,8 +3758,21 @@ y = [3, 4]
 # Save figure below
 `,
     testCases: [{ input: 'run', expectedOutput: 'PLOT_OK', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Saving figure files",
+        explanation: "Call plt.savefig() passing output filename parameter.",
+        code: `import matplotlib.pyplot as plt
+_ = input()
+x = [1, 2]
+y = [3, 4]
+plt.plot(x, y)
+plt.savefig("plot.png")`
+      }
+    ]
   },
-  {
+{
     id: 'py-matplotlib-8',
     title: 'Histogram of a Distribution',
     slug: 'histogram-distribution',
@@ -2374,10 +3792,19 @@ data = [1, 2, 2, 3, 3, 3, 4, 4, 5]
 # Generate histogram below
 `,
     testCases: [{ input: 'run', expectedOutput: 'PLOT_OK', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Histogram distribution bins",
+        explanation: "Call plt.hist() passing dataset and bins parameter.",
+        code: `import matplotlib.pyplot as plt
+_ = input()
+data = [1, 2, 2, 3, 3, 3, 4, 4, 5]
+plt.hist(data, bins=5)`
+      }
+    ]
   },
-
-  // SEABORN TIERS
-  {
+{
     id: 'py-seaborn-1',
     title: 'Distribution Plot Basics',
     slug: 'distribution-plot-basics',
@@ -2398,8 +3825,20 @@ data = [1, 2, 2, 3, 3, 3, 4, 4, 5]
 # Generate histplot below
 `,
     testCases: [{ input: 'run', expectedOutput: 'PLOT_OK', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Seaborn histplot",
+        explanation: "Generate distribution plot using histplot function.",
+        code: `import seaborn as sns
+import matplotlib.pyplot as plt
+_ = input()
+data = [1, 2, 2, 3, 3, 3, 4, 4, 5]
+sns.histplot(data)`
+      }
+    ]
   },
-  {
+{
     id: 'py-seaborn-2',
     title: 'Categorical Plot: Boxplot',
     slug: 'categorical-plot-boxplot',
@@ -2420,8 +3859,20 @@ values = [10, 20, 15, 30, 25]
 # Generate boxplot below
 `,
     testCases: [{ input: 'run', expectedOutput: 'PLOT_OK', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Seaborn boxplot",
+        explanation: "Call boxplot function passing dataset to y parameter for vertical display.",
+        code: `import seaborn as sns
+import matplotlib.pyplot as plt
+_ = input()
+values = [10, 20, 15, 30, 25]
+sns.boxplot(y=values)`
+      }
+    ]
   },
-  {
+{
     id: 'py-seaborn-3',
     title: 'Bar & Count Plots',
     slug: 'bar-count-plots',
@@ -2443,8 +3894,21 @@ df = pd.DataFrame({'category': ['A', 'A', 'B', 'C', 'C', 'C']})
 # Generate countplot below
 `,
     testCases: [{ input: 'run', expectedOutput: 'PLOT_OK', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Seaborn countplot",
+        explanation: "Call countplot passing categories column Name and DataFrame reference.",
+        code: `import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+_ = input()
+df = pd.DataFrame({'category': ['A', 'A', 'B', 'C', 'C', 'C']})
+sns.countplot(x="category", data=df)`
+      }
+    ]
   },
-  {
+{
     id: 'py-seaborn-4',
     title: 'Correlation Heatmap',
     slug: 'correlation-heatmap',
@@ -2470,8 +3934,25 @@ df = pd.DataFrame({
 # Generate correlation heatmap below
 `,
     testCases: [{ input: 'run', expectedOutput: 'PLOT_OK', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Seaborn correlation heatmap",
+        explanation: "Compute correlation matrix using df.corr(), and pass to sns.heatmap().",
+        code: `import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+_ = input()
+df = pd.DataFrame({
+    'A': [1, 2, 3],
+    'B': [4, 5, 6],
+    'C': [7, 5, 9]
+})
+sns.heatmap(df.corr())`
+      }
+    ]
   },
-  {
+{
     id: 'py-seaborn-5',
     title: 'Pairplot for EDA',
     slug: 'pairplot-eda',
@@ -2496,8 +3977,24 @@ df = pd.DataFrame({
 # Generate pairplot below
 `,
     testCases: [{ input: 'run', expectedOutput: 'PLOT_OK', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Seaborn pairplot",
+        explanation: "Call pairplot function passing DataFrame reference.",
+        code: `import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+_ = input()
+df = pd.DataFrame({
+    'A': [1, 2, 3],
+    'B': [4, 5, 6]
+})
+sns.pairplot(df)`
+      }
+    ]
   },
-  {
+{
     id: 'py-seaborn-6',
     title: 'Styling & Themes',
     slug: 'styling-themes',
@@ -2518,12 +4015,21 @@ data = [1, 2, 3]
 # Apply theme and plot below
 `,
     testCases: [{ input: 'run', expectedOutput: 'PLOT_OK', isExample: true }]
+  ,
+    solutions: [
+      {
+        title: "Seaborn dark theme set",
+        explanation: "Call sns.set_theme(style=\"dark\") prior to drawing plots.",
+        code: `import seaborn as sns
+import matplotlib.pyplot as plt
+_ = input()
+data = [1, 2, 3]
+sns.set_theme(style="dark")
+sns.histplot(data)`
+      }
+    ]
   },
-
-  // ==========================================
-  // SECTION 3: 🧠 INTERMEDIATE & ADVANCED ALGORITHMS
-  // ==========================================
-  {
+{
     id: 'py-second-largest',
     title: 'Find Second Largest Number',
     slug: 'find-second-largest-number',
@@ -2544,8 +4050,22 @@ numbers = [int(x) for x in input().split()]
       { input: '2 3 6 6 5', expectedOutput: '5', isExample: true },
       { input: '10 10 10', expectedOutput: 'None' }
     ]
+  ,
+    solutions: [
+      {
+        title: "Set deduplication and sort",
+        explanation: "Cast values to unique set, verify size, sort elements, and select second largest.",
+        code: `numbers = [int(x) for x in input().split()]
+unique_nums = list(set(numbers))
+if len(unique_nums) < 2:
+    print("None")
+else:
+    unique_nums.sort()
+    print(unique_nums[-2])`
+      }
+    ]
   },
-  {
+{
     id: 'py-missing-number',
     title: 'Find the Missing Number',
     slug: 'find-the-missing-number',
@@ -2566,8 +4086,20 @@ numbers = [int(x) for x in input().split()]
       { input: '3 0 1', expectedOutput: '2', isExample: true },
       { input: '9 6 4 2 3 5 7 0 1', expectedOutput: '8' }
     ]
+  ,
+    solutions: [
+      {
+        title: "Arithmetic series sum difference",
+        explanation: "Use sum formula n*(n+1)//2 and subtract the sum of actual numbers.",
+        code: `numbers = [int(x) for x in input().split()]
+n = len(numbers)
+expected_sum = (n * (n + 1)) // 2
+actual_sum = sum(numbers)
+print(expected_sum - actual_sum)`
+      }
+    ]
   },
-  {
+{
     id: 'py-group-anagrams',
     title: 'Group Anagrams',
     slug: 'group-anagrams',
@@ -2588,8 +4120,27 @@ words = input().split()
       { input: 'eat tea tan ate nat bat', expectedOutput: 'ate eat tea\nbat\nnat tan', isExample: true },
       { input: 'hello world', expectedOutput: 'hello\nworld' }
     ]
+  ,
+    solutions: [
+      {
+        title: "Dictionary word letters sort grouping",
+        explanation: "Group words by sorted letters key using a dictionary, sort output arrays, and print.",
+        code: `words = input().split()
+from collections import defaultdict
+groups = defaultdict(list)
+for word in words:
+    sorted_w = "".join(sorted(word))
+    groups[sorted_w].append(word)
+result_groups = []
+for g in groups.values():
+    result_groups.append(sorted(g))
+result_groups.sort(key=lambda x: x[0])
+for group in result_groups:
+    print(" ".join(group))`
+      }
+    ]
   },
-  {
+{
     id: 'py-regex-phone',
     title: 'Regex Phone Extractor',
     slug: 'regex-phone-extractor',
@@ -2612,8 +4163,21 @@ text = input()
       { input: 'Call me at 123-456-7890 or office at (987) 654-3210. Email is contact@test.com.', expectedOutput: '123-456-7890\n987-654-3210', isExample: true },
       { input: 'No numbers here!', expectedOutput: '' }
     ]
+  ,
+    solutions: [
+      {
+        title: "Regex pattern matching capture groups",
+        explanation: "Find matching phone groups under regex and reformat them hyphenated.",
+        code: `import re
+text = input()
+pattern = r"\(?(\d{3})\)?[-.\s]?(\d{3})[-.]?(\d{4})"
+matches = re.findall(pattern, text)
+for m in matches:
+    print(f"{m[0]}-{m[1]}-{m[2]}")`
+      }
+    ]
   },
-  {
+{
     id: 'py-fibonacci',
     title: 'Fibonacci Sequence Generator',
     slug: 'fibonacci-sequence-generator',
@@ -2634,6 +4198,21 @@ n = int(input())
       { input: '5', expectedOutput: '0 1 1 2 3', isExample: true },
       { input: '10', expectedOutput: '0 1 1 2 3 5 8 13 21 34', isExample: true },
       { input: '1', expectedOutput: '0' }
+    ]
+  ,
+    solutions: [
+      {
+        title: "Fibonacci list loop calculation",
+        explanation: "Build list sequence adding prior elements sequentially up to limit.",
+        code: `n = int(input())
+if n == 1:
+    print("0")
+else:
+    fib = [0, 1]
+    for i in range(2, n):
+        fib.append(fib[-1] + fib[-2])
+    print(" ".join(map(str, fib[:n])))`
+      }
     ]
   }
 ];

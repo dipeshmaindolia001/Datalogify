@@ -46,70 +46,148 @@ const { challenge } = Astro.props;
         <div class="text-[10px] font-mono text-slate-500 mt-1">{challenge.section.toUpperCase()} · {challenge.concept}</div>
       </div>
 
-      <!-- Problem Prompt -->
-      <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
-        <p class="whitespace-pre-line">{challenge.prompt}</p>
+      <!-- Left panel tabs: Description / Solutions -->
+      <div class="desc-tabs flex border-b border-slate-800 text-[11px] font-semibold text-slate-400 -mx-6 px-6 mb-4">
+        <button
+          id="desc-tab-problem-btn"
+          class="px-4 py-2 border-b-2 border-indigo-500 text-white focus:outline-none cursor-pointer"
+        >
+          Problem
+        </button>
+        <button
+          id="desc-tab-solutions-btn"
+          class="px-4 py-2 border-b-2 border-transparent hover:text-white focus:outline-none cursor-pointer flex items-center gap-1.5"
+        >
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347A3.5 3.5 0 0111.5 18H9a3.5 3.5 0 01-3.5-3.5v-.1a3.5 3.5 0 011.018-2.45z" /></svg>
+          Solutions
+        </button>
       </div>
 
-      <!-- Table Schema Structure Card -->
-      <div class="pt-4 border-t border-slate-800">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-450 mb-3">Database Schema</h3>
-        <div class="space-y-4">
-          {challenge.schemaNote.split('\n').map(line => {
-            const match = line.trim().match(/^([a-zA-Z_0-9]+)\((.+)\)$/);
-            if (!match) return <div class="font-mono text-xs text-indigo-300 bg-[#0b0f19] border border-slate-800/80 rounded-xl p-3">{line}</div>;
+      <!-- Problem panel -->
+      <div id="desc-panel-problem" class="space-y-6">
+        <!-- Problem Prompt -->
+        <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+          <p class="whitespace-pre-line">{challenge.prompt}</p>
+        </div>
 
-            const tableName = match[1];
-            const columns = match[2].split(',').map(c => c.trim());
+        <!-- Table Schema Structure Card -->
+        <div class="pt-4 border-t border-slate-800">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-450 mb-3">Database Schema</h3>
+          <div class="space-y-4">
+            {challenge.schemaNote.split('\n').map(line => {
+              const match = line.trim().match(/^([a-zA-Z_0-9]+)\((.+)\)$/);
+              if (!match) return <div class="font-mono text-xs text-indigo-300 bg-[#0b0f19] border border-slate-800/80 rounded-xl p-3">{line}</div>;
 
-            return (
-              <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl overflow-hidden shadow-sm">
-                <!-- Table Header -->
-                <div class="bg-[#0b0f19] border-b border-slate-800/80 px-4 py-2 flex items-center gap-2">
-                  <span class="text-xs">🗂️</span>
-                  <span class="font-mono text-xs font-bold text-slate-200">{tableName}</span>
+              const tableName = match[1];
+              const columns = match[2].split(',').map(c => c.trim());
+
+              return (
+                <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl overflow-hidden shadow-sm">
+                  <!-- Table Header -->
+                  <div class="bg-[#0b0f19] border-b border-slate-800/80 px-4 py-2 flex items-center gap-2">
+                    <span class="text-xs">🗂️</span>
+                    <span class="font-mono text-xs font-bold text-slate-200">{tableName}</span>
+                  </div>
+                  <!-- Columns List -->
+                  <div class="divide-y divide-slate-800/30 font-mono text-xs">
+                    {columns.map(col => {
+                      const isId = col === 'id' || col.endsWith('_id');
+                      const isDate = col.endsWith('date');
+                      const isNumeric = col === 'price' || col === 'salary' || col === 'amount' || col === 'quantity' || col === 'minutes_played';
+                      
+                      let typeTag = 'TEXT';
+                      let typeClass = 'bg-slate-800/50 text-slate-400 border-slate-700/30';
+                      if (isId) {
+                        typeTag = 'INT';
+                        typeClass = 'bg-indigo-950/40 text-indigo-300 border-indigo-900/40';
+                      } else if (isDate) {
+                        typeTag = 'DATE';
+                        typeClass = 'bg-amber-950/40 text-amber-300 border-amber-900/40';
+                      } else if (isNumeric) {
+                        typeTag = 'NUM';
+                        typeClass = 'bg-emerald-950/40 text-emerald-300 border-emerald-900/40';
+                      }
+
+                      return (
+                        <div class="px-4 py-2 flex items-center justify-between hover:bg-slate-800/10">
+                          <span class="flex items-center gap-2 text-slate-300">
+                            {isId ? (
+                              <span class="text-indigo-400 select-none">🔑</span>
+                            ) : (
+                              <span class="text-slate-500 select-none">🔹</span>
+                            )}
+                            <span class={isId ? 'font-semibold text-slate-100' : 'text-slate-350'}>{col}</span>
+                          </span>
+                          <span class={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${typeClass}`}>
+                            {typeTag}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <!-- Columns List -->
-                <div class="divide-y divide-slate-800/30 font-mono text-xs">
-                  {columns.map(col => {
-                    const isId = col === 'id' || col.endsWith('_id');
-                    const isDate = col.endsWith('date');
-                    const isNumeric = col === 'price' || col === 'salary' || col === 'amount' || col === 'quantity' || col === 'minutes_played';
-                    
-                    let typeTag = 'TEXT';
-                    let typeClass = 'bg-slate-800/50 text-slate-400 border-slate-700/30';
-                    if (isId) {
-                      typeTag = 'INT';
-                      typeClass = 'bg-indigo-950/40 text-indigo-300 border-indigo-900/40';
-                    } else if (isDate) {
-                      typeTag = 'DATE';
-                      typeClass = 'bg-amber-950/40 text-amber-300 border-amber-900/40';
-                    } else if (isNumeric) {
-                      typeTag = 'NUM';
-                      typeClass = 'bg-emerald-950/40 text-emerald-300 border-emerald-900/40';
-                    }
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
-                    return (
-                      <div class="px-4 py-2 flex items-center justify-between hover:bg-slate-800/10">
-                        <span class="flex items-center gap-2 text-slate-300">
-                          {isId ? (
-                            <span class="text-indigo-400 select-none">🔑</span>
-                          ) : (
-                            <span class="text-slate-500 select-none">🔹</span>
-                          )}
-                          <span class={isId ? 'font-semibold text-slate-100' : 'text-slate-350'}>{col}</span>
-                        </span>
-                        <span class={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${typeClass}`}>
-                          {typeTag}
-                        </span>
-                      </div>
-                    );
-                  })}
+      <!-- Solutions panel (hidden by default) -->
+      <div id="desc-panel-solutions" class="hidden space-y-4">
+        <div class="flex items-start gap-2 p-3 bg-amber-950/30 border border-amber-800/40 rounded-xl">
+          <svg class="w-4 h-4 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          <p class="text-xs text-amber-300/90">Try writing the query yourself first! Use the solutions for validation or comparing approaches.</p>
+        </div>
+        
+        {challenge.solutions && challenge.solutions.length > 0 ? (
+          challenge.solutions.map((sol, idx) => (
+            <div class="solution-card border border-slate-800 rounded-xl overflow-hidden">
+              <button
+                class="sol-toggle w-full flex items-center justify-between px-4 py-3 text-left bg-slate-900/80 hover:bg-slate-800/80 transition-colors cursor-pointer"
+                data-sol-idx={idx}
+              >
+                <div>
+                  <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Solution {idx + 1}</span>
+                  <div class="text-sm font-semibold text-white mt-0.5">{sol.title}</div>
+                  <p class="text-xs text-slate-400 mt-0.5">{sol.explanation}</p>
+                </div>
+                <svg class="sol-chevron w-4 h-4 text-slate-500 shrink-0 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+              </button>
+              <div class="sol-body hidden bg-slate-950">
+                <pre class="solution-pre font-mono text-xs p-4 overflow-x-auto text-slate-200 leading-relaxed language-sql">{sol.code}</pre>
+                <div class="px-4 pb-3 flex gap-2">
+                  <button class="sol-try-btn text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer flex items-center gap-1" data-sol-code={sol.code}>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Load into Editor
+                  </button>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          ))
+        ) : (
+          <div class="solution-card border border-slate-800 rounded-xl overflow-hidden">
+            <button
+              class="sol-toggle w-full flex items-center justify-between px-4 py-3 text-left bg-slate-900/80 hover:bg-slate-800/80 transition-colors cursor-pointer"
+              data-sol-idx="0"
+            >
+              <div>
+                <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Solution 1</span>
+                <div class="text-sm font-semibold text-white mt-0.5">Standard SQL Query</div>
+                <p class="text-xs text-slate-400 mt-0.5">Standard query to solve the challenge using fundamental SQL operations.</p>
+              </div>
+              <svg class="sol-chevron w-4 h-4 text-slate-500 shrink-0 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            <div class="sol-body hidden bg-slate-950">
+              <pre class="solution-pre font-mono text-xs p-4 overflow-x-auto text-slate-200 leading-relaxed language-sql">{challenge.solution}</pre>
+              <div class="px-4 pb-3 flex gap-2">
+                <button class="sol-try-btn text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer flex items-center gap-1" data-sol-code={challenge.solution}>
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Load into Editor
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
 
@@ -354,7 +432,10 @@ const { challenge } = Astro.props;
       
       // Warm up initial SQLite database instance
       dbInstance = new SQLLib.Database();
-      dbInstance.run(resolveSetup(challenge.setup));
+      const setupSql = resolveSetup(challenge.setup);
+      if (setupSql.trim()) {
+        dbInstance.exec(setupSql);
+      }
 
       if (statusLabel) {
         statusLabel.innerHTML = `
@@ -407,6 +488,31 @@ const { challenge } = Astro.props;
       numbersHtml += `<span>${i}</span>`;
     }
     gutter.innerHTML = numbersHtml;
+  }
+
+  // Left panel: Description / Solutions tab toggling
+  function selectDescTab(tabName: string) {
+    const problemBtn = document.getElementById('desc-tab-problem-btn');
+    const solutionsBtn = document.getElementById('desc-tab-solutions-btn');
+    const problemPanel = document.getElementById('desc-panel-problem');
+    const solutionsPanel = document.getElementById('desc-panel-solutions');
+
+    const activeClass = 'px-4 py-2 border-b-2 border-indigo-500 text-white focus:outline-none cursor-pointer flex items-center gap-1.5';
+    const inactiveClass = 'px-4 py-2 border-b-2 border-transparent hover:text-white focus:outline-none cursor-pointer flex items-center gap-1.5';
+    const activeClassSimple = 'px-4 py-2 border-b-2 border-indigo-500 text-white focus:outline-none cursor-pointer';
+    const inactiveClassSimple = 'px-4 py-2 border-b-2 border-transparent hover:text-white focus:outline-none cursor-pointer';
+
+    if (tabName === 'problem') {
+      if (problemBtn) problemBtn.className = activeClassSimple;
+      if (solutionsBtn) solutionsBtn.className = inactiveClass;
+      if (problemPanel) problemPanel.classList.remove('hidden');
+      if (solutionsPanel) solutionsPanel.classList.add('hidden');
+    } else {
+      if (problemBtn) problemBtn.className = inactiveClassSimple;
+      if (solutionsBtn) solutionsBtn.className = activeClass;
+      if (problemPanel) problemPanel.classList.add('hidden');
+      if (solutionsPanel) solutionsPanel.classList.remove('hidden');
+    }
   }
 
   // Toggling Terminal Panels
@@ -576,6 +682,54 @@ const { challenge } = Astro.props;
       }
     });
 
+    // Left panel (Problem / Solutions) tab clicks
+    const problemTabBtn = document.getElementById('desc-tab-problem-btn');
+    const solutionsTabBtn = document.getElementById('desc-tab-solutions-btn');
+    if (problemTabBtn) {
+      problemTabBtn.addEventListener('click', () => selectDescTab('problem'));
+    }
+    if (solutionsTabBtn) {
+      solutionsTabBtn.addEventListener('click', () => selectDescTab('solutions'));
+    }
+
+    // Solution accordion toggles
+    document.querySelectorAll('.sol-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = btn.getAttribute('data-sol-idx');
+        const body = btn.nextElementSibling as HTMLElement | null;
+        const chevron = btn.querySelector('.sol-chevron') as HTMLElement | null;
+        if (body) {
+          body.classList.toggle('hidden');
+          if (chevron) {
+            chevron.style.transform = body.classList.contains('hidden') ? '' : 'rotate(180deg)';
+          }
+          // Syntax highlight the solution code
+          if (!body.classList.contains('hidden')) {
+            const pre = body.querySelector('.solution-pre') as HTMLElement | null;
+            if (pre && (window as any).Prism) {
+              const raw = pre.textContent || '';
+              pre.innerHTML = (window as any).Prism.highlight(raw, (window as any).Prism.languages.sql, 'sql');
+            }
+          }
+        }
+      });
+    });
+
+    // "Load into Editor" buttons
+    document.querySelectorAll('.sol-try-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const code = btn.getAttribute('data-sol-code') || '';
+        if (jar && code) {
+          jar.updateCode(code);
+          updateLineNumbers(code);
+          // Switch to Problem tab so user can run it
+          selectDescTab('problem');
+          // Scroll to top of editor
+          document.getElementById('sql-editor')?.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
     // Start SQLite compilation
     initSQLite();
   });
@@ -670,5 +824,30 @@ const { challenge } = Astro.props;
   .tab-size-4 {
     tab-size: 4;
     -moz-tab-size: 4;
+  }
+
+  /* Left panel tabs */
+  .desc-tabs {
+    border-color: #1e293b !important;
+    margin-top: 0 !important;
+  }
+
+  /* Solution code block */
+  .solution-pre {
+    background-color: #090d16 !important;
+    border-top: 1px solid #1e293b;
+  }
+
+  /* Solution card */
+  .solution-card {
+    border-color: #1e293b !important;
+  }
+
+  .sol-toggle {
+    cursor: pointer;
+  }
+
+  .sol-chevron {
+    transition: transform 0.2s ease;
   }
 </style>

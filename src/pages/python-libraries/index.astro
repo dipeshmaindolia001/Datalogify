@@ -1,0 +1,94 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TopicSidebar from '../../components/TopicSidebar.astro';
+import { getCollection } from 'astro:content';
+
+const libraryLessons = (await getCollection('lessons', ({ data }) => data.category === 'python-libraries'))
+  .sort((a, b) => a.data.order - b.data.order);
+
+function getSlug(id: string): string {
+  return id.replace(/^python-libraries\//, '');
+}
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Course',
+  name: 'Python Libraries for Data Analytics & Machine Learning',
+  description: 'Complete practical guides for NumPy, Pandas, Matplotlib, and Seaborn — from setup to advanced analytics.',
+  provider: { '@type': 'Organization', name: 'Datalogify' },
+  numberOfLessons: libraryLessons.length,
+  hasCourseInstance: {
+    '@type': 'CourseInstance',
+    courseMode: 'online',
+    courseWorkload: 'PT20H',
+  },
+};
+---
+
+<BaseLayout
+  title="Python Libraries for Data Analytics & Machine Learning — Complete Guides"
+  description="Master the essential Python data stack: NumPy, Pandas, Matplotlib, and Seaborn. In-depth, practical, code-first reference guides."
+  jsonLd={jsonLd}
+>
+  <div class="max-w-[1400px] mx-auto px-4 sm:px-6 py-8 lg:py-12">
+    <div class="flex gap-8">
+      <!-- Left Sidebar -->
+      <aside class="hidden lg:block w-64 shrink-0">
+        <div class="sticky top-24">
+          <TopicSidebar category="python-libraries" />
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="flex-1 min-w-0">
+        <!-- Header -->
+        <div class="mb-10 animate-slide-up">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500 text-white text-2xl shadow-lg shadow-cyan-200/50">📚</span>
+            <div>
+              <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                Python Data Stack
+              </h1>
+              <p class="text-sm text-slate-500">{libraryLessons.length} Comprehensive Guides · NumPy, Pandas, Visualization</p>
+            </div>
+          </div>
+          <p class="text-base text-slate-500 max-w-2xl leading-relaxed mt-3">
+            Deep-dive practical reference manuals for the core data libraries. Every function, pattern, vectorization trick, and syntax shortcut you need for day-to-day data science and ML engineering.
+          </p>
+        </div>
+
+        <!-- Guides Grid -->
+        <div class="grid sm:grid-cols-2 gap-4">
+          {libraryLessons.map((lesson) => (
+            <a
+              href={`/python-libraries/${getSlug(lesson.id)}/`}
+              class="group flex flex-col justify-between bg-white rounded-2xl p-6 border border-slate-200/80 hover:border-cyan-400 hover:shadow-xl hover:shadow-cyan-500/5 transition-all duration-300 hover:-translate-y-1"
+            >
+              <div>
+                <div class="flex items-center justify-between gap-3 mb-3">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-cyan-50 text-cyan-700 border border-cyan-100">
+                    Guide {lesson.data.order}
+                  </span>
+                  <span class="text-xs text-slate-400">Complete Manual</span>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 group-hover:text-cyan-600 transition-colors mb-2">
+                  {lesson.data.title}
+                </h2>
+                <p class="text-sm text-slate-500 line-clamp-3 leading-relaxed mb-4">
+                  {lesson.data.description}
+                </p>
+              </div>
+
+              <div class="flex items-center gap-2 text-sm font-semibold text-cyan-600 group-hover:text-cyan-700 pt-4 border-t border-slate-100">
+                <span>Read Full Guide</span>
+                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
